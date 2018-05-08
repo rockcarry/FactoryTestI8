@@ -12,6 +12,8 @@
 #define new DEBUG_NEW
 #endif
 
+#define ENABLE_MES_SYSTEM  FALSE
+
 static void get_app_dir(char *path, int size)
 {
     HMODULE handle = GetModuleHandle(NULL);
@@ -107,6 +109,7 @@ void CFactoryTestI8Dlg::DoDeviceTest()
         m_strTestInfo   = "正在写号 ...\r\n";
         m_strTestResult = "正在写号";
 
+#if ENABLE_MES_SYSTEM
         CString strErrMsg;
         CString strMAC;
         CString strBT ;
@@ -121,6 +124,7 @@ void CFactoryTestI8Dlg::DoDeviceTest()
             m_strTestInfo  += "无法从 MES 系统获取 MAC\r\n";
             return;
         }
+#endif
 
         if (tnp_burn_snmac(m_tnpContext, m_strCurSN.GetBuffer(), m_strCurMac.GetBuffer())) {
             m_bResultBurnSNMac = TRUE;
@@ -194,7 +198,9 @@ void CFactoryTestI8Dlg::DoDeviceTest()
         if (!m_bResultTestNet) {
             strErrMsg += "L007";
         }
+#if ENABLE_MES_SYSTEM
         MesDLL::GetInstance().SetMobileData(m_strCurSN, CString(m_strResource), CString(m_strUserName), m_strTestResult, strErrCode, strErrMsg);	
+#endif
     }
 
     CloseHandle(m_hTestThread);
@@ -348,12 +354,14 @@ BOOL CFactoryTestI8Dlg::OnInitDialog()
     log_printf("version  = %s\n", m_strTnpVer  );
     log_printf("logfile  = %s\n", m_strLogFile );
 
+#if ENABLE_MES_SYSTEM
     CString strJigCode;
     CString strErrMsg;
     ret = MesDLL::GetInstance().CheckUserAndResourcePassed (CString(m_strUserName), CString(m_strResource), CString(m_strPassWord), strJigCode, strErrMsg);
     if (!ret) {
-        AfxMessageBox(TEXT("检查 MES 系统失败！"), MB_OK);
+        AfxMessageBox(TEXT("登录 MES 系统失败！"), MB_OK);
     }
+#endif
 
     m_strMesResource   = CString(m_strResource);
     m_strConnectState  = "等待设备连接...";
@@ -378,11 +386,13 @@ void CFactoryTestI8Dlg::OnDestroy()
     tnp_free(m_tnpContext);
     log_done();
 
+#if ENABLE_MES_SYSTEM
     CString strErrMsg;
     BOOL ret = MesDLL::GetInstance().ATELogOut(CString(m_strResource), strErrMsg);
     if (!ret) {
         log_printf("MesDLL ATELogOut failed !\n");
     }
+#endif
 }
 
 void CFactoryTestI8Dlg::OnSysCommand(UINT nID, LPARAM lParam)
@@ -442,12 +452,14 @@ void CFactoryTestI8Dlg::OnEnChangeEdtScanSn()
         m_strScanSN = "";
         UpdateData(FALSE);
 
+#if ENABLE_MES_SYSTEM
         CString strErrMsg;
         BOOL ret = MesDLL::GetInstance().CheckRoutePassed(m_strCurSN, CString(m_strResource), strErrMsg);
         if (!ret) {
-            AfxMessageBox(TEXT("该序列号没有按照途程生产！"), MB_OK);
+            AfxMessageBox(TEXT("该工位没有按照途程生产！"), MB_OK);
             return;
         }
+#endif
 
         if (m_bConnectState) {
             // start test
