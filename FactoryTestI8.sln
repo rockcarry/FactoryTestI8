@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual Studio 2005
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FactoryTestI8Full", "FactoryTestI8Full\FactoryTestI8Full.vcproj", "{735F6790-6AE3-44AD-80F2-6A764C430C32}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FactoryTestI8SN", "FactoryTestI8SN\FactoryTestI8SN.vcproj", "{FDA4F93F-F5EA-48EF-AB6E-FC805E3F105B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{735F6790-6AE3-44AD-80F2-6A764C430C32}.Debug|Win32.ActiveCfg = Debug|Win32
+		{735F6790-6AE3-44AD-80F2-6A764C430C32}.Debug|Win32.Build.0 = Debug|Win32
+		{735F6790-6AE3-44AD-80F2-6A764C430C32}.Release|Win32.ActiveCfg = Release|Win32
+		{735F6790-6AE3-44AD-80F2-6A764C430C32}.Release|Win32.Build.0 = Release|Win32
+		{FDA4F93F-F5EA-48EF-AB6E-FC805E3F105B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{FDA4F93F-F5EA-48EF-AB6E-FC805E3F105B}.Debug|Win32.Build.0 = Debug|Win32
+		{FDA4F93F-F5EA-48EF-AB6E-FC805E3F105B}.Release|Win32.ActiveCfg = Release|Win32
+		{FDA4F93F-F5EA-48EF-AB6E-FC805E3F105B}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
