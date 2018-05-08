@@ -97,6 +97,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description="copy files"
+				CommandLine="copy &quot;$(SolutionDir)\files\*&quot; &quot;$(TargetDir)&quot; /y&#x0D;&#x0A;del &quot;$(TargetDir)\*.pdb&quot;&#x0D;&#x0A;del &quot;$(TargetDir)\*.ilk&quot;&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -182,6 +184,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description="copy files"
+				CommandLine="copy &quot;$(SolutionDir)\files\*&quot; &quot;$(TargetDir)&quot; /y&#x0D;&#x0A;del &quot;$(TargetDir)\*.pdb&quot;&#x0D;&#x0A;del &quot;$(TargetDir)\*.ilk&quot;&#x0D;&#x0A;"
 			/>
 		</Configuration>
 	</Configurations>

@@ -54,7 +54,7 @@ static int load_config_from_file(char *user, char *passwd, char *res, char *ver,
 
     // open params file
     get_app_dir(file, MAX_PATH);
-    strcat(file, "\\factorytest.ini");
+    strcat(file, "\\factorytesti8sn.ini");
     fp = fopen(file, "rb");
 
     if (fp) {
