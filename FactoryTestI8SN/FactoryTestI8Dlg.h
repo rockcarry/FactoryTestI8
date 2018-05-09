@@ -60,7 +60,9 @@ private:
     char   *m_strDeviceIP;
     BOOL    m_bMesLoginOK;
     BOOL    m_bConnectState;
-    BOOL    m_bResultBurnSNMac;
+    BOOL    m_bSnScaned;
+    BOOL    m_bResultBurnSN;
+    BOOL    m_bResultBurnMac;
     BOOL    m_bResultTestSpkMic;
     BOOL    m_bResultTestNet;
     BOOL    m_bResultDone;

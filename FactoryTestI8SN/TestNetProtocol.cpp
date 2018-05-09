@@ -231,14 +231,14 @@ void tnp_disconnect(void *ctxt)
     }
 }
 
-int tnp_burn_snmac(void *ctxt, char *sn, char *mac)
+void tnp_burn_snmac(void *ctxt, char *sn, char *mac, int *snrslt, int *macrslt)
 {
     TNPCONTEXT *context = (TNPCONTEXT*)ctxt;
-    if (!ctxt) return -1;
+    if (!ctxt) return;
 
     if (!context->sock) {
         log_printf("tnp_burn_sn failed ! no connection !\n");
-        return -1;
+        return;
     }
 
     FACTORYTEST_DATA data = {0};
@@ -250,12 +250,12 @@ int tnp_burn_snmac(void *ctxt, char *sn, char *mac)
 
     if (send(context->sock, (const char*)&data, sizeof(data), 0) == -1) {
         log_printf("tnp_burn_sn send udp data failed !\n");
-        return -1;
+        return;
     }
 
     if (recv(context->sock, (char*)&data, sizeof(data), 0) == -1) {
         log_printf("tnp_burn_sn recv udp data failed !\n");
-        return -1;
+        return;
     }
 
     log_printf("tnp_burn_sn data received:\n");
@@ -264,7 +264,8 @@ int tnp_burn_snmac(void *ctxt, char *sn, char *mac)
     log_printf("rtSN     = %d\n", data.rtSN    );
     log_printf("rtMAC    = %d\n", data.rtMAC   );
     log_printf("exitTest = %d\n", data.exitTest);
-    return (data.rtSN == 1 && data.rtMAC == 1) ? 0 : -1;
+    *snrslt  = data.rtSN;
+    *macrslt = data.rtMAC;
 }
 
 int tnp_test_spkmic(void *ctxt)

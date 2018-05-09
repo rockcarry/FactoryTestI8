@@ -110,32 +110,7 @@ void CFactoryTestI8Dlg::DoDeviceTest()
         m_strTestInfo   = "正在写号 ...\r\n";
         m_strTestResult = "正在写号";
 
-#if ENABLE_MES_SYSTEM
-        if (m_bMesLoginOK) {
-            CString strErrMsg;
-            CString strMAC;
-            CString strBT ;
-            CString strCode1;
-            CString strCode2;
-            CString strCode3;
-            BOOL ret = MesDLL::GetInstance().GetAddressRangeByMO(m_strCurSN, strMAC, strBT, strCode1, strCode2, strCode3, strErrMsg);
-            if (ret) {
-                m_strCurMac = strMAC;
-                SendMessage(WM_TNP_UPDATE_UI);
-            } else {
-                m_strTestInfo  += "无法从 MES 系统获取 MAC\r\n";
-                return;
-            }
-        } else {
-            m_strCurMac = "4637E68F43E5";
-        }
-#endif
-
-        if (tnp_burn_snmac(m_tnpContext, m_strCurSN.GetBuffer(), m_strCurMac.GetBuffer())) {
-            m_bResultBurnSNMac = TRUE;
-        } else {
-            m_bResultBurnSNMac = FALSE;
-        }
+        tnp_burn_snmac(m_tnpContext, m_strCurSN.GetBuffer(), m_strCurMac.GetBuffer(), &m_bResultBurnSN, &m_bResultBurnMac);
         m_strCurSN .ReleaseBuffer();
         m_strCurMac.ReleaseBuffer();
         SendMessage(WM_TNP_UPDATE_UI);
@@ -181,13 +156,14 @@ void CFactoryTestI8Dlg::DoDeviceTest()
     }
 
     if (!m_bTestCancel) {
-        if (m_bResultBurnSNMac && m_bResultTestSpkMic && m_bResultTestNet) {
+        if (m_bResultBurnSN && m_bResultBurnMac && m_bResultTestSpkMic && m_bResultTestNet) {
             m_strTestResult = "OK";
         } else {
             m_strTestResult = "NG";
         }
 
-        m_strTestInfo += m_bResultBurnSNMac ? "写号     -  OK\r\n" : "写号     -  NG\r\n";
+        m_strTestInfo += m_bResultBurnSN    ? "写号     -  OK\r\n" : "写号     -  NG\r\n";
+        m_strTestInfo += m_bResultBurnMac   ? "MAC      -  OK\r\n" : "MAC      -  NG\r\n";
         m_strTestInfo += m_bResultTestSpkMic? "喇叭咪头 -  OK\r\n" : "喇叭咪头 -  NG\r\n";
         m_strTestInfo += m_bResultTestNet   ? "吞吐量   -  OK\r\n" : "吞吐量   -  NG\r\n";
 
@@ -197,8 +173,11 @@ void CFactoryTestI8Dlg::DoDeviceTest()
 #if ENABLE_MES_SYSTEM
         CString strErrCode;
         CString strErrMsg;
-        if (!m_bResultBurnSNMac) {
-            strErrMsg += "L001,L002,";
+        if (!m_bResultBurnSN) {
+            strErrMsg += "L001";
+        }
+        if (!m_bResultBurnMac) {
+            strErrMsg += "L002,";
         }
         if (!m_bResultTestSpkMic) {
             strErrMsg += "L004,L005,";
@@ -382,7 +361,9 @@ BOOL CFactoryTestI8Dlg::OnInitDialog()
     m_strConnectState  = "等待设备连接...";
     m_strTestInfo      = "请打开设备，进入测试模式。\r\n";
     m_bConnectState    = FALSE;
-    m_bResultBurnSNMac = FALSE;
+    m_bSnScaned        = FALSE;
+    m_bResultBurnSN    = FALSE;
+    m_bResultBurnMac   = FALSE;
     m_bResultTestSpkMic= FALSE;
     m_bResultTestNet   = FALSE;
     m_bResultDone      = FALSE;
@@ -459,7 +440,7 @@ HBRUSH CFactoryTestI8Dlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
     case IDC_TXT_TEST_RESULT:
         if (!m_bConnectState || !m_bResultDone) {
             pDC->SetTextColor(RGB(0, 120, 255));
-        } else if (m_bResultBurnSNMac && m_bResultTestSpkMic && m_bResultTestNet) {
+        } else if (m_bResultBurnSN && m_bResultBurnMac && m_bResultTestSpkMic && m_bResultTestNet) {
             pDC->SetTextColor(RGB(0, 200, 0));
         } else {
             pDC->SetTextColor(RGB(255, 0, 0));
@@ -482,9 +463,9 @@ void CFactoryTestI8Dlg::OnEnChangeEdtScanSn()
     // TODO:  Add your control notification handler code here
     UpdateData(TRUE);
     if (m_strScanSN.GetLength() >= 15) {
+        m_bSnScaned = TRUE;
         m_strCurSN  = m_strScanSN;
         m_strScanSN = "";
-        UpdateData(FALSE);
 
 #if ENABLE_MES_SYSTEM
         if (m_bMesLoginOK) {
@@ -495,10 +476,29 @@ void CFactoryTestI8Dlg::OnEnChangeEdtScanSn()
                 return;
             }
         }
+
+        if (m_bMesLoginOK) {
+            CString strErrMsg;
+            CString strMAC;
+            CString strBT ;
+            CString strCode1;
+            CString strCode2;
+            CString strCode3;
+            BOOL ret = MesDLL::GetInstance().GetAddressRangeByMO(m_strCurSN, strMAC, strBT, strCode1, strCode2, strCode3, strErrMsg);
+            if (ret) {
+                m_strCurMac = strMAC;
+            } else {
+                m_strTestInfo  += "无法从 MES 系统获取 MAC\r\n";
+                return;
+            }
+        } else {
+            m_strCurMac = "4637E68F43E5";
+        }
 #endif
 
+        UpdateData(FALSE);
         if (m_bConnectState) {
-            // start test
+            m_bSnScaned = FALSE;
             StartDeviceTest();
         }
     }
@@ -526,6 +526,10 @@ LRESULT CFactoryTestI8Dlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
         m_strTestResult = "请扫描条码";
         m_strScanSN     = "";
         m_bConnectState = TRUE;
+        if (m_bSnScaned) {
+            m_bSnScaned = FALSE;
+            StartDeviceTest();
+        }
     } else {
         m_strConnectState.Format(TEXT("设备连接失败！（%s）"), CString(m_strDeviceIP));
         m_strTestInfo   = "设备连接失败，请重启设备。\r\n";
