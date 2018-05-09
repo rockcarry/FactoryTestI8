@@ -47,8 +47,7 @@ BOOL CFactoryTestI8App::InitInstance()
 
     CWinApp::InitInstance();
 
-    if (!AfxSocketInit())
-    {
+    if (!AfxSocketInit()) {
         AfxMessageBox(IDP_SOCKETS_INIT_FAILED);
         return FALSE;
     }
@@ -65,13 +64,11 @@ BOOL CFactoryTestI8App::InitInstance()
     CFactoryTestI8Dlg dlg;
     m_pMainWnd = &dlg;
     INT_PTR nResponse = dlg.DoModal();
-    if (nResponse == IDOK)
-    {
+    if (nResponse == IDOK) {
         // TODO: 在此处放置处理何时用“确定”来关闭
         //  对话框的代码
     }
-    else if (nResponse == IDCANCEL)
-    {
+    else if (nResponse == IDCANCEL) {
         // TODO: 在此放置处理何时用“取消”来关闭
         //  对话框的代码
     }

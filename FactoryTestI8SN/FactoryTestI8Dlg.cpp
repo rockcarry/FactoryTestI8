@@ -303,16 +303,14 @@ void CFactoryTestI8Dlg::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CFactoryTestI8Dlg, CDialog)
     ON_WM_SYSCOMMAND()
     ON_WM_PAINT()
+    ON_WM_CTLCOLOR()
     ON_WM_QUERYDRAGICON()
     ON_WM_DESTROY()
+    ON_WM_CLOSE()
     ON_EN_CHANGE(IDC_EDT_SCAN_SN, &CFactoryTestI8Dlg::OnEnChangeEdtScanSn)
     ON_MESSAGE(WM_TNP_UPDATE_UI   , &CFactoryTestI8Dlg::OnTnpUpdateUI   )
     ON_MESSAGE(WM_TNP_DEVICE_FOUND, &CFactoryTestI8Dlg::OnTnpDeviceFound)
     ON_MESSAGE(WM_TNP_DEVICE_LOST , &CFactoryTestI8Dlg::OnTnpDeviceLost )
-    ON_WM_TIMER()
-    ON_WM_KEYDOWN()
-    ON_WM_CTLCOLOR()
-    ON_WM_CLOSE()
 END_MESSAGE_MAP()
 
 
@@ -419,9 +417,16 @@ void CFactoryTestI8Dlg::OnSysCommand(UINT nID, LPARAM lParam)
     }
 }
 
+// 当用户拖动最小化窗口时系统调用此函数取得光标显示。
+//
+HCURSOR CFactoryTestI8Dlg::OnQueryDragIcon()
+{
+    return static_cast<HCURSOR>(m_hIcon);
+}
+
 // 如果向对话框添加最小化按钮，则需要下面的代码
-//  来绘制该图标。对于使用文档/视图模型的 MFC 应用程序，
-//  这将由框架自动完成。
+// 来绘制该图标。对于使用文档/视图模型的 MFC 应用程序，
+// 这将由框架自动完成。
 
 void CFactoryTestI8Dlg::OnPaint()
 {
@@ -445,11 +450,24 @@ void CFactoryTestI8Dlg::OnPaint()
     }
 }
 
-//当用户拖动最小化窗口时系统调用此函数取得光标显示。
-//
-HCURSOR CFactoryTestI8Dlg::OnQueryDragIcon()
+HBRUSH CFactoryTestI8Dlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
-    return static_cast<HCURSOR>(m_hIcon);
+    HBRUSH hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
+    switch (pWnd->GetDlgCtrlID()) {
+    case IDC_TXT_TEST_RESULT:
+        if (!m_bConnectState || !m_bResultDone) {
+            pDC->SetTextColor(RGB(0, 120, 255));
+        } else if (m_bResultBurnSNMac && m_bResultTestSpkMic && m_bResultTestNet) {
+            pDC->SetTextColor(RGB(0, 200, 0));
+        } else {
+            pDC->SetTextColor(RGB(255, 0, 0));
+        }
+        break;
+    case IDC_TXT_MES_LOGIN:
+        pDC->SetTextColor(m_bMesLoginOK ? RGB(0, 180, 0) : RGB(255, 0, 0));
+        break;
+    }
+    return hbr;
 }
 
 void CFactoryTestI8Dlg::OnEnChangeEdtScanSn()
@@ -517,19 +535,15 @@ LRESULT CFactoryTestI8Dlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
 
 LRESULT CFactoryTestI8Dlg::OnTnpDeviceLost (WPARAM wParam, LPARAM lParam)
 {
-    m_strDeviceIP = NULL;
-    m_bResultDone = FALSE;
+    m_bConnectState = FALSE;
+    m_strDeviceIP   = NULL;
+    m_bResultDone   = FALSE;
     StopDeviceTest(); // stop test
     m_strConnectState = "等待设备连接...";
     tnp_disconnect(m_tnpContext);
     m_strTestInfo = "请打开设备，进入测试模式。\r\n";
     UpdateData(FALSE);
     return 0;
-}
-
-void CFactoryTestI8Dlg::OnTimer(UINT_PTR nIDEvent)
-{
-    CDialog::OnTimer(nIDEvent);
 }
 
 void CFactoryTestI8Dlg::OnCancel() {}
@@ -549,22 +563,3 @@ BOOL CFactoryTestI8Dlg::PreTranslateMessage(MSG *pMsg)
     return CDialog::PreTranslateMessage(pMsg);
 }
 
-HBRUSH CFactoryTestI8Dlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
-{
-    HBRUSH hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
-    switch (pWnd->GetDlgCtrlID()) {
-    case IDC_TXT_TEST_RESULT:
-        if (!m_bConnectState || !m_bResultDone) {
-            pDC->SetTextColor(RGB(0, 120, 255));
-        } else if (m_bResultBurnSNMac && m_bResultTestSpkMic && m_bResultTestNet) {
-            pDC->SetTextColor(RGB(0, 200, 0));
-        } else {
-            pDC->SetTextColor(RGB(255, 0, 0));
-        }
-        break;
-    case IDC_TXT_MES_LOGIN:
-        pDC->SetTextColor(m_bMesLoginOK ? RGB(0, 180, 0) : RGB(255, 0, 0));
-        break;
-    }
-    return hbr;
-}
