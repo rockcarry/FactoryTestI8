@@ -312,6 +312,7 @@ BEGIN_MESSAGE_MAP(CFactoryTestI8Dlg, CDialog)
     ON_WM_TIMER()
     ON_WM_KEYDOWN()
     ON_WM_CTLCOLOR()
+    ON_WM_CLOSE()
 END_MESSAGE_MAP()
 
 
@@ -338,7 +339,7 @@ BOOL CFactoryTestI8Dlg::OnInitDialog()
     }
 
     // 设置此对话框的图标。当应用程序主窗口不是对话框时，框架将自动
-    //  执行此操作
+    // 执行此操作
     SetIcon(m_hIcon, TRUE );        // 设置大图标
     SetIcon(m_hIcon, FALSE);        // 设置小图标
 
@@ -346,7 +347,7 @@ BOOL CFactoryTestI8Dlg::OnInitDialog()
     GetDlgItem(IDC_TXT_TEST_RESULT)->SetFont(&m_fntResult);
     m_strTestResult = "设备未连接";
 
-    // TODO: 在此添加额外的初始化代码
+    // 在此添加额外的初始化代码
     strcpy(m_strUserName , "username"      );
     strcpy(m_strPassWord , "password"      );
     strcpy(m_strResource , "resource"      );
@@ -370,13 +371,11 @@ BOOL CFactoryTestI8Dlg::OnInitDialog()
     m_bMesLoginOK = MesDLL::GetInstance().CheckUserAndResourcePassed (CString(m_strUserName), CString(m_strResource), CString(m_strPassWord), strJigCode, strErrMsg);
     if (strcmp(m_strLoginMode, "alert_and_exit") == 0) {
         if (!m_bMesLoginOK) {
-            AfxMessageBox(TEXT("登录 MES 系统失败！"), MB_OK);
-            OnCancel();
-            return FALSE;
+            AfxMessageBox(TEXT("\n登录 MES 系统失败！\n\n请检查网络配置和 MES 系统，然后重试。\n\n谢谢！"), MB_OK);
+            EndDialog(IDCANCEL); return FALSE;
         }
-    } else {
-        m_strMesLoginState = m_bMesLoginOK ? "登录 MES 成功" : "登录 MES 失败";
     }
+    m_strMesLoginState = m_bMesLoginOK ? "登录 MES 成功" : "登录 MES 失败";
 #endif
 
     m_strMesResource   = CString(m_strResource);
@@ -397,7 +396,6 @@ void CFactoryTestI8Dlg::OnDestroy()
 {
     CDialog::OnDestroy();
 
-    // TODO: Add your message handler code here
     tnp_disconnect(m_tnpContext);
     tnp_free(m_tnpContext);
     log_done();
@@ -531,9 +529,16 @@ LRESULT CFactoryTestI8Dlg::OnTnpDeviceLost (WPARAM wParam, LPARAM lParam)
 
 void CFactoryTestI8Dlg::OnTimer(UINT_PTR nIDEvent)
 {
-    // TODO: Add your message handler code here and/or call default
-
     CDialog::OnTimer(nIDEvent);
+}
+
+void CFactoryTestI8Dlg::OnCancel() {}
+void CFactoryTestI8Dlg::OnOK()     {}
+
+void CFactoryTestI8Dlg::OnClose()
+{
+    CDialog::OnClose();
+    EndDialog(IDCANCEL);
 }
 
 BOOL CFactoryTestI8Dlg::PreTranslateMessage(MSG *pMsg) 
@@ -547,22 +552,19 @@ BOOL CFactoryTestI8Dlg::PreTranslateMessage(MSG *pMsg)
 HBRUSH CFactoryTestI8Dlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
     HBRUSH hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
-
-    // TODO:  Change any attributes of the DC here
     switch (pWnd->GetDlgCtrlID()) {
     case IDC_TXT_TEST_RESULT:
         if (!m_bConnectState || !m_bResultDone) {
             pDC->SetTextColor(RGB(0, 120, 255));
         } else if (m_bResultBurnSNMac && m_bResultTestSpkMic && m_bResultTestNet) {
-            pDC->SetTextColor(RGB(0, 255, 0));
+            pDC->SetTextColor(RGB(0, 200, 0));
         } else {
             pDC->SetTextColor(RGB(255, 0, 0));
         }
         break;
     case IDC_TXT_MES_LOGIN:
-        pDC->SetTextColor(m_bMesLoginOK ? RGB(0, 255, 0) : RGB(255, 0, 0));
+        pDC->SetTextColor(m_bMesLoginOK ? RGB(0, 180, 0) : RGB(255, 0, 0));
         break;
     }
-    // TODO:  Return a different brush if the default is not desired
     return hbr;
 }
