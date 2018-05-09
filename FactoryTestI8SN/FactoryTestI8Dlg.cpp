@@ -142,18 +142,6 @@ void CFactoryTestI8Dlg::DoDeviceTest()
     }
 
     if (!m_bTestCancel) {
-        m_strTestInfo  += "正在测试喇叭咪头 ...\r\n";
-        m_strTestResult = "正在测试";
-        SendMessage(WM_TNP_UPDATE_UI);
-        if (tnp_test_spkmic(m_tnpContext) == 0) {
-            m_bResultTestSpkMic = TRUE;
-        } else {
-            m_bResultTestSpkMic = FALSE;
-        }
-        SendMessage(WM_TNP_UPDATE_UI);
-    }
-
-    if (!m_bTestCancel) {
         m_strTestInfo += "正在测试吞吐量 ...\r\n\r\n";
         SendMessage(WM_TNP_UPDATE_UI);
 
@@ -178,7 +166,21 @@ void CFactoryTestI8Dlg::DoDeviceTest()
             m_bResultTestNet = FALSE;
         }
         SendMessage(WM_TNP_UPDATE_UI);
+    }
 
+    if (!m_bTestCancel) {
+        m_strTestInfo  += "正在测试喇叭咪头 ...\r\n";
+        m_strTestResult = "正在测试";
+        SendMessage(WM_TNP_UPDATE_UI);
+        if (tnp_test_spkmic(m_tnpContext) == 0) {
+            m_bResultTestSpkMic = TRUE;
+        } else {
+            m_bResultTestSpkMic = FALSE;
+        }
+        SendMessage(WM_TNP_UPDATE_UI);
+    }
+
+    if (!m_bTestCancel) {
         if (m_bResultBurnSNMac && m_bResultTestSpkMic && m_bResultTestNet) {
             m_strTestResult = "OK";
         } else {
@@ -289,15 +291,15 @@ CFactoryTestI8Dlg::CFactoryTestI8Dlg(CWnd* pParent /*=NULL*/)
 void CFactoryTestI8Dlg::DoDataExchange(CDataExchange* pDX)
 {
     CDialog::DoDataExchange(pDX);
-    DDX_Text(pDX, IDC_EDT_SCAN_SN, m_strScanSN);
-    DDX_Text(pDX, IDC_EDT_CUR_SN, m_strCurSN);
+    DDX_Text(pDX, IDC_TXT_MES_LOGIN, m_strMesLoginState);
     DDX_Text(pDX, IDC_TXT_MES_RESOURCE, m_strMesResource);
     DDX_Text(pDX, IDC_TXT_CONNECT_STATE, m_strConnectState);
-    DDX_Text(pDX, IDC_EDT_CUR_MAC, m_strCurMac);
     DDX_Text(pDX, IDC_TXT_TEST_INFO, m_strTestInfo);
-    DDX_Text(pDX, IDC_EDT_IPREF_RESULT, m_strWiFiThroughPut);
     DDX_Text(pDX, IDC_TXT_TEST_RESULT, m_strTestResult);
-    DDX_Text(pDX, IDC_TXT_MES_LOGIN, m_strMesLoginState);
+    DDX_Text(pDX, IDC_EDT_SCAN_SN, m_strScanSN);
+    DDX_Text(pDX, IDC_EDT_CUR_SN, m_strCurSN);
+    DDX_Text(pDX, IDC_EDT_CUR_MAC, m_strCurMac);
+    DDX_Text(pDX, IDC_EDT_IPREF_RESULT, m_strWiFiThroughPut);
 }
 
 BEGIN_MESSAGE_MAP(CFactoryTestI8Dlg, CDialog)
