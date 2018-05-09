@@ -12,7 +12,7 @@
 #define new DEBUG_NEW
 #endif
 
-#define ENABLE_MES_SYSTEM  FALSE
+#define ENABLE_MES_SYSTEM  TRUE
 
 static void get_app_dir(char *path, int size)
 {
@@ -37,7 +37,7 @@ static void parse_params(const char *str, const char *key, char *val)
         else p++;
     }
 
-    for (i=0; i<12; i++) {
+    for (i=0; i<32; i++) {
         if (*p == ',' || *p == ';' || *p == '\r' || *p == '\n' || *p == '\0') {
             val[i] = '\0';
             break;
@@ -47,7 +47,7 @@ static void parse_params(const char *str, const char *key, char *val)
     }
 }
 
-static int load_config_from_file(char *user, char *passwd, char *res, char *ver, char *log)
+static int load_config_from_file(char *user, char *passwd, char *res, char *ver, char *login, char *log)
 {
     char  file[MAX_PATH];
     FILE *fp = NULL;
@@ -66,11 +66,12 @@ static int load_config_from_file(char *user, char *passwd, char *res, char *ver,
         if (buf) {
             fseek(fp, 0, SEEK_SET);
             fread(buf, len, 1, fp);
-            parse_params(buf, "username", user  );
-            parse_params(buf, "password", passwd);
-            parse_params(buf, "resource", res   );
-            parse_params(buf, "version" , ver   );
-            parse_params(buf, "logfile" , log   );
+            parse_params(buf, "username" , user  );
+            parse_params(buf, "password" , passwd);
+            parse_params(buf, "resource" , res   );
+            parse_params(buf, "version"  , ver   );
+            parse_params(buf, "loginmode", login );
+            parse_params(buf, "logfile"  , log   );
             free(buf);
         }
         fclose(fp);
@@ -110,19 +111,23 @@ void CFactoryTestI8Dlg::DoDeviceTest()
         m_strTestResult = "正在写号";
 
 #if ENABLE_MES_SYSTEM
-        CString strErrMsg;
-        CString strMAC;
-        CString strBT ;
-        CString strCode1;
-        CString strCode2;
-        CString strCode3;
-        BOOL ret = MesDLL::GetInstance().GetAddressRangeByMO(m_strCurSN, strMAC, strBT, strCode1, strCode2, strCode3, strErrMsg);
-        if (ret) {
-            m_strCurMac = strMAC;
-            SendMessage(WM_TNP_UPDATE_UI);
+        if (m_bMesLoginOK) {
+            CString strErrMsg;
+            CString strMAC;
+            CString strBT ;
+            CString strCode1;
+            CString strCode2;
+            CString strCode3;
+            BOOL ret = MesDLL::GetInstance().GetAddressRangeByMO(m_strCurSN, strMAC, strBT, strCode1, strCode2, strCode3, strErrMsg);
+            if (ret) {
+                m_strCurMac = strMAC;
+                SendMessage(WM_TNP_UPDATE_UI);
+            } else {
+                m_strTestInfo  += "无法从 MES 系统获取 MAC\r\n";
+                return;
+            }
         } else {
-            m_strTestInfo  += "无法从 MES 系统获取 MAC\r\n";
-            return;
+            m_strCurMac = "4637E68F43E5";
         }
 #endif
 
@@ -187,6 +192,7 @@ void CFactoryTestI8Dlg::DoDeviceTest()
         m_bResultDone = TRUE;
         SendMessage(WM_TNP_UPDATE_UI);
 
+#if ENABLE_MES_SYSTEM
         CString strErrCode;
         CString strErrMsg;
         if (!m_bResultBurnSNMac) {
@@ -198,8 +204,9 @@ void CFactoryTestI8Dlg::DoDeviceTest()
         if (!m_bResultTestNet) {
             strErrMsg += "L007";
         }
-#if ENABLE_MES_SYSTEM
-        MesDLL::GetInstance().SetMobileData(m_strCurSN, CString(m_strResource), CString(m_strUserName), m_strTestResult, strErrCode, strErrMsg);	
+        if (m_bMesLoginOK) {
+            MesDLL::GetInstance().SetMobileData(m_strCurSN, CString(m_strResource), CString(m_strUserName), m_strTestResult, strErrCode, strErrMsg);	
+        }
 #endif
     }
 
@@ -264,16 +271,17 @@ END_MESSAGE_MAP()
 
 CFactoryTestI8Dlg::CFactoryTestI8Dlg(CWnd* pParent /*=NULL*/)
     : CDialog(CFactoryTestI8Dlg::IDD, pParent)
-    , m_strScanSN(_T(""))
-    , m_strCurSN(_T(""))
+    , m_strMesLoginState(_T(""))
     , m_strMesResource(_T(""))
     , m_strConnectState(_T(""))
+    , m_strScanSN(_T(""))
+    , m_strCurSN(_T(""))
     , m_strCurMac(_T(""))
-    , m_strTestInfo(_T(""))
     , m_strWiFiThroughPut(_T(""))
     , m_strTestResult(_T(""))
+    , m_strTestInfo(_T(""))
     , m_hTestThread(NULL)
-
+    , m_tnpContext(NULL)
 {
     m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -289,6 +297,7 @@ void CFactoryTestI8Dlg::DoDataExchange(CDataExchange* pDX)
     DDX_Text(pDX, IDC_TXT_TEST_INFO, m_strTestInfo);
     DDX_Text(pDX, IDC_EDT_IPREF_RESULT, m_strWiFiThroughPut);
     DDX_Text(pDX, IDC_TXT_TEST_RESULT, m_strTestResult);
+    DDX_Text(pDX, IDC_TXT_MES_LOGIN, m_strMesLoginState);
 }
 
 BEGIN_MESSAGE_MAP(CFactoryTestI8Dlg, CDialog)
@@ -338,12 +347,13 @@ BOOL CFactoryTestI8Dlg::OnInitDialog()
     m_strTestResult = "设备未连接";
 
     // TODO: 在此添加额外的初始化代码
-    strcpy(m_strUserName, "username");
-    strcpy(m_strPassWord, "password");
-    strcpy(m_strResource, "resource");
-    strcpy(m_strTnpVer  , "version" );
-    strcpy(m_strLogFile , "DEBUGER" );
-    int ret = load_config_from_file(m_strUserName, m_strPassWord, m_strResource, m_strTnpVer, m_strLogFile);
+    strcpy(m_strUserName , "username"      );
+    strcpy(m_strPassWord , "password"      );
+    strcpy(m_strResource , "resource"      );
+    strcpy(m_strTnpVer   , "version"       );
+    strcpy(m_strLoginMode, "alert_and_exit");
+    strcpy(m_strLogFile  , "DEBUGER"       );
+    int ret = load_config_from_file(m_strUserName, m_strPassWord, m_strResource, m_strTnpVer, m_strLoginMode, m_strLogFile);
     if (ret != 0) {
         AfxMessageBox(TEXT("无法打开测试配置文件！"), MB_OK);
     }
@@ -357,9 +367,15 @@ BOOL CFactoryTestI8Dlg::OnInitDialog()
 #if ENABLE_MES_SYSTEM
     CString strJigCode;
     CString strErrMsg;
-    ret = MesDLL::GetInstance().CheckUserAndResourcePassed (CString(m_strUserName), CString(m_strResource), CString(m_strPassWord), strJigCode, strErrMsg);
-    if (!ret) {
-        AfxMessageBox(TEXT("登录 MES 系统失败！"), MB_OK);
+    m_bMesLoginOK = MesDLL::GetInstance().CheckUserAndResourcePassed (CString(m_strUserName), CString(m_strResource), CString(m_strPassWord), strJigCode, strErrMsg);
+    if (strcmp(m_strLoginMode, "alert_and_exit") == 0) {
+        if (!m_bMesLoginOK) {
+            AfxMessageBox(TEXT("登录 MES 系统失败！"), MB_OK);
+            OnCancel();
+            return FALSE;
+        }
+    } else {
+        m_strMesLoginState = m_bMesLoginOK ? "登录 MES 成功" : "登录 MES 失败";
     }
 #endif
 
@@ -453,11 +469,13 @@ void CFactoryTestI8Dlg::OnEnChangeEdtScanSn()
         UpdateData(FALSE);
 
 #if ENABLE_MES_SYSTEM
-        CString strErrMsg;
-        BOOL ret = MesDLL::GetInstance().CheckRoutePassed(m_strCurSN, CString(m_strResource), strErrMsg);
-        if (!ret) {
-            AfxMessageBox(TEXT("该工位没有按照途程生产！"), MB_OK);
-            return;
+        if (m_bMesLoginOK) {
+            CString strErrMsg;
+            BOOL ret = MesDLL::GetInstance().CheckRoutePassed(m_strCurSN, CString(m_strResource), strErrMsg);
+            if (!ret) {
+                AfxMessageBox(TEXT("该工位没有按照途程生产！"), MB_OK);
+                return;
+            }
         }
 #endif
 
@@ -534,12 +552,15 @@ HBRUSH CFactoryTestI8Dlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
     switch (pWnd->GetDlgCtrlID()) {
     case IDC_TXT_TEST_RESULT:
         if (!m_bConnectState || !m_bResultDone) {
-            pDC->SetTextColor(RGB(188, 100, 0));
+            pDC->SetTextColor(RGB(0, 120, 255));
         } else if (m_bResultBurnSNMac && m_bResultTestSpkMic && m_bResultTestNet) {
             pDC->SetTextColor(RGB(0, 255, 0));
         } else {
             pDC->SetTextColor(RGB(255, 0, 0));
         }
+        break;
+    case IDC_TXT_MES_LOGIN:
+        pDC->SetTextColor(m_bMesLoginOK ? RGB(0, 255, 0) : RGB(255, 0, 0));
         break;
     }
     // TODO:  Return a different brush if the default is not desired

@@ -15,9 +15,8 @@
 #define IDC_TXT_CONNECT_STATE           1004
 #define IDC_TXT_TEST_RESULT             1005
 #define IDC_TXT_TEST_INFO               1006
-#define IDC_EDT_CUR_MAC2                1006
-#define IDC_TXT_RESOURCE                1007
 #define IDC_TXT_MES_RESOURCE            1007
+#define IDC_TXT_MES_LOGIN               1008
 
 // Next default values for new objects
 // 

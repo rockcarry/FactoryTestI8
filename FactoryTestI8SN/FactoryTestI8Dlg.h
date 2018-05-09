@@ -37,6 +37,7 @@ protected:
     DECLARE_MESSAGE_MAP()
 
 private:
+    CString m_strMesLoginState;
     CString m_strMesResource;
     CString m_strConnectState;
     CString m_strScanSN;
@@ -45,16 +46,17 @@ private:
     CString m_strWiFiThroughPut;
     CString m_strTestResult;
     CString m_strTestInfo;
-
     CFont   m_fntResult;
 
     void   *m_tnpContext;
-    char    m_strUserName[32];
-    char    m_strPassWord[32];
-    char    m_strResource[32];
-    char    m_strTnpVer  [32];
-    char    m_strLogFile [32];
+    char    m_strUserName [32];
+    char    m_strPassWord [32];
+    char    m_strResource [32];
+    char    m_strTnpVer   [32];
+    char    m_strLoginMode[32];
+    char    m_strLogFile  [32];
     char   *m_strDeviceIP;
+    BOOL    m_bMesLoginOK;
     BOOL    m_bConnectState;
     BOOL    m_bResultBurnSNMac;
     BOOL    m_bResultTestSpkMic;
