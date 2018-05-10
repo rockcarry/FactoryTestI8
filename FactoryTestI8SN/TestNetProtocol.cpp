@@ -250,8 +250,10 @@ int tnp_burn_snmac(void *ctxt, char *sn, char *mac, int *snrslt, int *macrslt)
 
     FACTORYTEST_DATA data = {0};
     data.MAGIC = SIG_MAGIC;
-    memcpy(data.SN , sn , 16);
-    memcpy(data.MAC, mac, 16);
+    memset(data.SN , '0', sizeof(data.SN ));
+    memset(data.MAC, '0', sizeof(data.MAC));
+    memcpy(data.SN , sn , strlen(sn ));
+    memcpy(data.MAC, mac, strlen(mac));
     data.testSN = data.testMAC = '1';
 
     if (send(context->sock, (const char*)&data, sizeof(data), 0) == -1) {
