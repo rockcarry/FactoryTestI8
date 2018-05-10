@@ -130,13 +130,13 @@ BEGIN
     BEGIN
         BLOCK "080403a8"
         BEGIN
-            VALUE "CompanyName", "TODO: <公司名>"
-            VALUE "FileDescription", "TODO: <文件说明>"
+            VALUE "CompanyName", "爱培科科技股份有限公司"
+            VALUE "FileDescription", "工厂测试工具 I8-SN 写号+吞吐量+喇叭+咪头 测试"
             VALUE "FileVersion", "1.0.0.1"
             VALUE "InternalName", "FactoryTestI8.exe"
-            VALUE "LegalCopyright", "TODO: (C) <公司名>。保留所有权利。"
+            VALUE "LegalCopyright", "(C) <APICAL>。保留所有权利。"
             VALUE "OriginalFilename", "FactoryTestI8.exe"
-            VALUE "ProductName", "TODO: <产品名>"
+            VALUE "ProductName", "工厂测试工具 I8-SN"
             VALUE "ProductVersion", "1.0.0.1"
         END
     END

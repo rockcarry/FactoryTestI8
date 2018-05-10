@@ -2,7 +2,6 @@
 //
 
 #include "stdafx.h"
-#include "tlhelp32.h"
 #include "FactoryTestI8.h"
 #include "FactoryTestI8Dlg.h"
 #include "TestNetProtocol.h"
@@ -99,27 +98,6 @@ static float parse_iperf_log(CString path)
     return 0;
 }
 
-static void kill_process_by_name(char *name)
-{
-    PROCESSENTRY32 pe32  = {0};
-    HANDLE         hsnap = NULL;
-
-    pe32.dwSize = sizeof(pe32);
-    hsnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    if (hsnap == INVALID_HANDLE_VALUE) return;
-
-    BOOL ret = Process32First(hsnap, &pe32);
-    while (ret) {
-        if (stricmp(pe32.szExeFile, name) == 0) {
-            HANDLE h = OpenProcess(PROCESS_TERMINATE, FALSE, pe32.th32ProcessID);
-            TerminateProcess(h, 0);
-            CloseHandle(h);
-        }
-        ret = Process32Next(hsnap, &pe32);
-    }
-    CloseHandle(hsnap);
-}
-
 static DWORD WINAPI DeviceTestThreadProc(LPVOID pParam)
 {
     CFactoryTestI8Dlg *dlg = (CFactoryTestI8Dlg*)pParam;
@@ -155,14 +133,7 @@ void CFactoryTestI8Dlg::DoDeviceTest()
         CreateProcess(NULL, cmd.GetBuffer(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
         cmd.ReleaseBuffer();
         CloseHandle(pi.hThread);
-        while (1) {
-            DWORD ret1 = WaitForSingleObject(pi.hProcess, 100);
-            if (ret1 == WAIT_OBJECT_0) {
-                break;
-            } else if (m_bTestCancel) {
-                kill_process_by_name("iperf3.exe");
-            }
-        }
+        WaitForSingleObject(pi.hProcess, -1);
         CloseHandle(pi.hProcess);
 
         float wifi = parse_iperf_log(TEXT("iperf.log"));
@@ -219,7 +190,7 @@ void CFactoryTestI8Dlg::DoDeviceTest()
             strErrMsg += "L007";
         }
         if (m_bMesLoginOK) {
-            MesDLL::GetInstance().SetMobileData(m_strCurSN, CString(m_strResource), CString(m_strUserName), m_strTestResult, strErrCode, strErrMsg);
+            MesDLL::GetInstance().SetMobileData(m_strCurSN, CString(m_strResource), CString(m_strUserName), m_strTestResult, strErrCode, strErrMsg);	
         }
 #endif
     }
@@ -456,7 +427,7 @@ void CFactoryTestI8Dlg::OnPaint()
         int cyIcon = GetSystemMetrics(SM_CYICON);
         CRect rect;
         GetClientRect(&rect);
-        int x = (rect.Width () - cxIcon + 1) / 2;
+        int x = (rect.Width() - cxIcon + 1) / 2;
         int y = (rect.Height() - cyIcon + 1) / 2;
 
         // 绘制图标
@@ -576,19 +547,19 @@ LRESULT CFactoryTestI8Dlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
 
 LRESULT CFactoryTestI8Dlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
 {
+    m_strDeviceIP   = NULL;
+    m_bConnectState = FALSE;
+    m_bSnScaned     = FALSE;
+    m_bResultDone   = FALSE;
     StopDeviceTest(); // stop test
     m_strConnectState   = "等待设备连接...";
     m_strTestResult     = "请连接设备";
-    m_strTestInfo       = "请打开设备，进入测试模式。\r\n";
     m_strScanSN         = "";
     m_strCurSN          = "";
     m_strCurMac         = "";
     m_strWiFiThroughPut = "";
-    m_strDeviceIP       = NULL;
-    m_bConnectState     = FALSE;
-    m_bSnScaned         = FALSE;
-    m_bResultDone       = FALSE;
     tnp_disconnect(m_tnpContext);
+    m_strTestInfo = "请打开设备，进入测试模式。\r\n";
     UpdateData(FALSE);
     return 0;
 }
@@ -602,7 +573,7 @@ void CFactoryTestI8Dlg::OnClose()
     EndDialog(IDCANCEL);
 }
 
-BOOL CFactoryTestI8Dlg::PreTranslateMessage(MSG *pMsg)
+BOOL CFactoryTestI8Dlg::PreTranslateMessage(MSG *pMsg) 
 {
     if (pMsg->message == WM_KEYDOWN) {
         GetDlgItem(IDC_EDT_SCAN_SN)->SetFocus();
