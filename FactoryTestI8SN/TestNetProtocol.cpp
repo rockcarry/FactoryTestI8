@@ -231,14 +231,14 @@ void tnp_disconnect(void *ctxt)
     }
 }
 
-void tnp_burn_snmac(void *ctxt, char *sn, char *mac, int *snrslt, int *macrslt)
+int tnp_burn_snmac(void *ctxt, char *sn, char *mac, int *snrslt, int *macrslt)
 {
     TNPCONTEXT *context = (TNPCONTEXT*)ctxt;
-    if (!ctxt) return;
+    if (!ctxt) return -1;
 
     if (!context->sock) {
-        log_printf("tnp_burn_sn failed ! no connection !\n");
-        return;
+        log_printf("tnp_burn_snmac failed ! no connection !\n");
+        return -1;
     }
 
     FACTORYTEST_DATA data = {0};
@@ -246,26 +246,25 @@ void tnp_burn_snmac(void *ctxt, char *sn, char *mac, int *snrslt, int *macrslt)
     memcpy(data.SN , sn , 16);
     memcpy(data.MAC, mac, 16);
     data.testSN = data.testMAC = '1';
-    log_printf("exitTest = %d\n", data.exitTest);
 
     if (send(context->sock, (const char*)&data, sizeof(data), 0) == -1) {
-        log_printf("tnp_burn_sn send udp data failed !\n");
-        return;
+        log_printf("tnp_burn_snmac send udp data failed !\n");
+        return -1;
     }
 
     if (recv(context->sock, (char*)&data, sizeof(data), 0) == -1) {
-        log_printf("tnp_burn_sn recv udp data failed !\n");
-        return;
+        log_printf("tnp_burn_snmac recv udp data failed !\n");
+        return -1;
     }
 
-    log_printf("tnp_burn_sn data received:\n");
+    log_printf("tnp_burn_snmac data received:\n");
     log_printf("SN       = %s\n", data.SN      );
     log_printf("MAC      = %s\n", data.MAC     );
     log_printf("rtSN     = %d\n", data.rtSN    );
     log_printf("rtMAC    = %d\n", data.rtMAC   );
-    log_printf("exitTest = %d\n", data.exitTest);
     *snrslt  = data.rtSN;
     *macrslt = data.rtMAC;
+    return 0;
 }
 
 int tnp_test_spkmic(void *ctxt)
@@ -274,7 +273,7 @@ int tnp_test_spkmic(void *ctxt)
     if (!ctxt) return -1;
 
     if (!context->sock) {
-        log_printf("tnp_test_spk failed ! no connection !\n");
+        log_printf("tnp_test_spkmic failed ! no connection !\n");
         return -1;
     }
 
@@ -284,25 +283,145 @@ int tnp_test_spkmic(void *ctxt)
     data.testMic = '1';
 
     if (send(context->sock, (const char*)&data, sizeof(data), 0) == -1) {
-        log_printf("tnp_test_spk send udp data failed !\n");
+        log_printf("tnp_test_spkmic send udp data failed !\n");
         return -1;
     }
 
     for (int i=0; i<5; i++) {
         if (context->test_status & TNP_TEST_CANCEL) break;
         if (recv(context->sock, (char*)&data, sizeof(data), 0) == -1) {
-            log_printf("tnp_test_spk recv udp data failed ! retry %d\n", i);
+            log_printf("tnp_test_spkmic recv udp data failed ! retry %d\n", i);
             continue;
         } else {
             break;
         }
     }
 
-    log_printf("tnp_test_spk data received:\n");
+    log_printf("tnp_test_spkmic data received:\n");
     log_printf("rtSPK    = %d\n", data.rtSPK   );
     log_printf("rtMic    = %d\n", data.rtMic   );
-    log_printf("exitTest = %d\n", data.exitTest);
     return (data.rtSPK == 1 && data.rtMic == 1) ? 0 : -1;
+}
+
+int tnp_test_button(void *ctxt, int *btn)
+{
+    TNPCONTEXT *context = (TNPCONTEXT*)ctxt;
+    if (!ctxt) return -1;
+
+    if (!context->sock) {
+        log_printf("tnp_test_spkmic failed ! no connection !\n");
+        return -1;
+    }
+
+    FACTORYTEST_DATA data = {0};
+    data.MAGIC   = SIG_MAGIC;
+    data.testKey = '1';
+
+    if (send(context->sock, (const char*)&data, sizeof(data), 0) == -1) {
+        log_printf("tnp_test_button send udp data failed !\n");
+        return -1;
+    }
+
+    if (recv(context->sock, (char*)&data, sizeof(data), 0) == -1) {
+        log_printf("tnp_test_button recv udp data failed !\n");
+        return -1;
+    }
+
+    log_printf("tnp_test_button data received:\n");
+    log_printf("rtKey = %d\n", data.rtKey);
+    *btn = data.rtKey;
+    return 0;
+}
+
+int tnp_test_ir_and_filter(void *ctxt, int onoff)
+{
+    TNPCONTEXT *context = (TNPCONTEXT*)ctxt;
+    if (!ctxt) return -1;
+
+    if (!context->sock) {
+        log_printf("tnp_test_spkmic failed ! no connection !\n");
+        return -1;
+    }
+
+    FACTORYTEST_DATA data = {0};
+    data.MAGIC  = SIG_MAGIC;
+    data.testIR = data.testIRCut = onoff ? '1' : '2';
+
+    if (send(context->sock, (const char*)&data, sizeof(data), 0) == -1) {
+        log_printf("tnp_test_ir_and_filter send udp data failed !\n");
+        return -1;
+    }
+
+    if (recv(context->sock, (char*)&data, sizeof(data), 0) == -1) {
+        log_printf("tnp_test_ir_and_filter recv udp data failed !\n");
+        return -1;
+    }
+
+    return 0;
+}
+
+int tnp_test_spkmic_manual(void *ctxt)
+{
+    TNPCONTEXT *context = (TNPCONTEXT*)ctxt;
+    if (!ctxt) return -1;
+
+    if (!context->sock) {
+        log_printf("tnp_test_spkmic failed ! no connection !\n");
+        return -1;
+    }
+
+    FACTORYTEST_DATA data = {0};
+    data.MAGIC   = SIG_MAGIC;
+    data.testSPK = data.testMic = '2';
+
+    if (send(context->sock, (const char*)&data, sizeof(data), 0) == -1) {
+        log_printf("tnp_test_spkmic_manual send udp data failed !\n");
+        return -1;
+    }
+
+    if (recv(context->sock, (char*)&data, sizeof(data), 0) == -1) {
+        log_printf("tnp_test_spkmic_manual recv udp data failed !\n");
+        return -1;
+    }
+
+    return 0;
+}
+
+int tnp_test_sensor_snmac_version(void *ctxt, int *sensor, int *sn, int *mac, int *ver)
+{
+    TNPCONTEXT *context = (TNPCONTEXT*)ctxt;
+    if (!ctxt) return -1;
+
+    if (!context->sock) {
+        log_printf("tnp_test_sensor_snmac_version failed ! no connection !\n");
+        return -1;
+    }
+
+    FACTORYTEST_DATA data = {0};
+    data.MAGIC   = SIG_MAGIC;
+    data.testLightSensor = data.testSN = data.testMAC = data.testVersion = '1';
+    strcpy(data.VER, context->version);
+
+    if (send(context->sock, (const char*)&data, sizeof(data), 0) == -1) {
+        log_printf("tnp_test_sensor_snmac_version send udp data failed !\n");
+        return -1;
+    }
+
+    if (recv(context->sock, (char*)&data, sizeof(data), 0) == -1) {
+        log_printf("tnp_test_sensor_snmac_version recv udp data failed !\n");
+        return -1;
+    }
+
+    log_printf("tnp_test_sensor_snmac_version data received:\n");
+    log_printf("rtLightSensor = %d\n", data.rtLightSensor);
+    log_printf("rtSN          = %d\n", data.rtSN         );
+    log_printf("rtMAC         = %d\n", data.rtMAC        );
+    log_printf("rtVersion     = %d\n", data.rtVersion    );
+    *sensor = data.rtLightSensor;
+    *sn     = data.rtSN;
+    *mac    = data.rtMAC;
+    *ver    = data.rtVersion;
+    return 0;
 }
 
 void tnp_test_cancel(void *ctxt, int cancel)
