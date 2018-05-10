@@ -136,7 +136,6 @@ BEGIN
             VALUE "InternalName", "FactoryTestI8.exe"
             VALUE "LegalCopyright", "(C) <APICAL>。保留所有权利。"
             VALUE "OriginalFilename", "FactoryTestI8.exe"
-            VALUE "ProductName", "工厂测试工具 I8-SN"
             VALUE "ProductVersion", "1.0.0.1"
         END
     END

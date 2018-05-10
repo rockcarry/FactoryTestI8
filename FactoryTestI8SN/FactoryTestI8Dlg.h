@@ -31,10 +31,10 @@ protected:
     afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
     afx_msg void OnPaint();
     afx_msg HBRUSH  OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+    afx_msg HCURSOR OnQueryDragIcon();
     afx_msg LRESULT OnTnpUpdateUI   (WPARAM wParam, LPARAM lParam);
     afx_msg LRESULT OnTnpDeviceFound(WPARAM wParam, LPARAM lParam);
     afx_msg LRESULT OnTnpDeviceLost (WPARAM wParam, LPARAM lParam);
-    afx_msg HCURSOR OnQueryDragIcon();
     afx_msg void    OnEnChangeEdtScanSn();
     DECLARE_MESSAGE_MAP()
 
