@@ -18,7 +18,6 @@ typedef struct {
     DEVICE  device_list[256];
     int     devlost_timeout;
 
-    char    version[32];
     SOCKET  sock;
     #define TNP_TEST_CANCEL (1 << 0)
     int     test_status;
@@ -156,7 +155,7 @@ typedef struct {
 } FACTORYTEST_DATA;
 #pragma pack()
 
-void* tnp_init(char *version, HWND hwnd)
+void* tnp_init(HWND hwnd)
 {
     // wsa startup
     WSADATA wsa;
@@ -175,7 +174,6 @@ void* tnp_init(char *version, HWND hwnd)
     // init context variables
     ctxt->hwnd            = hwnd;
     ctxt->devlost_timeout = TND_DEVLOST_TIMEO;
-    strcpy(ctxt->version, version);
 
     // create thread for device detection
     ctxt->thread_handle = CreateThread(NULL, 0, DeviceDetectThreadProc, ctxt, 0, NULL);
@@ -396,7 +394,7 @@ int tnp_test_spkmic_manual(void *ctxt)
     return 0;
 }
 
-int tnp_test_sensor_snmac_version(void *ctxt, int *sensor, int *sn, int *mac, int *ver)
+int tnp_test_sensor_snmac_version(void *ctxt, char *sn, char *mac, char *version, int *rsltsensor, int *rsltsn, int *rsltmac, int *rsltver)
 {
     TNPCONTEXT *context = (TNPCONTEXT*)ctxt;
     if (!ctxt) return -1;
@@ -407,9 +405,14 @@ int tnp_test_sensor_snmac_version(void *ctxt, int *sensor, int *sn, int *mac, in
     }
 
     FACTORYTEST_DATA data = {0};
-    data.MAGIC   = SIG_MAGIC;
-    data.testLightSensor = data.testSN = data.testMAC = data.testVersion = '1';
-    strcpy(data.VER, context->version);
+    data.MAGIC = SIG_MAGIC;
+    data.testLightSensor = '1';
+    data.testVersion     = '1';
+    data.testSN          = '2';
+    data.testMAC         = '2';
+    strcpy(data.SN , sn     );
+    strcpy(data.MAC, mac    );
+    strcpy(data.VER, version);
 
     if (send(context->sock, (const char*)&data, sizeof(data), 0) == -1) {
         log_printf("tnp_test_sensor_snmac_version send udp data failed !\n");
@@ -426,10 +429,13 @@ int tnp_test_sensor_snmac_version(void *ctxt, int *sensor, int *sn, int *mac, in
     log_printf("rtSN          = %d\n", data.rtSN         );
     log_printf("rtMAC         = %d\n", data.rtMAC        );
     log_printf("rtVersion     = %d\n", data.rtVersion    );
-    *sensor = data.rtLightSensor;
-    *sn     = data.rtSN;
-    *mac    = data.rtMAC;
-    *ver    = data.rtVersion;
+    *rsltsensor = data.rtLightSensor;
+    *rsltsn     = data.rtSN;
+    *rsltmac    = data.rtMAC;
+    *rsltver    = data.rtVersion;
+    strcpy(sn     , data.SN );
+    strcpy(mac    , data.MAC);
+    strcpy(version, data.VER);
     return 0;
 }
 

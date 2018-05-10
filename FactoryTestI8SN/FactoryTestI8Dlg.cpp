@@ -210,16 +210,16 @@ void CFactoryTestI8Dlg::DoDeviceTest()
         CString strErrCode;
         CString strErrMsg;
         if (!m_bResultBurnSN) {
-            strErrMsg += "L001";
+            strErrCode += "L001,";
         }
         if (!m_bResultBurnMac) {
-            strErrMsg += "L002,";
+            strErrCode += "L002,";
         }
         if (!m_bResultTestSpkMic) {
-            strErrMsg += "L004,L005,";
+            strErrCode += "L004,L005,";
         }
         if (!m_bResultTestNet) {
-            strErrMsg += "L007";
+            strErrCode += "L007,";
         }
         if (m_bMesLoginOK) {
             MesDLL::GetInstance().SetMobileData(m_strCurSN, CString(m_strResource), CString(m_strUserName), m_strTestResult, strErrCode, strErrMsg);

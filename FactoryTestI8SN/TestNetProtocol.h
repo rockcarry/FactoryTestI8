@@ -8,7 +8,7 @@ enum {
     WM_TNP_DEVICE_LOST,
 };
 
-void* tnp_init(char *version, HWND hwnd);
+void* tnp_init(HWND hwnd);
 void  tnp_free(void *ctxt);
 int   tnp_connect    (void *ctxt, struct in_addr addr);
 void  tnp_disconnect (void *ctxt);
@@ -18,7 +18,7 @@ int   tnp_test_spkmic(void *ctxt);
 int   tnp_test_button(void *ctxt, int *btn);
 int   tnp_test_ir_and_filter(void *ctxt, int onoff);
 int   tnp_test_spkmic_manual(void *ctxt);
-int   tnp_test_sensor_snmac_version(void *ctxt, int *sensor, int *sn, int *mac, int *ver);
+int   tnp_test_sensor_snmac_version(void *ctxt, char *sn, char *mac, char *version, int *rsltsensor, int *rsltsn, int *rsltmac, int *rsltver);
 void  tnp_test_cancel(void *ctxt, int cancel);
 
 
