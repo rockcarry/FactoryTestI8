@@ -131,11 +131,14 @@ void CFactoryTestI8Dlg::DoDeviceTest()
 {
     m_bResultDone = FALSE;
 
+    // set timeout to 6s
+    tnp_set_timeout(m_pTnpContext, 6000);
+
     if (!m_bTestCancel) {
         m_strTestInfo   = "正在写号 ...\r\n";
         m_strTestResult = "正在写号";
 
-        tnp_burn_snmac(m_tnpContext, m_strCurSN.GetBuffer(), m_strCurMac.GetBuffer(), &m_bResultBurnSN, &m_bResultBurnMac);
+        tnp_burn_snmac(m_pTnpContext, m_strCurSN.GetBuffer(), m_strCurMac.GetBuffer(), &m_bResultBurnSN, &m_bResultBurnMac);
         m_strCurSN .ReleaseBuffer();
         m_strCurMac.ReleaseBuffer();
         PostMessage(WM_TNP_UPDATE_UI);
@@ -180,7 +183,7 @@ void CFactoryTestI8Dlg::DoDeviceTest()
         m_strTestInfo  += "正在测试喇叭咪头 ...\r\n\r\n";
         m_strTestResult = "正在测试";
         PostMessage(WM_TNP_UPDATE_UI);
-        if (tnp_test_spkmic(m_tnpContext) == 0) {
+        if (tnp_test_spkmic(m_pTnpContext) == 0) {
             m_bResultTestSpkMic = TRUE;
         } else {
             m_bResultTestSpkMic = FALSE;
@@ -224,6 +227,9 @@ void CFactoryTestI8Dlg::DoDeviceTest()
 #endif
     }
 
+    // set timeout to 3s
+    tnp_set_timeout(m_pTnpContext, 3000);
+
     CloseHandle(m_hTestThread);
     m_hTestThread = NULL;
 }
@@ -236,14 +242,14 @@ void CFactoryTestI8Dlg::StartDeviceTest()
     }
 
     m_bTestCancel = FALSE;
-    tnp_test_cancel(m_tnpContext, FALSE);
+    tnp_test_cancel(m_pTnpContext, FALSE);
     m_hTestThread = CreateThread(NULL, 0, DeviceTestThreadProc, this, 0, NULL);
 }
 
 void CFactoryTestI8Dlg::StopDeviceTest()
 {
     m_bTestCancel = TRUE;
-    tnp_test_cancel(m_tnpContext, TRUE);
+    tnp_test_cancel(m_pTnpContext, TRUE);
     if (m_hTestThread) {
         WaitForSingleObject(m_hTestThread, -1);
     }
@@ -295,7 +301,7 @@ CFactoryTestI8Dlg::CFactoryTestI8Dlg(CWnd* pParent /*=NULL*/)
     , m_strTestResult(_T(""))
     , m_strTestInfo(_T(""))
     , m_hTestThread(NULL)
-    , m_tnpContext(NULL)
+    , m_pTnpContext(NULL)
 {
     m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -402,7 +408,7 @@ BOOL CFactoryTestI8Dlg::OnInitDialog()
     m_bResultDone      = FALSE;
     UpdateData(FALSE);
 
-    m_tnpContext = tnp_init(m_strTnpVer, GetSafeHwnd());
+    m_pTnpContext = tnp_init(m_strTnpVer, GetSafeHwnd());
     return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -410,8 +416,8 @@ void CFactoryTestI8Dlg::OnDestroy()
 {
     CDialog::OnDestroy();
 
-    tnp_disconnect(m_tnpContext);
-    tnp_free(m_tnpContext);
+    tnp_disconnect(m_pTnpContext);
+    tnp_free(m_pTnpContext);
     log_done();
 
 #if ENABLE_MES_SYSTEM
@@ -554,7 +560,7 @@ LRESULT CFactoryTestI8Dlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
     m_strConnectState.Format(TEXT("发现设备 %s ！"), CString(m_strDeviceIP));
     UpdateData(FALSE);
 
-    int ret = tnp_connect(m_tnpContext, addr);
+    int ret = tnp_connect(m_pTnpContext, addr);
     if (ret == 0) {
         m_strConnectState.Format(TEXT("设备连接成功！（%s）"), CString(m_strDeviceIP));
         m_bConnectState = TRUE;
@@ -588,7 +594,7 @@ LRESULT CFactoryTestI8Dlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
     m_bConnectState     = FALSE;
     m_bSnScaned         = FALSE;
     m_bResultDone       = FALSE;
-    tnp_disconnect(m_tnpContext);
+    tnp_disconnect(m_pTnpContext);
     UpdateData(FALSE);
     return 0;
 }

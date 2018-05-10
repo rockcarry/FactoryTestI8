@@ -50,7 +50,7 @@ private:
     CString m_strTestInfo;
     CFont   m_fntResult;
 
-    void   *m_tnpContext;
+    void   *m_pTnpContext;
     char    m_strUserName [32];
     char    m_strPassWord [32];
     char    m_strResource [32];

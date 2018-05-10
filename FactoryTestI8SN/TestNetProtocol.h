@@ -12,6 +12,7 @@ void* tnp_init(char *version, HWND hwnd);
 void  tnp_free(void *ctxt);
 int   tnp_connect    (void *ctxt, struct in_addr addr);
 void  tnp_disconnect (void *ctxt);
+void  tnp_set_timeout(void *ctxt, int timeout);
 int   tnp_burn_snmac (void *ctxt, char *sn, char *mac, int *snrslt, int *macrslt);
 int   tnp_test_spkmic(void *ctxt);
 int   tnp_test_button(void *ctxt, int *btn);

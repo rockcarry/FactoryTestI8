@@ -16,6 +16,7 @@ typedef struct {
     #define TNP_TS_EXIT (1 << 0)
     int     thread_status;
     DEVICE  device_list[256];
+    int     devlost_timeout;
 
     char    version[32];
     SOCKET  sock;
@@ -82,7 +83,7 @@ static DWORD WINAPI DeviceDetectThreadProc(LPVOID pParam)
 
         DWORD curtick = GetTickCount();
         for (int i=0; i<256; i++) {
-            if (  ctxt->device_list[i].tick + TND_DEVLOST_TIMEO < curtick
+            if (  ctxt->device_list[i].tick + ctxt->devlost_timeout < curtick
                && ctxt->device_list[i].addr.S_un.S_addr != 0) {
                 log_printf("device %s lost !\n", inet_ntoa(ctxt->device_list[i].addr));
                 log_printf("remove it from device list !\n");
@@ -172,7 +173,8 @@ void* tnp_init(char *version, HWND hwnd)
     }
 
     // init context variables
-    ctxt->hwnd = hwnd;
+    ctxt->hwnd            = hwnd;
+    ctxt->devlost_timeout = TND_DEVLOST_TIMEO;
     strcpy(ctxt->version, version);
 
     // create thread for device detection
@@ -229,6 +231,13 @@ void tnp_disconnect(void *ctxt)
         closesocket(context->sock);
         context->sock = NULL;
     }
+}
+
+void tnp_set_timeout(void *ctxt, int timeout)
+{
+    TNPCONTEXT *context = (TNPCONTEXT*)ctxt;
+    if (!ctxt) return;
+    context->devlost_timeout = timeout;
 }
 
 int tnp_burn_snmac(void *ctxt, char *sn, char *mac, int *snrslt, int *macrslt)
@@ -309,7 +318,7 @@ int tnp_test_button(void *ctxt, int *btn)
     if (!ctxt) return -1;
 
     if (!context->sock) {
-        log_printf("tnp_test_spkmic failed ! no connection !\n");
+        log_printf("tnp_test_button failed ! no connection !\n");
         return -1;
     }
 
@@ -339,7 +348,7 @@ int tnp_test_ir_and_filter(void *ctxt, int onoff)
     if (!ctxt) return -1;
 
     if (!context->sock) {
-        log_printf("tnp_test_spkmic failed ! no connection !\n");
+        log_printf("tnp_test_ir_and_filter failed ! no connection !\n");
         return -1;
     }
 
@@ -366,7 +375,7 @@ int tnp_test_spkmic_manual(void *ctxt)
     if (!ctxt) return -1;
 
     if (!context->sock) {
-        log_printf("tnp_test_spkmic failed ! no connection !\n");
+        log_printf("tnp_test_spkmic_manual failed ! no connection !\n");
         return -1;
     }
 
