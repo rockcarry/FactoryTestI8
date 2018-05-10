@@ -19,6 +19,7 @@ int   tnp_test_button(void *ctxt, int *btn);
 int   tnp_test_ir_and_filter(void *ctxt, int onoff);
 int   tnp_test_spkmic_manual(void *ctxt);
 int   tnp_test_sensor_snmac_version(void *ctxt, char *sn, char *mac, char *version, int *rsltsensor, int *rsltsn, int *rsltmac, int *rsltver);
+int   tnp_test_done  (void *ctxt);
 void  tnp_test_cancel(void *ctxt, int cancel);
 
 
