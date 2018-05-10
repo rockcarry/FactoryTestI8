@@ -45,6 +45,7 @@ protected:
     afx_msg void OnBnClickedBtnSpkmicTest();
     afx_msg void OnBnClickedBtnKeyTest();
     afx_msg void OnBnClickedBtnUploadReport();
+    afx_msg void OnBnClickedBtnRefreshCamera();
     DECLARE_MESSAGE_MAP()
 
 private:

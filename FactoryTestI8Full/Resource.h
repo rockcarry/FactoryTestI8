@@ -36,6 +36,7 @@
 #define IDC_BTN_LSENSOR_TEST            1025
 #define IDC_BTN_LSENSOR_RESULT          1026
 #define IDC_TXT_SN_MAC_VER              1027
+#define IDC_BTN_REFRESH_CAMERA          1028
 
 // Next default values for new objects
 // 

@@ -165,6 +165,7 @@ BEGIN_MESSAGE_MAP(CFactoryTestI8FullDlg, CDialog)
     ON_BN_CLICKED(IDC_BTN_SPKMIC_TEST, &CFactoryTestI8FullDlg::OnBnClickedBtnSpkmicTest)
     ON_BN_CLICKED(IDC_BTN_KEY_TEST, &CFactoryTestI8FullDlg::OnBnClickedBtnKeyTest)
     ON_BN_CLICKED(IDC_BTN_UPLOAD_REPORT, &CFactoryTestI8FullDlg::OnBnClickedBtnUploadReport)
+    ON_BN_CLICKED(IDC_BTN_REFRESH_CAMERA, &CFactoryTestI8FullDlg::OnBnClickedBtnRefreshCamera)
 END_MESSAGE_MAP()
 
 
@@ -488,16 +489,8 @@ LRESULT CFactoryTestI8FullDlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
         // set timeout to 6s
         tnp_set_timeout(m_pTnpContext, 6000);
 
-        //++ reopen fanplayer to play rtsp stream
-        if (m_pFanPlayer) {
-            player_close(m_pFanPlayer);
-        }
-        char url[MAX_PATH];
-        sprintf(url, "rtsp://%s:8554//main", m_strDeviceIP);
-        PLAYER_INIT_PARAMS params = {0};
-        params.init_timeout = 10000;
-        m_pFanPlayer = player_open(url, GetDlgItem(IDC_STATIC_VIDEO)->GetSafeHwnd(), NULL);
-        //-- reopen fanplayer to play rtsp stream
+        // refresh camera
+        OnBnClickedBtnRefreshCamera();
     } else {
         m_strConnectState.Format(TEXT("设备连接失败！（%s）"), CString(m_strDeviceIP));
         m_strTestInfo   = "设备连接失败，请重启设备。\r\n";
@@ -680,4 +673,21 @@ void CFactoryTestI8FullDlg::OnBnClickedBtnUploadReport()
             MesDLL::GetInstance().SetMobileData(m_strCurSN, CString(m_strResource), CString(m_strUserName), strTestResult, strErrCode, strErrMsg);
         }
 #endif
+}
+
+void CFactoryTestI8FullDlg::OnBnClickedBtnRefreshCamera()
+{
+    //++ reopen fanplayer to play rtsp stream
+    if (m_pFanPlayer) {
+        player_close(m_pFanPlayer);
+        m_pFanPlayer = NULL;
+    }
+    if (strcmp(m_strDeviceIP, "") != 0) {
+        char url[MAX_PATH];
+        sprintf(url, "rtsp://%s:8554//main", m_strDeviceIP);
+        PLAYER_INIT_PARAMS params = {0};
+        params.init_timeout = 10000;
+        m_pFanPlayer = player_open(url, GetDlgItem(IDC_STATIC_VIDEO)->GetSafeHwnd(), &params);
+    }
+    //-- reopen fanplayer to play rtsp stream
 }
