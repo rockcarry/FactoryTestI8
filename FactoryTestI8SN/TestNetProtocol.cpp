@@ -86,8 +86,8 @@ static DWORD WINAPI DeviceDetectThreadProc(LPVOID pParam)
                && ctxt->device_list[i].addr.S_un.S_addr != 0) {
                 log_printf("device %s lost !\n", inet_ntoa(ctxt->device_list[i].addr));
                 log_printf("remove it from device list !\n");
-                ctxt->device_list[i].addr.S_un.S_addr = 0;
                 PostMessage(ctxt->hwnd, WM_TNP_DEVICE_LOST, 0, ctxt->device_list[i].addr.S_un.S_addr);
+                ctxt->device_list[i].addr.S_un.S_addr = 0;
             }
         }
 
