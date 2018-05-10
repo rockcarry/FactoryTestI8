@@ -441,6 +441,33 @@ int tnp_test_sensor_snmac_version(void *ctxt, char *sn, char *mac, char *version
     return 0;
 }
 
+int tnp_test_done(void *ctxt)
+{
+    TNPCONTEXT *context = (TNPCONTEXT*)ctxt;
+    if (!ctxt) return -1;
+
+    if (!context->sock) {
+        log_printf("tnp_test_done failed ! no connection !\n");
+        return -1;
+    }
+
+    FACTORYTEST_DATA data = {0};
+    data.MAGIC    = SIG_MAGIC;
+    data.exitTest = 'a';
+
+    if (send(context->sock, (const char*)&data, sizeof(data), 0) == -1) {
+        log_printf("tnp_test_done send udp data failed !\n");
+        return -1;
+    }
+
+    if (recv(context->sock, (char*)&data, sizeof(data), 0) == -1) {
+        log_printf("tnp_test_done recv udp data failed !\n");
+        return -1;
+    }
+
+    return 0;
+}
+
 void tnp_test_cancel(void *ctxt, int cancel)
 {
     TNPCONTEXT *context = (TNPCONTEXT*)ctxt;

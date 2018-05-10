@@ -223,9 +223,17 @@ void CFactoryTestI8Dlg::DoDeviceTest()
             strErrCode += "L007,";
         }
         if (m_bMesLoginOK) {
-            MesDLL::GetInstance().SetMobileData(m_strCurSN, CString(m_strResource), CString(m_strUserName), m_strTestResult, strErrCode, strErrMsg);
+            BOOL ret = MesDLL::GetInstance().SetMobileData(m_strCurSN, CString(m_strResource), CString(m_strUserName), m_strTestResult, strErrCode, strErrMsg);
+            if (ret) {
+                m_strTestResult = "ÉÏ´«Ê§°Ü";
+                PostMessage(WM_TNP_UPDATE_UI);
+            }
         }
 #endif
+    }
+
+    if (m_bResultDone) {
+        tnp_test_done(m_pTnpContext);
     }
 
     // set timeout to 3s
