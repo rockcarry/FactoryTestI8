@@ -19,7 +19,7 @@
 #define IDC_TXT_MES_LOGIN               1008
 #define IDC_BTN_SPKMIC_TEST             1009
 #define IDC_BTN_KEY_TEST                1010
-#define IDC_BTN_LCD_RESULT              1011
+#define IDC_BTN_LED_RESULT              1011
 #define IDC_BTN_UPLOAD_REPORT           1012
 #define IDC_BTN_IR_RESULT               1013
 #define IDC_BTN_CAMERA_RESULT           1014
@@ -33,9 +33,11 @@
 #define IDC_BTN_VERSION_RESULT          1022
 #define IDC_TXT_TEST_INFO               1023
 #define IDC_STATIC_VIDEO                1024
+#define IDC_BTN_LSENSOR_TEST            1025
+#define IDC_BTN_LSENSOR_RESULT          1026
 
 // Next default values for new objects
-//
+// 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        129

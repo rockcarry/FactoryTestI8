@@ -30,12 +30,21 @@ protected:
     afx_msg void OnClose();
     afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
     afx_msg void OnPaint();
+    afx_msg void OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct);
     afx_msg HBRUSH  OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
     afx_msg HCURSOR OnQueryDragIcon();
+    afx_msg LRESULT OnPlayerOpenDone(WPARAM wParam, LPARAM lParam);
     afx_msg LRESULT OnTnpUpdateUI   (WPARAM wParam, LPARAM lParam);
     afx_msg LRESULT OnTnpDeviceFound(WPARAM wParam, LPARAM lParam);
     afx_msg LRESULT OnTnpDeviceLost (WPARAM wParam, LPARAM lParam);
-    afx_msg void    OnEnChangeEdtScanSn();
+    afx_msg void OnEnChangeEdtScanSn();
+    afx_msg void OnBnClickedBtnLedResult();
+    afx_msg void OnBnClickedBtnCameraResult();
+    afx_msg void OnBnClickedBtnIrResult();
+    afx_msg void OnBnClickedBtnSpkmicResult();
+    afx_msg void OnBnClickedBtnIrTest();
+    afx_msg void OnBnClickedBtnSpkmicTest();
+    afx_msg void OnBnClickedBtnKeyTest();
     DECLARE_MESSAGE_MAP()
 
 private:
@@ -45,7 +54,8 @@ private:
     CString m_strScanSN;
     CString m_strCurSN;
     CString m_strCurMac;
-    void   *m_tnpContext;
+    void   *m_pTnpContext;
+    void   *m_pFanPlayer;
     char    m_strUserName [32];
     char    m_strPassWord [32];
     char    m_strResource [32];
@@ -55,5 +65,21 @@ private:
     char   *m_strDeviceIP;
     BOOL    m_bMesLoginOK;
     BOOL    m_bConnectState;
+    BOOL    m_bSnScaned;
+    BOOL    m_bIrOnOffState;
+    int     m_nLedTestResult;
+    int     m_nCameraTestResult;
+    int     m_nIRTestResult;
+    int     m_nSpkMicTestResult;
+    int     m_nKeyTestResult;
+    int     m_nLSensorTestResult;
+    int     m_nSnTestResult;
+    int     m_nMacTestResult;
+    int     m_nVersionTestResult;
     CString m_strTestInfo;
+
+private:
+    int GetBackColorByCtrlId(int id);
+public:
+    afx_msg void OnBnClickedBtnUploadReport();
 };
