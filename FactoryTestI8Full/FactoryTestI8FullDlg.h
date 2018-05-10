@@ -33,7 +33,6 @@ protected:
     afx_msg void OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct);
     afx_msg HBRUSH  OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
     afx_msg HCURSOR OnQueryDragIcon();
-    afx_msg LRESULT OnPlayerOpenDone(WPARAM wParam, LPARAM lParam);
     afx_msg LRESULT OnTnpUpdateUI   (WPARAM wParam, LPARAM lParam);
     afx_msg LRESULT OnTnpDeviceFound(WPARAM wParam, LPARAM lParam);
     afx_msg LRESULT OnTnpDeviceLost (WPARAM wParam, LPARAM lParam);
@@ -45,6 +44,7 @@ protected:
     afx_msg void OnBnClickedBtnIrTest();
     afx_msg void OnBnClickedBtnSpkmicTest();
     afx_msg void OnBnClickedBtnKeyTest();
+    afx_msg void OnBnClickedBtnUploadReport();
     DECLARE_MESSAGE_MAP()
 
 private:
@@ -54,15 +54,18 @@ private:
     CString m_strScanSN;
     CString m_strCurSN;
     CString m_strCurMac;
+    CString m_strTestInfo;
+    CString m_strSnMacVer;
     void   *m_pTnpContext;
     void   *m_pFanPlayer;
-    char    m_strUserName [32];
-    char    m_strPassWord [32];
-    char    m_strResource [32];
-    char    m_strTnpVer   [32];
-    char    m_strLoginMode[32];
-    char    m_strLogFile  [32];
-    char   *m_strDeviceIP;
+    char    m_strUserName  [32];
+    char    m_strPassWord  [32];
+    char    m_strResource  [32];
+    char    m_strTnpVer    [32];
+    char    m_strLoginMode [32];
+    char    m_strRouteCheck[32];
+    char    m_strLogFile   [32];
+    char    m_strDeviceIP  [32];
     BOOL    m_bMesLoginOK;
     BOOL    m_bConnectState;
     BOOL    m_bSnScaned;
@@ -76,10 +79,8 @@ private:
     int     m_nSnTestResult;
     int     m_nMacTestResult;
     int     m_nVersionTestResult;
-    CString m_strTestInfo;
+    CFont   m_fntTestInfo;
 
 private:
     int GetBackColorByCtrlId(int id);
-public:
-    afx_msg void OnBnClickedBtnUploadReport();
 };

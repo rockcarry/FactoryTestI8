@@ -48,7 +48,7 @@ static void parse_params(const char *str, const char *key, char *val)
     }
 }
 
-static int load_config_from_file(char *user, char *passwd, char *res, char *ver, char *login, char *log)
+static int load_config_from_file(char *user, char *passwd, char *res, char *ver, char *login, char *route, char *log)
 {
     char  file[MAX_PATH];
     FILE *fp = NULL;
@@ -67,12 +67,13 @@ static int load_config_from_file(char *user, char *passwd, char *res, char *ver,
         if (buf) {
             fseek(fp, 0, SEEK_SET);
             fread(buf, len, 1, fp);
-            parse_params(buf, "username" , user  );
-            parse_params(buf, "password" , passwd);
-            parse_params(buf, "resource" , res   );
-            parse_params(buf, "version"  , ver   );
-            parse_params(buf, "loginmode", login );
-            parse_params(buf, "logfile"  , log   );
+            parse_params(buf, "username"  , user  );
+            parse_params(buf, "password"  , passwd);
+            parse_params(buf, "resource"  , res   );
+            parse_params(buf, "version"   , ver   );
+            parse_params(buf, "loginmode" , login );
+            parse_params(buf, "routecheck", route );
+            parse_params(buf, "logfile"   , log   );
             free(buf);
         }
         fclose(fp);
@@ -81,7 +82,6 @@ static int load_config_from_file(char *user, char *passwd, char *res, char *ver,
 
     return -1;
 }
-
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
@@ -116,9 +116,6 @@ END_MESSAGE_MAP()
 
 // CFactoryTestI8FullDlg 对话框
 
-
-
-
 CFactoryTestI8FullDlg::CFactoryTestI8FullDlg(CWnd* pParent /*=NULL*/)
     : CDialog(CFactoryTestI8FullDlg::IDD, pParent)
     , m_strMesLoginState(_T(""))
@@ -128,6 +125,7 @@ CFactoryTestI8FullDlg::CFactoryTestI8FullDlg(CWnd* pParent /*=NULL*/)
     , m_strCurSN(_T(""))
     , m_strCurMac(_T(""))
     , m_strTestInfo(_T(""))
+    , m_strSnMacVer(_T(""))
     , m_pTnpContext(NULL)
     , m_pFanPlayer(NULL)
 {
@@ -141,6 +139,7 @@ void CFactoryTestI8FullDlg::DoDataExchange(CDataExchange* pDX)
     DDX_Text(pDX, IDC_TXT_MES_RESOURCE, m_strMesResource);
     DDX_Text(pDX, IDC_TXT_CONNECT_STATE, m_strConnectState);
     DDX_Text(pDX, IDC_TXT_TEST_INFO, m_strTestInfo);
+    DDX_Text(pDX, IDC_TXT_SN_MAC_VER, m_strSnMacVer);
     DDX_Text(pDX, IDC_EDT_SCAN_SN, m_strScanSN);
     DDX_Text(pDX, IDC_EDT_CUR_SN, m_strCurSN);
     DDX_Text(pDX, IDC_EDT_CUR_MAC, m_strCurMac);
@@ -155,7 +154,6 @@ BEGIN_MESSAGE_MAP(CFactoryTestI8FullDlg, CDialog)
     ON_WM_DESTROY()
     ON_WM_CLOSE()
     ON_EN_CHANGE(IDC_EDT_SCAN_SN, &CFactoryTestI8FullDlg::OnEnChangeEdtScanSn)
-    ON_MESSAGE(MSG_FFPLAYER       , &CFactoryTestI8FullDlg::OnPlayerOpenDone)
     ON_MESSAGE(WM_TNP_UPDATE_UI   , &CFactoryTestI8FullDlg::OnTnpUpdateUI   )
     ON_MESSAGE(WM_TNP_DEVICE_FOUND, &CFactoryTestI8FullDlg::OnTnpDeviceFound)
     ON_MESSAGE(WM_TNP_DEVICE_LOST , &CFactoryTestI8FullDlg::OnTnpDeviceLost )
@@ -197,14 +195,19 @@ BOOL CFactoryTestI8FullDlg::OnInitDialog()
     SetIcon(m_hIcon, TRUE );        // 设置大图标
     SetIcon(m_hIcon, FALSE);        // 设置小图标
 
+    m_fntTestInfo.CreatePointFont(220, TEXT("黑体"), NULL);
+    GetDlgItem(IDC_TXT_TEST_INFO)->SetFont(&m_fntTestInfo);
+
     // 在此添加额外的初始化代码
-    strcpy(m_strUserName , "username"      );
-    strcpy(m_strPassWord , "password"      );
-    strcpy(m_strResource , "resource"      );
-    strcpy(m_strTnpVer   , "version"       );
-    strcpy(m_strLoginMode, "alert_and_exit");
-    strcpy(m_strLogFile  , "DEBUGER"       );
-    int ret = load_config_from_file(m_strUserName, m_strPassWord, m_strResource, m_strTnpVer, m_strLoginMode, m_strLogFile);
+    strcpy(m_strUserName  , "username"      );
+    strcpy(m_strPassWord  , "password"      );
+    strcpy(m_strResource  , "resource"      );
+    strcpy(m_strTnpVer    , "version"       );
+    strcpy(m_strLoginMode , "alert_and_exit");
+    strcpy(m_strRouteCheck, "yes"           );
+    strcpy(m_strLogFile   , "DEBUGER"       );
+    strcpy(m_strDeviceIP  , ""              );
+    int ret = load_config_from_file(m_strUserName, m_strPassWord, m_strResource, m_strTnpVer, m_strLoginMode, m_strRouteCheck, m_strLogFile);
     if (ret != 0) {
         AfxMessageBox(TEXT("无法打开测试配置文件！"), MB_OK);
     }
@@ -228,20 +231,24 @@ BOOL CFactoryTestI8FullDlg::OnInitDialog()
     m_strMesLoginState = m_bMesLoginOK ? "登录 MES 成功" : "登录 MES 失败";
 #endif
 
-    m_strMesResource   = CString(m_strResource);
-    m_strConnectState  = "等待设备连接...";
-    m_strTestInfo      = "请打开设备，进入测试模式。\r\n";
-    m_bConnectState    = FALSE;
-    m_bSnScaned        = FALSE;
-    m_bIrOnOffState    = FALSE;
-    m_nLedTestResult   = -1;
-    m_nCameraTestResult= -1;
-    m_nIRTestResult    = -1;
-    m_nSpkMicTestResult= -1;
-    m_nKeyTestResult   = -1;
+    m_strMesResource    = CString(m_strResource);
+    m_strConnectState   = "等待设备连接...";
+    m_strTestInfo       = "请打开设备，进入测试模式。\r\n";
+    m_bConnectState     = FALSE;
+    m_bSnScaned         = FALSE;
+    m_bIrOnOffState     = FALSE;
+    m_nLedTestResult    = -1;
+    m_nCameraTestResult = -1;
+    m_nIRTestResult     = -1;
+    m_nSpkMicTestResult = -1;
+    m_nKeyTestResult    = -1;
+    m_nLSensorTestResult= -1;
+    m_nSnTestResult     = -1;
+    m_nMacTestResult    = -1;
+    m_nVersionTestResult= -1;
     UpdateData(FALSE);
 
-    m_pTnpContext = tnp_init(m_strTnpVer, GetSafeHwnd());
+    m_pTnpContext = tnp_init(GetSafeHwnd());
     return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -385,7 +392,7 @@ void CFactoryTestI8FullDlg::OnEnChangeEdtScanSn()
         m_strScanSN = "";
 
 #if ENABLE_MES_SYSTEM
-        if (m_bMesLoginOK) {
+        if (m_bMesLoginOK && stricmp(m_strRouteCheck, "yes") == 0) {
             CString strErrMsg;
             BOOL ret = MesDLL::GetInstance().CheckRoutePassed(m_strCurSN, CString(m_strResource), strErrMsg);
             if (!ret) {
@@ -414,20 +421,26 @@ void CFactoryTestI8FullDlg::OnEnChangeEdtScanSn()
 #endif
 
         if (m_bConnectState) {
-            // todo...
+            m_bSnScaned = FALSE;
+            char strsn [32];
+            char strmac[32];
+            char strver[32];
+            strcpy(strsn , m_strCurSN );
+            strcpy(strmac, m_strCurMac);
+            strcpy(strver, m_strTnpVer);
+            tnp_test_sensor_snmac_version(m_pTnpContext, strsn, strmac, strver,
+                &m_nLSensorTestResult, &m_nSnTestResult, &m_nMacTestResult, &m_nVersionTestResult);
+            m_strSnMacVer.Format("设备实际 SN： %s\r\n设备实际 MAC：%s\r\n设备实际 VER：%s", strsn, strmac, strver);
+            GetDlgItem(IDC_BTN_LSENSOR_RESULT)->Invalidate();
+            GetDlgItem(IDC_BTN_SN_RESULT     )->Invalidate();
+            GetDlgItem(IDC_BTN_MAC_RESULT    )->Invalidate();
+            GetDlgItem(IDC_BTN_VERSION_RESULT)->Invalidate();
+        } else {
+            m_bSnScaned = TRUE;
+            m_strTestInfo = "请打开设备，进入测试模式。\r\n";
         }
         UpdateData(FALSE);
     }
-}
-
-LRESULT CFactoryTestI8FullDlg::OnPlayerOpenDone(WPARAM wParam, LPARAM lParam)
-{
-    switch (wParam) {
-    case MSG_OPEN_DONE:
-        player_play(m_pFanPlayer);
-        break;
-    }
-    return 0;
 }
 
 LRESULT CFactoryTestI8FullDlg::OnTnpUpdateUI(WPARAM wParam, LPARAM lParam)
@@ -438,10 +451,15 @@ LRESULT CFactoryTestI8FullDlg::OnTnpUpdateUI(WPARAM wParam, LPARAM lParam)
 
 LRESULT CFactoryTestI8FullDlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
 {
+    if (strcmp(m_strDeviceIP, "") != 0) {
+        log_printf("already have a device connected !\n");
+        return 0;
+    }
+
     struct in_addr addr;
     addr.S_un.S_addr = (u_long)lParam;
 
-    m_strDeviceIP = inet_ntoa(addr);
+    strcpy(m_strDeviceIP, inet_ntoa(addr));
     m_strConnectState.Format(TEXT("发现设备 %s ！"), CString(m_strDeviceIP));
 
     int ret = tnp_connect(m_pTnpContext, addr);
@@ -450,14 +468,36 @@ LRESULT CFactoryTestI8FullDlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
         m_bConnectState = TRUE;
         if (m_bSnScaned) {
             m_bSnScaned = FALSE;
+            char strsn [32];
+            char strmac[32];
+            char strver[32];
+            strcpy(strsn , m_strCurSN );
+            strcpy(strmac, m_strCurMac);
+            strcpy(strver, m_strTnpVer);
+            tnp_test_sensor_snmac_version(m_pTnpContext, strsn, strmac, strver,
+                &m_nLSensorTestResult, &m_nSnTestResult, &m_nMacTestResult, &m_nVersionTestResult);
+            m_strSnMacVer.Format("设备实际 SN： %s\r\n设备实际 MAC：%s\r\n设备实际 VER：%s", strsn, strmac, strver);
+            GetDlgItem(IDC_BTN_LSENSOR_RESULT)->Invalidate();
+            GetDlgItem(IDC_BTN_SN_RESULT     )->Invalidate();
+            GetDlgItem(IDC_BTN_MAC_RESULT    )->Invalidate();
+            GetDlgItem(IDC_BTN_VERSION_RESULT)->Invalidate();
         } else {
-            m_strTestInfo   = "设备已连接，请扫描条码。\r\n";
+            m_strTestInfo   = "设备已连接，请扫描条码...\r\n";
         }
-        tnp_test_sensor_snmac_version(m_pTnpContext, &m_nLSensorTestResult, &m_nSnTestResult, &m_nMacTestResult, &m_nVersionTestResult);
-        GetDlgItem(IDC_BTN_LSENSOR_RESULT)->Invalidate();
-        GetDlgItem(IDC_BTN_SN_RESULT     )->Invalidate();
-        GetDlgItem(IDC_BTN_MAC_RESULT    )->Invalidate();
-        GetDlgItem(IDC_BTN_VERSION_RESULT)->Invalidate();
+
+        // set timeout to 6s
+        tnp_set_timeout(m_pTnpContext, 6000);
+
+        //++ reopen fanplayer to play rtsp stream
+        if (m_pFanPlayer) {
+            player_close(m_pFanPlayer);
+        }
+        char url[MAX_PATH];
+        sprintf(url, "rtsp://%s:8554//main", m_strDeviceIP);
+        PLAYER_INIT_PARAMS params = {0};
+        params.init_timeout = 10000;
+        m_pFanPlayer = player_open(url, GetDlgItem(IDC_STATIC_VIDEO)->GetSafeHwnd(), NULL);
+        //-- reopen fanplayer to play rtsp stream
     } else {
         m_strConnectState.Format(TEXT("设备连接失败！（%s）"), CString(m_strDeviceIP));
         m_strTestInfo   = "设备连接失败，请重启设备。\r\n";
@@ -465,29 +505,29 @@ LRESULT CFactoryTestI8FullDlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
     }
     UpdateData(FALSE);
 
-    //++ reopen fanplayer to play rtsp stream
-    if (m_pFanPlayer) {
-        player_close(m_pFanPlayer);
-    }
-    char url[MAX_PATH];
-    sprintf(url, "rtsp://%s:8554//main", m_strDeviceIP);
-    m_pFanPlayer = player_open(url, GetDlgItem(IDC_STATIC_VIDEO)->GetSafeHwnd(), NULL);
-    //-- reopen fanplayer to play rtsp stream
-
     return 0;
 }
 
-LRESULT CFactoryTestI8FullDlg::OnTnpDeviceLost (WPARAM wParam, LPARAM lParam)
+LRESULT CFactoryTestI8FullDlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
 {
+    struct in_addr addr;
+    addr.S_un.S_addr = (u_long)lParam;
+
+    if (strcmp(m_strDeviceIP, inet_ntoa(addr)) != 0) {
+        log_printf("this is not current connected device lost !\n");
+        return 0;
+    }
+
     player_close(m_pFanPlayer);
     m_pFanPlayer = NULL;
 
     m_strConnectState   = "等待设备连接...";
     m_strTestInfo       = "请打开设备，进入测试模式。\r\n";
+    m_strSnMacVer       = "";
     m_strScanSN         = "";
     m_strCurSN          = "";
     m_strCurMac         = "";
-    m_strDeviceIP       = NULL;
+    m_strDeviceIP[0]    = '\0';
     m_bConnectState     = FALSE;
     m_bSnScaned         = FALSE;
     m_bIrOnOffState     = FALSE;
@@ -496,9 +536,18 @@ LRESULT CFactoryTestI8FullDlg::OnTnpDeviceLost (WPARAM wParam, LPARAM lParam)
     m_nIRTestResult     = -1;
     m_nSpkMicTestResult = -1;
     m_nKeyTestResult    = -1;
-    tnp_disconnect(m_pTnpContext);
+    m_nLSensorTestResult= -1;
+    m_nSnTestResult     = -1;
+    m_nMacTestResult    = -1;
+    m_nVersionTestResult= -1;
+    tnp_disconnect (m_pTnpContext);
+    tnp_set_timeout(m_pTnpContext, 3000);
     UpdateData(FALSE);
 
+    GetDlgItem(IDC_BTN_LED_RESULT    )->Invalidate();
+    GetDlgItem(IDC_BTN_CAMERA_RESULT )->Invalidate();
+    GetDlgItem(IDC_BTN_IR_RESULT     )->Invalidate();
+    GetDlgItem(IDC_BTN_SPKMIC_RESULT )->Invalidate();
     GetDlgItem(IDC_BTN_KEY_RESULT    )->Invalidate();
     GetDlgItem(IDC_BTN_LSENSOR_RESULT)->Invalidate();
     GetDlgItem(IDC_BTN_SN_RESULT     )->Invalidate();
@@ -590,5 +639,45 @@ void CFactoryTestI8FullDlg::OnBnClickedBtnKeyTest()
 
 void CFactoryTestI8FullDlg::OnBnClickedBtnUploadReport()
 {
-    // todo..
+#if ENABLE_MES_SYSTEM
+        CString strTestResult;
+        CString strErrCode;
+        CString strErrMsg;
+        if (m_nLedTestResult != 1) {
+            strErrCode += "L001,";
+        }
+        if (m_nCameraTestResult != 1) {
+            strErrCode += "L002,";
+        }
+        if (m_nIRTestResult != 1) {
+            strErrCode += "L003,";
+        }
+        if (m_nSpkMicTestResult != 1) {
+            strErrCode += "L004,";
+        }
+        if (m_nKeyTestResult != 1) {
+            strErrCode += "L005,";
+        }
+        if (m_nLSensorTestResult != 1) {
+            strErrCode += "L006,";
+        }
+        if (m_nSnTestResult != 1) {
+            strErrCode += "L007,";
+        }
+        if (m_nMacTestResult != 1) {
+            strErrCode += "L008,";
+        }
+        if (m_nVersionTestResult != 1) {
+            strErrCode += "L009,";
+        }
+        if (  m_nLedTestResult == 1 && m_nCameraTestResult == 1 && m_nIRTestResult == 1 && m_nSpkMicTestResult == 1
+           && m_nKeyTestResult == 1 && m_nLSensorTestResult == 1 && m_nSnTestResult == 1 && m_nMacTestResult == 1 && m_nVersionTestResult == 1) {
+            strTestResult = "OK";
+        } else {
+            strTestResult = "NG";
+        }
+        if (m_bMesLoginOK) {
+            MesDLL::GetInstance().SetMobileData(m_strCurSN, CString(m_strResource), CString(m_strUserName), strTestResult, strErrCode, strErrMsg);
+        }
+#endif
 }
