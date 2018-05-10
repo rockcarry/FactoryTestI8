@@ -48,7 +48,7 @@ static void parse_params(const char *str, const char *key, char *val)
     }
 }
 
-static int load_config_from_file(char *user, char *passwd, char *res, char *ver, char *login, char *log)
+static int load_config_from_file(char *user, char *passwd, char *res, char *ver, char *login, char *route, char *log)
 {
     char  file[MAX_PATH];
     FILE *fp = NULL;
@@ -67,12 +67,13 @@ static int load_config_from_file(char *user, char *passwd, char *res, char *ver,
         if (buf) {
             fseek(fp, 0, SEEK_SET);
             fread(buf, len, 1, fp);
-            parse_params(buf, "username" , user  );
-            parse_params(buf, "password" , passwd);
-            parse_params(buf, "resource" , res   );
-            parse_params(buf, "version"  , ver   );
-            parse_params(buf, "loginmode", login );
-            parse_params(buf, "logfile"  , log   );
+            parse_params(buf, "username"  , user  );
+            parse_params(buf, "password"  , passwd);
+            parse_params(buf, "resource"  , res   );
+            parse_params(buf, "version"   , ver   );
+            parse_params(buf, "loginmode" , login );
+            parse_params(buf, "routecheck", route );
+            parse_params(buf, "logfile"   , log   );
             free(buf);
         }
         fclose(fp);
@@ -366,13 +367,15 @@ BOOL CFactoryTestI8Dlg::OnInitDialog()
     m_strTestResult = "请连接设备";
 
     // 在此添加额外的初始化代码
-    strcpy(m_strUserName , "username"      );
-    strcpy(m_strPassWord , "password"      );
-    strcpy(m_strResource , "resource"      );
-    strcpy(m_strTnpVer   , "version"       );
-    strcpy(m_strLoginMode, "alert_and_exit");
-    strcpy(m_strLogFile  , "DEBUGER"       );
-    int ret = load_config_from_file(m_strUserName, m_strPassWord, m_strResource, m_strTnpVer, m_strLoginMode, m_strLogFile);
+    strcpy(m_strUserName  , "username"      );
+    strcpy(m_strPassWord  , "password"      );
+    strcpy(m_strResource  , "resource"      );
+    strcpy(m_strTnpVer    , "version"       );
+    strcpy(m_strLoginMode , "alert_and_exit");
+    strcpy(m_strRouteCheck, "yes"           );
+    strcpy(m_strLogFile   , "DEBUGER"       );
+    strcpy(m_strDeviceIP  , ""              );
+    int ret = load_config_from_file(m_strUserName, m_strPassWord, m_strResource, m_strTnpVer, m_strLoginMode, m_strRouteCheck, m_strLogFile);
     if (ret != 0) {
         AfxMessageBox(TEXT("无法打开测试配置文件！"), MB_OK);
     }
@@ -408,7 +411,7 @@ BOOL CFactoryTestI8Dlg::OnInitDialog()
     m_bResultDone      = FALSE;
     UpdateData(FALSE);
 
-    m_pTnpContext = tnp_init(m_strTnpVer, GetSafeHwnd());
+    m_pTnpContext = tnp_init(GetSafeHwnd());
     return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -506,7 +509,7 @@ void CFactoryTestI8Dlg::OnEnChangeEdtScanSn()
         m_strScanSN = "";
 
 #if ENABLE_MES_SYSTEM
-        if (m_bMesLoginOK) {
+        if (m_bMesLoginOK && stricmp(m_strRouteCheck, "yes") == 0) {
             CString strErrMsg;
             BOOL ret = MesDLL::GetInstance().CheckRoutePassed(m_strCurSN, CString(m_strResource), strErrMsg);
             if (!ret) {
@@ -553,12 +556,14 @@ LRESULT CFactoryTestI8Dlg::OnTnpUpdateUI(WPARAM wParam, LPARAM lParam)
 
 LRESULT CFactoryTestI8Dlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
 {
+    if (strcmp(m_strDeviceIP, "") != 0) {
+        log_printf("already have a device connected !\n");
+        return 0;
+    }
     struct in_addr addr;
     addr.S_un.S_addr = (u_long)lParam;
-
-    m_strDeviceIP = inet_ntoa(addr);
+    strcpy(m_strDeviceIP, inet_ntoa(addr));
     m_strConnectState.Format(TEXT("发现设备 %s ！"), CString(m_strDeviceIP));
-    UpdateData(FALSE);
 
     int ret = tnp_connect(m_pTnpContext, addr);
     if (ret == 0) {
@@ -582,6 +587,13 @@ LRESULT CFactoryTestI8Dlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
 
 LRESULT CFactoryTestI8Dlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
 {
+    struct in_addr addr;
+    addr.S_un.S_addr = (u_long)lParam;
+    if (strcmp(m_strDeviceIP, inet_ntoa(addr)) != 0) {
+        log_printf("this is not current connected device lost !\n");
+        return 0;
+    }
+
     StopDeviceTest(); // stop test
     m_strConnectState   = "等待设备连接...";
     m_strTestResult     = "请连接设备";
@@ -590,7 +602,7 @@ LRESULT CFactoryTestI8Dlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
     m_strCurSN          = "";
     m_strCurMac         = "";
     m_strWiFiThroughPut = "";
-    m_strDeviceIP       = NULL;
+    m_strDeviceIP[0]    = '\0';
     m_bConnectState     = FALSE;
     m_bSnScaned         = FALSE;
     m_bResultDone       = FALSE;

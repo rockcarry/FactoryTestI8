@@ -51,13 +51,14 @@ private:
     CFont   m_fntResult;
 
     void   *m_pTnpContext;
-    char    m_strUserName [32];
-    char    m_strPassWord [32];
-    char    m_strResource [32];
-    char    m_strTnpVer   [32];
-    char    m_strLoginMode[32];
-    char    m_strLogFile  [32];
-    char   *m_strDeviceIP;
+    char    m_strUserName  [32];
+    char    m_strPassWord  [32];
+    char    m_strResource  [32];
+    char    m_strTnpVer    [32];
+    char    m_strLoginMode [32];
+    char    m_strRouteCheck[32];
+    char    m_strLogFile   [32];
+    char    m_strDeviceIP  [32];
     BOOL    m_bMesLoginOK;
     BOOL    m_bConnectState;
     BOOL    m_bSnScaned;
