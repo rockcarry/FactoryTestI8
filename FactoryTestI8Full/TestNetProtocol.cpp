@@ -8,6 +8,7 @@
 typedef struct {
     struct in_addr addr;
     DWORD  tick;
+    char   sn[32];
 } DEVICE;
 
 typedef struct {
@@ -27,7 +28,7 @@ typedef struct {
 typedef struct
 {
     char mag [4 ];
-    char ip  [32];
+    char sn  [32];
     char port[12];
 } NOTIFY_MSG;
 #pragma pack()
@@ -81,6 +82,7 @@ static DWORD WINAPI DeviceDetectThreadProc(LPVOID pParam)
                 PostMessage(ctxt->hwnd, WM_TNP_DEVICE_FOUND, 0, from.sin_addr.S_un.S_addr);
             }
             ctxt->device_list[b4].tick = GetTickCount();
+            strncpy(ctxt->device_list[b4].sn, msg.sn, 32);
         } else {
 //          log_printf("receive datagram error or timeout !\n");
         }
