@@ -224,7 +224,7 @@ void CFactoryTestI8Dlg::DoDeviceTest()
         }
         if (m_bMesLoginOK) {
             BOOL ret = MesDLL::GetInstance().SetMobileData(m_strCurSN, CString(m_strResource), CString(m_strUserName), m_strTestResult, strErrCode, strErrMsg);
-            if (ret) {
+            if (!ret) {
                 m_strTestResult = "ÉÏ´«Ê§°Ü";
                 PostMessage(WM_TNP_UPDATE_UI);
             }

@@ -670,7 +670,11 @@ void CFactoryTestI8FullDlg::OnBnClickedBtnUploadReport()
             strTestResult = "NG";
         }
         if (m_bMesLoginOK) {
-            MesDLL::GetInstance().SetMobileData(m_strCurSN, CString(m_strResource), CString(m_strUserName), strTestResult, strErrCode, strErrMsg);
+            BOOL ret = MesDLL::GetInstance().SetMobileData(m_strCurSN, CString(m_strResource), CString(m_strUserName), strTestResult, strErrCode, strErrMsg);
+            if (!ret) {
+                m_strTestInfo = "上传测试结果失败！";
+                PostMessage(WM_TNP_UPDATE_UI);
+            }
         }
 #endif
 }
