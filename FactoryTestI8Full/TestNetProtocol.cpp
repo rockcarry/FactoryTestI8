@@ -95,6 +95,7 @@ static DWORD WINAPI DeviceDetectThreadProc(LPVOID pParam)
                 log_printf("remove it from device list !\n");
                 PostMessage(ctxt->hwnd, WM_TNP_DEVICE_LOST, 0, ctxt->device_list[i].addr.S_un.S_addr);
                 ctxt->device_list[i].addr.S_un.S_addr = 0;
+                strncpy(ctxt->device_list[i].sn, "", 32);
             }
         }
 
@@ -102,7 +103,7 @@ static DWORD WINAPI DeviceDetectThreadProc(LPVOID pParam)
         log_printf("++ dump device list:\n");
         for (int i=0; i<256; i++) {
             if (ctxt->device_list[i].addr.S_un.S_addr) {
-                log_printf("%s\n", inet_ntoa(ctxt->device_list[i].addr));
+                log_printf("%s %s\n", inet_ntoa(ctxt->device_list[i].addr), ctxt->device_list[i].sn);
             }
         }
         log_printf("-- dump device list:\n");
@@ -246,7 +247,7 @@ int tnp_connect_by_sn(void *ctxt, char *sn, struct in_addr *paddr)
     struct in_addr addr = {0};
     int            find =  0;
     for (int i=0; i<256; i++) {
-        if (strcmp(context->device_list[i].sn, sn) == 0) {
+        if (context->device_list[i].addr.S_un.S_addr && strcmp(context->device_list[i].sn, sn) == 0) {
             find = 1;
             *paddr = addr = context->device_list[i].addr;
             break;
@@ -263,12 +264,13 @@ int tnp_disconnect_by_sn(void *ctxt, char *sn)
     struct in_addr addr = {0};
     int            find =  0;
     for (int i=0; i<256; i++) {
-        if (strcmp(context->device_list[i].sn, sn) == 0) {
+        if (context->device_list[i].addr.S_un.S_addr && strcmp(context->device_list[i].sn, sn) == 0) {
             find = 1;
             break;
         }
     }
     if (find) return -1;
+
     tnp_disconnect(ctxt);
     return 0;
 }
