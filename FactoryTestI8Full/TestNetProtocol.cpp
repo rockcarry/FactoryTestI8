@@ -66,11 +66,12 @@ static DWORD WINAPI DeviceDetectThreadProc(LPVOID pParam)
         struct sockaddr_in from;
         int fromlen = sizeof(from);
         if (recvfrom(sock, (char*)&msg, sizeof(msg), 0, (struct sockaddr*)&from, &fromlen) != SOCKET_ERROR) {
+            /*
             log_printf("receive datagram from %s:%d\n", inet_ntoa(from.sin_addr), from.sin_port);
             log_printf("msg.mag : %c%c%c%c\n", msg.mag[0], msg.mag[1], msg.mag[2], msg.mag[3]);
             log_printf("msg.ip  : %s\n", msg.ip  );
             log_printf("msg.port: %s\n", msg.port);
-
+            */
             char *ip = inet_ntoa(from.sin_addr);
             int   b4 = from.sin_addr.S_un.S_un_b.s_b4;
             if (ctxt->device_list[b4].addr.S_un.S_addr != from.sin_addr.S_un.S_addr) {
@@ -81,7 +82,7 @@ static DWORD WINAPI DeviceDetectThreadProc(LPVOID pParam)
             }
             ctxt->device_list[b4].tick = GetTickCount();
         } else {
-            log_printf("receive datagram error or timeout !\n");
+//          log_printf("receive datagram error or timeout !\n");
         }
 
         DWORD curtick = GetTickCount();
@@ -95,7 +96,7 @@ static DWORD WINAPI DeviceDetectThreadProc(LPVOID pParam)
             }
         }
 
-#if 1
+#if 0
         log_printf("++ dump device list:\n");
         for (int i=0; i<256; i++) {
             if (ctxt->device_list[i].addr.S_un.S_addr) {
@@ -213,9 +214,9 @@ int tnp_connect(void *ctxt, struct in_addr addr)
     }
 
     context->sock = socket(AF_INET, SOCK_STREAM, 0);
-    int timeout;
-    timeout = TNP_TCP_SENDTIMEO; setsockopt(context->sock, SOL_SOCKET, SO_SNDTIMEO, (char*)&timeout, sizeof(int));
-    timeout = TNP_TCP_RECVTIMEO; setsockopt(context->sock, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(int));
+    int opt;
+    opt = TNP_TCP_SENDTIMEO; setsockopt(context->sock, SOL_SOCKET, SO_SNDTIMEO, (char*)&opt, sizeof(int));
+    opt = TNP_TCP_RECVTIMEO; setsockopt(context->sock, SOL_SOCKET, SO_RCVTIMEO, (char*)&opt, sizeof(int));
 
     struct sockaddr_in sockaddr;
     sockaddr.sin_family = AF_INET;
@@ -258,15 +259,17 @@ int tnp_burn_snmac(void *ctxt, char *sn, char *mac, int *snrslt, int *macrslt)
     memset(data.MAC, '0', sizeof(data.MAC));
     memcpy(data.SN , sn , strlen(sn ));
     memcpy(data.MAC, mac, strlen(mac));
+    data.SN [15] = '\0';
+    data.MAC[12] = '\0';
     data.testSN = data.testMAC = '1';
 
     if (send(context->sock, (const char*)&data, sizeof(data), 0) == -1) {
-        log_printf("tnp_burn_snmac send udp data failed !\n");
+        log_printf("tnp_burn_snmac send tcp data failed !\n");
         return -1;
     }
 
     if (recv(context->sock, (char*)&data, sizeof(data), 0) == -1) {
-        log_printf("tnp_burn_snmac recv udp data failed !\n");
+        log_printf("tnp_burn_snmac recv tcp data failed !\n");
         return -1;
     }
 
@@ -296,14 +299,14 @@ int tnp_test_spkmic(void *ctxt)
     data.testMic = '1';
 
     if (send(context->sock, (const char*)&data, sizeof(data), 0) == -1) {
-        log_printf("tnp_test_spkmic send udp data failed !\n");
+        log_printf("tnp_test_spkmic send tcp data failed !\n");
         return -1;
     }
 
     for (int i=0; i<5; i++) {
         if (context->test_status & TNP_TEST_CANCEL) break;
         if (recv(context->sock, (char*)&data, sizeof(data), 0) == -1) {
-            log_printf("tnp_test_spkmic recv udp data failed ! retry %d\n", i);
+            log_printf("tnp_test_spkmic recv tcp data failed ! retry %d\n", i);
             continue;
         } else {
             break;
@@ -331,12 +334,12 @@ int tnp_test_button(void *ctxt, int *btn)
     data.testKey = '1';
 
     if (send(context->sock, (const char*)&data, sizeof(data), 0) == -1) {
-        log_printf("tnp_test_button send udp data failed !\n");
+        log_printf("tnp_test_button send tcp data failed !\n");
         return -1;
     }
 
     if (recv(context->sock, (char*)&data, sizeof(data), 0) == -1) {
-        log_printf("tnp_test_button recv udp data failed !\n");
+        log_printf("tnp_test_button recv tcp data failed !\n");
         return -1;
     }
 
@@ -361,12 +364,12 @@ int tnp_test_ir_and_filter(void *ctxt, int onoff)
     data.testIR = data.testIRCut = onoff ? '1' : '2';
 
     if (send(context->sock, (const char*)&data, sizeof(data), 0) == -1) {
-        log_printf("tnp_test_ir_and_filter send udp data failed !\n");
+        log_printf("tnp_test_ir_and_filter send tcp data failed !\n");
         return -1;
     }
 
     if (recv(context->sock, (char*)&data, sizeof(data), 0) == -1) {
-        log_printf("tnp_test_ir_and_filter recv udp data failed !\n");
+        log_printf("tnp_test_ir_and_filter recv tcp data failed !\n");
         return -1;
     }
 
@@ -388,12 +391,12 @@ int tnp_test_spkmic_manual(void *ctxt)
     data.testSPK = data.testMic = '2';
 
     if (send(context->sock, (const char*)&data, sizeof(data), 0) == -1) {
-        log_printf("tnp_test_spkmic_manual send udp data failed !\n");
+        log_printf("tnp_test_spkmic_manual send tcp data failed !\n");
         return -1;
     }
 
     if (recv(context->sock, (char*)&data, sizeof(data), 0) == -1) {
-        log_printf("tnp_test_spkmic_manual recv udp data failed !\n");
+        log_printf("tnp_test_spkmic_manual recv tcp data failed !\n");
         return -1;
     }
 
@@ -421,12 +424,12 @@ int tnp_test_sensor_snmac_version(void *ctxt, char *sn, char *mac, char *version
     strcpy(data.VER, version);
 
     if (send(context->sock, (const char*)&data, sizeof(data), 0) == -1) {
-        log_printf("tnp_test_sensor_snmac_version send udp data failed !\n");
+        log_printf("tnp_test_sensor_snmac_version send tcp data failed !\n");
         return -1;
     }
 
     if (recv(context->sock, (char*)&data, sizeof(data), 0) == -1) {
-        log_printf("tnp_test_sensor_snmac_version recv udp data failed !\n");
+        log_printf("tnp_test_sensor_snmac_version recv tcp data failed !\n");
         return -1;
     }
 
@@ -460,12 +463,12 @@ int tnp_test_done(void *ctxt)
     data.exitTest = 'a';
 
     if (send(context->sock, (const char*)&data, sizeof(data), 0) == -1) {
-        log_printf("tnp_test_done send udp data failed !\n");
+        log_printf("tnp_test_done send tcp data failed !\n");
         return -1;
     }
 
     if (recv(context->sock, (char*)&data, sizeof(data), 0) == -1) {
-        log_printf("tnp_test_done recv udp data failed !\n");
+        log_printf("tnp_test_done recv tcp data failed !\n");
         return -1;
     }
 
