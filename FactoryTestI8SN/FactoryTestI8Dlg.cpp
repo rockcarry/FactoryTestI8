@@ -48,7 +48,7 @@ static void parse_params(const char *str, const char *key, char *val)
     }
 }
 
-static int load_config_from_file(char *user, char *passwd, char *res, char *ver, char *login, char *route, char *log)
+static int load_config_from_file(char *user, char *passwd, char *res, char *ver, char *login, char *route, char *throughput, char *log)
 {
     char  file[MAX_PATH];
     FILE *fp = NULL;
@@ -67,13 +67,14 @@ static int load_config_from_file(char *user, char *passwd, char *res, char *ver,
         if (buf) {
             fseek(fp, 0, SEEK_SET);
             fread(buf, len, 1, fp);
-            parse_params(buf, "username"  , user  );
-            parse_params(buf, "password"  , passwd);
-            parse_params(buf, "resource"  , res   );
-            parse_params(buf, "version"   , ver   );
-            parse_params(buf, "loginmode" , login );
-            parse_params(buf, "routecheck", route );
-            parse_params(buf, "logfile"   , log   );
+            parse_params(buf, "username"  , user      );
+            parse_params(buf, "password"  , passwd    );
+            parse_params(buf, "resource"  , res       );
+            parse_params(buf, "version"   , ver       );
+            parse_params(buf, "loginmode" , login     );
+            parse_params(buf, "routecheck", route     );
+            parse_params(buf, "throughput", throughput);
+            parse_params(buf, "logfile"   , log       );
             free(buf);
         }
         fclose(fp);
@@ -170,9 +171,11 @@ void CFactoryTestI8Dlg::DoDeviceTest()
         CloseHandle(pi.hProcess);
 
         float wifi = parse_iperf_log(TEXT("iperf.log"));
+        int   throughput = atoi(m_strThroughPut);
+        if (!throughput) throughput = 25;
         m_strWiFiThroughPut.Format(TEXT("%.1f MBytes/sec"), wifi);
         PostMessage(WM_TNP_UPDATE_UI);
-        if (wifi > 25.0) {
+        if (wifi > throughput) {
             m_bResultTestNet = TRUE;
         } else {
             m_bResultTestNet = FALSE;
@@ -232,7 +235,7 @@ void CFactoryTestI8Dlg::DoDeviceTest()
 #endif
     }
 
-    if (m_bResultDone) {
+    if (m_bResultDone && m_strTestResult.Compare("OK") == 0) {
         tnp_test_done(m_pTnpContext);
     }
 
@@ -383,7 +386,7 @@ BOOL CFactoryTestI8Dlg::OnInitDialog()
     strcpy(m_strRouteCheck, "yes"           );
     strcpy(m_strLogFile   , "DEBUGER"       );
     strcpy(m_strDeviceIP  , ""              );
-    int ret = load_config_from_file(m_strUserName, m_strPassWord, m_strResource, m_strTnpVer, m_strLoginMode, m_strRouteCheck, m_strLogFile);
+    int ret = load_config_from_file(m_strUserName, m_strPassWord, m_strResource, m_strTnpVer, m_strLoginMode, m_strRouteCheck, m_strThroughPut, m_strLogFile);
     if (ret != 0) {
         AfxMessageBox(TEXT("无法打开测试配置文件！"), MB_OK);
     }
