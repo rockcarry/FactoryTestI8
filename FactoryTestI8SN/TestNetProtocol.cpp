@@ -238,6 +238,41 @@ void tnp_disconnect(void *ctxt)
     }
 }
 
+int tnp_connect_by_sn(void *ctxt, char *sn, struct in_addr *paddr)
+{
+    TNPCONTEXT *context = (TNPCONTEXT*)ctxt;
+    if (!ctxt) return -1;
+
+    struct in_addr addr = {0};
+    int            find =  0;
+    for (int i=0; i<256; i++) {
+        if (strcmp(context->device_list[i].sn, sn) == 0) {
+            find = 1;
+            *paddr = addr = context->device_list[i].addr;
+            break;
+        }
+    }
+    return find ? tnp_connect(ctxt, addr) : -1;
+}
+
+int tnp_disconnect_by_sn(void *ctxt, char *sn)
+{
+    TNPCONTEXT *context = (TNPCONTEXT*)ctxt;
+    if (!ctxt) return -1;
+
+    struct in_addr addr = {0};
+    int            find =  0;
+    for (int i=0; i<256; i++) {
+        if (strcmp(context->device_list[i].sn, sn) == 0) {
+            find = 1;
+            break;
+        }
+    }
+    if (find) return -1;
+    tnp_disconnect(ctxt);
+    return 0;
+}
+
 void tnp_set_timeout(void *ctxt, int timeout)
 {
     TNPCONTEXT *context = (TNPCONTEXT*)ctxt;
