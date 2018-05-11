@@ -613,21 +613,39 @@ void CFactoryTestI8FullDlg::OnBnClickedBtnSpkmicResult()
 
 void CFactoryTestI8FullDlg::OnBnClickedBtnIrTest()
 {
+    GetDlgItem(IDC_BTN_IR_TEST    )->EnableWindow(FALSE);
+    GetDlgItem(IDC_BTN_SPKMIC_TEST)->EnableWindow(FALSE);
+    GetDlgItem(IDC_BTN_KEY_TEST   )->EnableWindow(FALSE);
     if (tnp_test_ir_and_filter(m_pTnpContext, !m_bIrOnOffState) == 0) {
         m_bIrOnOffState = !m_bIrOnOffState;
         GetDlgItem(IDC_BTN_IR_TEST)->SetWindowText(m_bIrOnOffState ? "红外灯-已开" : "红外灯-已关");
     }
+    GetDlgItem(IDC_BTN_IR_TEST    )->EnableWindow(TRUE );
+    GetDlgItem(IDC_BTN_SPKMIC_TEST)->EnableWindow(TRUE );
+    GetDlgItem(IDC_BTN_KEY_TEST   )->EnableWindow(TRUE );
 }
 
 void CFactoryTestI8FullDlg::OnBnClickedBtnSpkmicTest()
 {
+    GetDlgItem(IDC_BTN_IR_TEST    )->EnableWindow(FALSE);
+    GetDlgItem(IDC_BTN_SPKMIC_TEST)->EnableWindow(FALSE);
+    GetDlgItem(IDC_BTN_KEY_TEST   )->EnableWindow(FALSE);
     tnp_test_spkmic_manual(m_pTnpContext);
+    GetDlgItem(IDC_BTN_IR_TEST    )->EnableWindow(TRUE );
+    GetDlgItem(IDC_BTN_SPKMIC_TEST)->EnableWindow(TRUE );
+    GetDlgItem(IDC_BTN_KEY_TEST   )->EnableWindow(TRUE );
 }
 
 void CFactoryTestI8FullDlg::OnBnClickedBtnKeyTest()
 {
+    GetDlgItem(IDC_BTN_IR_TEST    )->EnableWindow(FALSE);
+    GetDlgItem(IDC_BTN_SPKMIC_TEST)->EnableWindow(FALSE);
+    GetDlgItem(IDC_BTN_KEY_TEST   )->EnableWindow(FALSE);
     tnp_test_button(m_pTnpContext, &m_nKeyTestResult);
     GetDlgItem(IDC_BTN_KEY_RESULT)->Invalidate();
+    GetDlgItem(IDC_BTN_IR_TEST    )->EnableWindow(TRUE );
+    GetDlgItem(IDC_BTN_SPKMIC_TEST)->EnableWindow(TRUE );
+    GetDlgItem(IDC_BTN_KEY_TEST   )->EnableWindow(TRUE );
 }
 
 void CFactoryTestI8FullDlg::OnBnClickedBtnUploadReport()
