@@ -46,16 +46,20 @@ static DWORD WINAPI DeviceDetectThreadProc(LPVOID pParam)
 
     // open & config socket
     sock = socket(AF_INET, SOCK_DGRAM, 0);
-    int timeout;
-    timeout = TNP_UDP_SENDTIMEO; setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, (char*)&timeout, sizeof(int));
-    timeout = TNP_UDP_RECVTIMEO; setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(int));
+    int opt;
+    opt = TNP_UDP_SENDTIMEO; setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO , (char*)&opt, sizeof(int));
+    opt = TNP_UDP_RECVTIMEO; setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO , (char*)&opt, sizeof(int));
+    opt = 1;                 setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char*)&opt, sizeof(int));
 
     // bind socket
     struct sockaddr_in local;
     local.sin_family      = AF_INET;
     local.sin_port        = htons(TNP_UDP_PORT);
     local.sin_addr.s_addr = INADDR_ANY;
-    bind(sock, (struct sockaddr*)&local, sizeof(local));
+    if (bind(sock, (struct sockaddr*)&local, sizeof(local)) < 0) {
+        log_printf("DeviceDetectThreadProc socket bind failed !\n");
+        return 0;
+    }
 
     // start device detection
     while (!(ctxt->thread_status & (TNP_TS_EXIT))) {
