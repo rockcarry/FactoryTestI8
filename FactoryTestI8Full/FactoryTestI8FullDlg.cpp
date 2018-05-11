@@ -432,10 +432,10 @@ void CFactoryTestI8FullDlg::OnEnChangeEdtScanSn()
             tnp_test_sensor_snmac_version(m_pTnpContext, strsn, strmac, strver,
                 &m_nLSensorTestResult, &m_nSnTestResult, &m_nMacTestResult, &m_nVersionTestResult);
             m_strSnMacVer.Format("设备实际 SN： %s\r\n设备实际 MAC：%s\r\n设备实际 VER：%s", strsn, strmac, strver);
-            GetDlgItem(IDC_BTN_LSENSOR_RESULT)->Invalidate();
-            GetDlgItem(IDC_BTN_SN_RESULT     )->Invalidate();
-            GetDlgItem(IDC_BTN_MAC_RESULT    )->Invalidate();
-            GetDlgItem(IDC_BTN_VERSION_RESULT)->Invalidate();
+            GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText(m_nLSensorTestResult ? "PASS" : "NG");
+            GetDlgItem(IDC_BTN_SN_RESULT     )->SetWindowText(m_nSnTestResult      ? "PASS" : "NG");
+            GetDlgItem(IDC_BTN_MAC_RESULT    )->SetWindowText(m_nMacTestResult     ? "PASS" : "NG");
+            GetDlgItem(IDC_BTN_VERSION_RESULT)->SetWindowText(m_nVersionTestResult ? "PASS" : "NG");
         } else {
             m_bSnScaned = TRUE;
             m_strTestInfo = "请打开设备，进入测试模式。\r\n";
@@ -478,10 +478,10 @@ LRESULT CFactoryTestI8FullDlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
             tnp_test_sensor_snmac_version(m_pTnpContext, strsn, strmac, strver,
                 &m_nLSensorTestResult, &m_nSnTestResult, &m_nMacTestResult, &m_nVersionTestResult);
             m_strSnMacVer.Format("设备实际 SN： %s\r\n设备实际 MAC：%s\r\n设备实际 VER：%s", strsn, strmac, strver);
-            GetDlgItem(IDC_BTN_LSENSOR_RESULT)->Invalidate();
-            GetDlgItem(IDC_BTN_SN_RESULT     )->Invalidate();
-            GetDlgItem(IDC_BTN_MAC_RESULT    )->Invalidate();
-            GetDlgItem(IDC_BTN_VERSION_RESULT)->Invalidate();
+            GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText(m_nLSensorTestResult ? "PASS" : "NG");
+            GetDlgItem(IDC_BTN_SN_RESULT     )->SetWindowText(m_nSnTestResult      ? "PASS" : "NG");
+            GetDlgItem(IDC_BTN_MAC_RESULT    )->SetWindowText(m_nMacTestResult     ? "PASS" : "NG");
+            GetDlgItem(IDC_BTN_VERSION_RESULT)->SetWindowText(m_nVersionTestResult ? "PASS" : "NG");
         } else {
             m_strTestInfo   = "设备已连接，请扫描条码...\r\n";
         }
