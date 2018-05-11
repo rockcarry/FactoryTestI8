@@ -421,14 +421,21 @@ void CFactoryTestI8FullDlg::OnEnChangeEdtScanSn()
         }
 #endif
 
-        if (m_bConnectState) {
-            m_bSnScaned = FALSE;
-            char strsn [32];
-            char strmac[32];
-            char strver[32];
-            strcpy(strsn , m_strCurSN );
-            strcpy(strmac, m_strCurMac);
-            strcpy(strver, m_strTnpVer);
+        char strsn [32];
+        char strmac[32];
+        char strver[32];
+        strcpy(strsn , m_strCurSN );
+        strcpy(strmac, m_strCurMac);
+        strcpy(strver, m_strTnpVer);
+        struct in_addr addr = {0};
+        int ret = tnp_connect_by_sn(m_pTnpContext, strsn, &addr);
+        if (ret == 0) {
+            strcpy(m_strDeviceIP, inet_ntoa(addr));
+            m_strConnectState.Format(TEXT("设备连接成功！（%s）"), CString(m_strDeviceIP));
+            m_strTestInfo   = "设备连接成功，开始测试...";
+            m_bConnectState = TRUE;
+            m_bSnScaned     = FALSE;
+
             tnp_test_sensor_snmac_version(m_pTnpContext, strsn, strmac, strver,
                 &m_nLSensorTestResult, &m_nSnTestResult, &m_nMacTestResult, &m_nVersionTestResult);
             m_strSnMacVer.Format("设备实际 SN： %s\r\n设备实际 MAC：%s\r\n设备实际 VER：%s", strsn, strmac, strver);
@@ -436,6 +443,12 @@ void CFactoryTestI8FullDlg::OnEnChangeEdtScanSn()
             GetDlgItem(IDC_BTN_SN_RESULT     )->SetWindowText(m_nSnTestResult      ? "PASS" : "NG");
             GetDlgItem(IDC_BTN_MAC_RESULT    )->SetWindowText(m_nMacTestResult     ? "PASS" : "NG");
             GetDlgItem(IDC_BTN_VERSION_RESULT)->SetWindowText(m_nVersionTestResult ? "PASS" : "NG");
+
+            // set timeout to 6s
+            tnp_set_timeout(m_pTnpContext, 6000);
+
+            // refresh camera
+            OnBnClickedBtnRefreshCamera();
         } else {
             m_bSnScaned = TRUE;
             m_strTestInfo = "请打开设备，进入测试模式。\r\n";
@@ -452,60 +465,59 @@ LRESULT CFactoryTestI8FullDlg::OnTnpUpdateUI(WPARAM wParam, LPARAM lParam)
 
 LRESULT CFactoryTestI8FullDlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
 {
+    if (!m_bSnScaned) return 0;
+
     if (strcmp(m_strDeviceIP, "") != 0) {
         log_printf("already have a device connected !\n");
         return 0;
     }
 
+    char strsn[32];
+    char strmac[32];
+    char strver[32];
+    strcpy(strsn , m_strCurSN );
+    strcpy(strmac, m_strCurMac);
+    strcpy(strver, m_strTnpVer);
+
     struct in_addr addr;
-    addr.S_un.S_addr = (u_long)lParam;
-
-    strcpy(m_strDeviceIP, inet_ntoa(addr));
-    m_strConnectState.Format(TEXT("发现设备 %s ！"), CString(m_strDeviceIP));
-
-    int ret = tnp_connect(m_pTnpContext, addr);
+    int ret = tnp_connect_by_sn(m_pTnpContext, strsn, &addr);
     if (ret == 0) {
+        strcpy(m_strDeviceIP, inet_ntoa(addr));
         m_strConnectState.Format(TEXT("设备连接成功！（%s）"), CString(m_strDeviceIP));
+        m_strTestInfo   = "设备连接成功，开始测试...";
         m_bConnectState = TRUE;
-        if (m_bSnScaned) {
-            m_bSnScaned = FALSE;
-            char strsn [32];
-            char strmac[32];
-            char strver[32];
-            strcpy(strsn , m_strCurSN );
-            strcpy(strmac, m_strCurMac);
-            strcpy(strver, m_strTnpVer);
-            tnp_test_sensor_snmac_version(m_pTnpContext, strsn, strmac, strver,
-                &m_nLSensorTestResult, &m_nSnTestResult, &m_nMacTestResult, &m_nVersionTestResult);
-            m_strSnMacVer.Format("设备实际 SN： %s\r\n设备实际 MAC：%s\r\n设备实际 VER：%s", strsn, strmac, strver);
-            GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText(m_nLSensorTestResult ? "PASS" : "NG");
-            GetDlgItem(IDC_BTN_SN_RESULT     )->SetWindowText(m_nSnTestResult      ? "PASS" : "NG");
-            GetDlgItem(IDC_BTN_MAC_RESULT    )->SetWindowText(m_nMacTestResult     ? "PASS" : "NG");
-            GetDlgItem(IDC_BTN_VERSION_RESULT)->SetWindowText(m_nVersionTestResult ? "PASS" : "NG");
-        } else {
-            m_strTestInfo   = "设备已连接，请扫描条码...\r\n";
-        }
+        m_bSnScaned     = FALSE;
+
+        tnp_test_sensor_snmac_version(m_pTnpContext, strsn, strmac, strver,
+            &m_nLSensorTestResult, &m_nSnTestResult, &m_nMacTestResult, &m_nVersionTestResult);
+        m_strSnMacVer.Format("设备实际 SN： %s\r\n设备实际 MAC：%s\r\n设备实际 VER：%s", strsn, strmac, strver);
+        GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText(m_nLSensorTestResult ? "PASS" : "NG");
+        GetDlgItem(IDC_BTN_SN_RESULT     )->SetWindowText(m_nSnTestResult      ? "PASS" : "NG");
+        GetDlgItem(IDC_BTN_MAC_RESULT    )->SetWindowText(m_nMacTestResult     ? "PASS" : "NG");
+        GetDlgItem(IDC_BTN_VERSION_RESULT)->SetWindowText(m_nVersionTestResult ? "PASS" : "NG");
 
         // set timeout to 6s
         tnp_set_timeout(m_pTnpContext, 6000);
 
         // refresh camera
         OnBnClickedBtnRefreshCamera();
-    } else {
-        m_strConnectState.Format(TEXT("设备连接失败！（%s）"), CString(m_strDeviceIP));
-        m_strTestInfo   = "设备连接失败，请重启设备。\r\n";
-        m_bConnectState = FALSE;
+        UpdateData(FALSE);
     }
-    UpdateData(FALSE);
 
     return 0;
 }
 
 LRESULT CFactoryTestI8FullDlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
 {
+    char strsn[32];
+    strcpy(strsn, m_strCurSN);
+    if (tnp_disconnect_by_sn(m_pTnpContext, strsn) != 0) {
+        log_printf("tnp_disconnect_by_sn failed !\n");
+        return 0;
+    }
+
     struct in_addr addr;
     addr.S_un.S_addr = (u_long)lParam;
-
     if (strcmp(m_strDeviceIP, inet_ntoa(addr)) != 0) {
         log_printf("this is not current connected device lost !\n");
         return 0;
