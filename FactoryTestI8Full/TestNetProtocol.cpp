@@ -458,6 +458,7 @@ int tnp_test_sensor_snmac_version(void *ctxt, char *sn, char *mac, char *version
     data.testVersion     = '1';
     data.testSN          = '2';
     data.testMAC         = '2';
+    data.testKey         = '1';
     strcpy(data.SN , sn     );
     strcpy(data.MAC, mac    );
     strcpy(data.VER, version);

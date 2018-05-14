@@ -654,7 +654,7 @@ void CFactoryTestI8FullDlg::OnBnClickedBtnKeyTest()
     GetDlgItem(IDC_BTN_SPKMIC_TEST)->EnableWindow(FALSE);
     GetDlgItem(IDC_BTN_KEY_TEST   )->EnableWindow(FALSE);
     tnp_test_button(m_pTnpContext, &m_nKeyTestResult);
-    GetDlgItem(IDC_BTN_KEY_RESULT)->Invalidate();
+    GetDlgItem(IDC_BTN_KEY_RESULT )->SetWindowText(m_nKeyTestResult ? "PASS" : "NG");
     GetDlgItem(IDC_BTN_IR_TEST    )->EnableWindow(TRUE );
     GetDlgItem(IDC_BTN_SPKMIC_TEST)->EnableWindow(TRUE );
     GetDlgItem(IDC_BTN_KEY_TEST   )->EnableWindow(TRUE );
