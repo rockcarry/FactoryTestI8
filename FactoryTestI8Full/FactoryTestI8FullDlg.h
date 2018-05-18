@@ -31,6 +31,7 @@ protected:
     afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
     afx_msg void OnPaint();
     afx_msg void OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct);
+    afx_msg void OnTimer(UINT_PTR nIDEvent);
     afx_msg HBRUSH  OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
     afx_msg HCURSOR OnQueryDragIcon();
     afx_msg LRESULT OnTnpUpdateUI   (WPARAM wParam, LPARAM lParam);
@@ -71,6 +72,7 @@ private:
     BOOL    m_bConnectState;
     BOOL    m_bSnScaned;
     BOOL    m_bIrOnOffState;
+    BOOL    m_bPlayerOpenOK;
     int     m_nLedTestResult;
     int     m_nCameraTestResult;
     int     m_nIRTestResult;
