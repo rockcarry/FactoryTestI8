@@ -400,7 +400,7 @@ int tnp_test_ir_and_filter(void *ctxt, int onoff)
 
     FACTORYTEST_DATA data = {0};
     data.MAGIC  = SIG_MAGIC;
-    data.testIR = data.testIRCut = onoff ? '1' : '2';
+    data.testIR = data.testIRCut = onoff ? '2' : '1';
 
     if (send(context->sock, (const char*)&data, sizeof(data), 0) == -1) {
         log_printf("tnp_test_ir_and_filter send tcp data failed !\n");
@@ -459,8 +459,12 @@ int tnp_test_sensor_snmac_version(void *ctxt, char *sn, char *mac, char *version
     data.testSN          = '2';
     data.testMAC         = '2';
     data.testKey         = '1';
-    strcpy(data.SN , sn     );
-    strcpy(data.MAC, mac    );
+    memset(data.SN , '0', sizeof(data.SN ));
+    memset(data.MAC, '0', sizeof(data.MAC));
+    memcpy(data.SN , sn , strlen(sn ));
+    memcpy(data.MAC, mac, strlen(mac));
+    data.SN [15] = '\0';
+    data.MAC[12] = '\0';
     strcpy(data.VER, version);
 
     if (send(context->sock, (const char*)&data, sizeof(data), 0) == -1) {

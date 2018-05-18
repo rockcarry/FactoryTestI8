@@ -228,15 +228,16 @@ void CFactoryTestI8Dlg::DoDeviceTest()
         if (m_bMesLoginOK) {
             BOOL ret = MesDLL::GetInstance().SetMobileData(m_strCurSN, CString(m_strResource), CString(m_strUserName), m_strTestResult, strErrCode, strErrMsg);
             if (!ret) {
-                m_strTestResult = "上传失败";
+                if (strErrMsg.Find("CS_RepeatCollect_OnOneOP") != -1) {
+                    m_strTestResult = "重复采集";
+                } else {
+                    m_strTestResult = "上传失败";
+                }
+                log_printf("MES SetMobileData failed !\nstrErrMsg = %s\n", strErrMsg);
                 PostMessage(WM_TNP_UPDATE_UI);
             }
         }
 #endif
-    }
-
-    if (m_bResultDone && m_strTestResult.Compare("OK") == 0) {
-        tnp_test_done(m_pTnpContext);
     }
 
     // set timeout to 3s
