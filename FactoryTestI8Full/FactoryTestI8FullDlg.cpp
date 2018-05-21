@@ -678,56 +678,56 @@ void CFactoryTestI8FullDlg::OnBnClickedBtnKeyTest()
 void CFactoryTestI8FullDlg::OnBnClickedBtnUploadReport()
 {
 #if ENABLE_MES_SYSTEM
-        CString strTestResult;
-        CString strErrCode;
-        CString strErrMsg;
-        if (m_nLedTestResult != 1) {
-            strErrCode += "L001,";
-        }
-        if (m_nCameraTestResult != 1) {
-            strErrCode += "L002,";
-        }
-        if (m_nIRTestResult != 1) {
-            strErrCode += "L003,";
-        }
-        if (m_nSpkMicTestResult != 1) {
-            strErrCode += "L004,";
-        }
-        if (m_nKeyTestResult != 1) {
-            strErrCode += "L005,";
-        }
-        if (m_nLSensorTestResult != 1) {
-            strErrCode += "L006,";
-        }
-        if (m_nSnTestResult != 1) {
-            strErrCode += "L007,";
-        }
-        if (m_nMacTestResult != 1) {
-            strErrCode += "L008,";
-        }
-        if (m_nVersionTestResult != 1) {
-            strErrCode += "L009,";
-        }
-        if (  m_nLedTestResult == 1 && m_nCameraTestResult == 1 && m_nIRTestResult == 1 && m_nSpkMicTestResult == 1
-           && m_nKeyTestResult == 1 && m_nLSensorTestResult == 1 && m_nSnTestResult == 1 && m_nMacTestResult == 1 && m_nVersionTestResult == 1) {
-            strTestResult = "OK";
-        } else {
-            strTestResult = "NG";
-        }
-        if (m_bMesLoginOK) {
-            BOOL ret = MesDLL::GetInstance().SetMobileData(m_strCurSN, CString(m_strResource), CString(m_strUserName), strTestResult, strErrCode, strErrMsg);
-            if (!ret) {
-                if (strErrMsg.Find("CS_RepeatCollect_OnOneOP") != -1) {
-                    m_strTestInfo = "重复采集！";
-                } else {
-                    m_strTestInfo = "上传测试结果失败！";
-                }
-                PostMessage(WM_TNP_UPDATE_UI);
+    CString strTestResult;
+    CString strErrCode;
+    CString strErrMsg;
+    if (m_nLedTestResult != 1) {
+        strErrCode += "L001,";
+    }
+    if (m_nCameraTestResult != 1) {
+        strErrCode += "L002,";
+    }
+    if (m_nIRTestResult != 1) {
+        strErrCode += "L003,";
+    }
+    if (m_nSpkMicTestResult != 1) {
+        strErrCode += "L004,";
+    }
+    if (m_nKeyTestResult != 1) {
+        strErrCode += "L005,";
+    }
+    if (m_nLSensorTestResult != 1) {
+        strErrCode += "L006,";
+    }
+    if (m_nSnTestResult != 1) {
+        strErrCode += "L007,";
+    }
+    if (m_nMacTestResult != 1) {
+        strErrCode += "L008,";
+    }
+    if (m_nVersionTestResult != 1) {
+        strErrCode += "L009,";
+    }
+    if (  m_nLedTestResult == 1 && m_nCameraTestResult == 1 && m_nIRTestResult == 1 && m_nSpkMicTestResult == 1
+       && m_nKeyTestResult == 1 && m_nLSensorTestResult == 1 && m_nSnTestResult == 1 && m_nMacTestResult == 1 && m_nVersionTestResult == 1) {
+        strTestResult = "OK";
+    } else {
+        strTestResult = "NG";
+    }
+    if (m_bMesLoginOK) {
+        BOOL ret = MesDLL::GetInstance().SetMobileData(m_strCurSN, CString(m_strResource), CString(m_strUserName), strTestResult, strErrCode, strErrMsg);
+        if (!ret) {
+            if (strErrMsg.Find("CS_RepeatCollect_OnOneOP") != -1) {
+                m_strTestInfo = "重复采集！";
+            } else {
+                m_strTestInfo = "上传测试结果失败！";
             }
+            PostMessage(WM_TNP_UPDATE_UI);
         }
-        if (strTestResult.Compare("OK") == 0) {
-            tnp_test_done(m_pTnpContext);
-        }
+    }
+    if (strTestResult.Compare("OK") == 0) {
+        tnp_test_done(m_pTnpContext);
+    }
 #endif
 }
 
