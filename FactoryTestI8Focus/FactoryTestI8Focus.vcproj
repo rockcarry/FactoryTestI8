@@ -4,7 +4,7 @@
 	Version="8.00"
 	Name="FactoryTestI8Focus"
 	ProjectGUID="{CF26A08D-2FE9-465B-8E17-FF9FFA396750}"
-	RootNamespace="FactoryTestFocus"
+	RootNamespace="FactoryTestI8Focus"
 	Keyword="MFCProj"
 	>
 	<Platforms>

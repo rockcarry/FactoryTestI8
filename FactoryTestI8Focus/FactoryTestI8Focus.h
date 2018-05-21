@@ -11,7 +11,7 @@
 
 
 // CFactoryTestI8Focus:
-// 有关此类的实现，请参阅 FactoryTestFocus.cpp
+// 有关此类的实现，请参阅 FactoryTestI8Focus.cpp
 //
 
 class CFactoryTestI8FocusApp : public CWinApp

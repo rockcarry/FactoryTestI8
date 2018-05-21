@@ -48,7 +48,7 @@ BEGIN
     "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)\r\n"
     "LANGUAGE 4, 2\r\n"
     "#pragma code_page(936)\r\n"
-    "#include ""res\\FactoryTestFocus.rc2""  // 非 Microsoft Visual C++ 编辑的资源\r\n"
+    "#include ""res\\FactoryTestI8Focus.rc2""  // 非 Microsoft Visual C++ 编辑的资源\r\n"
     "#include ""afxres.rc""     // 标准组件\r\n"
     "#endif\r\n"
     "\0"
@@ -71,10 +71,10 @@ IDR_MAINFRAME           ICON                    "res\\FactoryTestI8Focus.ico"
 // Dialog
 //
 
-IDD_FACTORYTESTFOCUS_DIALOG DIALOGEX 0, 0, 134, 234
+IDD_FACTORYTESTI8FOCUS_DIALOG DIALOGEX 0, 0, 134, 234
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_TOPMOST | WS_EX_APPWINDOW
-CAPTION "FactoryTestFocus"
+CAPTION "FactoryTestI8Focus"
 FONT 9, "宋体", 0, 0, 0x1
 BEGIN
     EDITTEXT        IDC_EDT_SCAN_SN,40,77,82,15,ES_AUTOHSCROLL
@@ -113,13 +113,13 @@ BEGIN
     BEGIN
         BLOCK "080403a8"
         BEGIN
-            VALUE "CompanyName", "TODO: <公司名>"
-            VALUE "FileDescription", "TODO: <文件说明>"
+            VALUE "CompanyName", "爱培科科技股份有限公司"
+            VALUE "FileDescription", "工厂测试工具 I8-FOCUS 验焦测试"
             VALUE "FileVersion", "1.0.0.1"
-            VALUE "InternalName", "FactoryTestFocus.exe"
-            VALUE "LegalCopyright", "TODO: (C) <公司名>。保留所有权利。"
-            VALUE "OriginalFilename", "FactoryTestFocus.exe"
-            VALUE "ProductName", "TODO: <产品名>"
+            VALUE "InternalName", "FactoryTestI8Focus.exe"
+            VALUE "LegalCopyright", "(C) <APICAL>。保留所有权利。"
+            VALUE "OriginalFilename", "FactoryTestI8Focus.exe"
+            VALUE "ProductName", "工厂测试工具 I8-FOCUS"
             VALUE "ProductVersion", "1.0.0.1"
         END
     END

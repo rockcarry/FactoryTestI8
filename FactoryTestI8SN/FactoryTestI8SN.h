@@ -11,7 +11,7 @@
 
 
 // CFactoryTestI8SNApp:
-// 有关此类的实现，请参阅 FactoryTestI8.cpp
+// 有关此类的实现，请参阅 FactoryTestI8SN.cpp
 //
 
 class CFactoryTestI8SNApp : public CWinApp

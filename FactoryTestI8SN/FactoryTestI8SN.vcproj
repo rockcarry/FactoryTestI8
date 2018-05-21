@@ -4,7 +4,7 @@
 	Version="8.00"
 	Name="FactoryTestI8SN"
 	ProjectGUID="{FDA4F93F-F5EA-48EF-AB6E-FC805E3F105B}"
-	RootNamespace="FactoryTestI8"
+	RootNamespace="FactoryTestI8SN"
 	Keyword="MFCProj"
 	>
 	<Platforms>
@@ -290,7 +290,7 @@
 	<Globals>
 		<Global
 			Name="RESOURCE_FILE"
-			Value="FactoryTestI8.rc"
+			Value="FactoryTestI8SN.rc"
 		/>
 	</Globals>
 </VisualStudioProject>

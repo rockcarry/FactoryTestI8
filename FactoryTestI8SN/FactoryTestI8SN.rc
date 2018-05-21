@@ -48,7 +48,7 @@ BEGIN
     "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)\r\n"
     "LANGUAGE 4, 2\r\n"
     "#pragma code_page(936)\r\n"
-    "#include ""res\\FactoryTestI8.rc2""  // 非 Microsoft Visual C++ 编辑的资源\r\n"
+    "#include ""res\\FactoryTestI8SN.rc2""  // 非 Microsoft Visual C++ 编辑的资源\r\n"
     "#include ""afxres.rc""     // 标准组件\r\n"
     "#endif\r\n"
     "\0"
@@ -73,16 +73,16 @@ IDR_MAINFRAME           ICON                    "res\\FactoryTestI8SN.ico"
 
 IDD_ABOUTBOX DIALOGEX 0, 0, 235, 55
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "关于 FactoryTestI8"
+CAPTION "关于 FactoryTestI8SN"
 FONT 9, "宋体", 0, 0, 0x1
 BEGIN
     ICON            IDR_MAINFRAME,IDC_STATIC,11,17,20,20
-    LTEXT           "FactoryTestI8 1.0 版",IDC_STATIC,40,10,119,8,SS_NOPREFIX
+    LTEXT           "FactoryTestI8SN 1.0 版",IDC_STATIC,40,10,119,8,SS_NOPREFIX
     LTEXT           "Copyright (C) 2018",IDC_STATIC,40,25,119,8
     DEFPUSHBUTTON   "确定",IDOK,178,7,50,16,WS_GROUP
 END
 
-IDD_FACTORYTESTI8_DIALOG DIALOGEX 0, 0, 333, 187
+IDD_FACTORYTESTI8SN_DIALOG DIALOGEX 0, 0, 333, 187
 STYLE DS_SETFONT | DS_MODALFRAME | WS_MINIMIZEBOX | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_APPWINDOW
 CAPTION "工厂测试工具-写号+喇叭+咪头+吞吐量"
@@ -133,9 +133,10 @@ BEGIN
             VALUE "CompanyName", "爱培科科技股份有限公司"
             VALUE "FileDescription", "工厂测试工具 I8-SN 写号+吞吐量+喇叭+咪头 测试"
             VALUE "FileVersion", "1.0.0.1"
-            VALUE "InternalName", "FactoryTestI8.exe"
+            VALUE "InternalName", "FactoryTestI8SN.exe"
             VALUE "LegalCopyright", "(C) <APICAL>。保留所有权利。"
-            VALUE "OriginalFilename", "FactoryTestI8.exe"
+            VALUE "OriginalFilename", "FactoryTestI8SN.exe"
+            VALUE "ProductName", "工厂测试工具 I8-SN"
             VALUE "ProductVersion", "1.0.0.1"
         END
     END
@@ -172,7 +173,7 @@ END
 
 STRINGTABLE 
 BEGIN
-    IDS_ABOUTBOX            "关于 FactoryTestI8(&A)..."
+    IDS_ABOUTBOX            "关于 FactoryTestI8SN(&A)..."
     IDP_SOCKETS_INIT_FAILED "Windows 套接字初始化失败。"
 END
 
