@@ -1,15 +1,15 @@
-// FactoryTestI8Dlg.h : 头文件
+// FactoryTestI8SNDlg.h : 头文件
 //
 
 #pragma once
 
 
-// CFactoryTestI8Dlg 对话框
-class CFactoryTestI8Dlg : public CDialog
+// CFactoryTestI8SNDlg 对话框
+class CFactoryTestI8SNDlg : public CDialog
 {
 // 构造
 public:
-    CFactoryTestI8Dlg(CWnd* pParent = NULL);    // 标准构造函数
+    CFactoryTestI8SNDlg(CWnd* pParent = NULL);    // 标准构造函数
 
 // 对话框数据
     enum { IDD = IDD_FACTORYTESTI8_DIALOG };

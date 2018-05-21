@@ -198,11 +198,11 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\FactoryTestI8.cpp"
+				RelativePath=".\FactoryTestI8SN.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\FactoryTestI8Dlg.cpp"
+				RelativePath=".\FactoryTestI8SNDlg.cpp"
 				>
 			</File>
 			<File
@@ -244,11 +244,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FactoryTestI8.h"
+				RelativePath=".\FactoryTestI8SN.h"
 				>
 			</File>
 			<File
-				RelativePath=".\FactoryTestI8Dlg.h"
+				RelativePath=".\FactoryTestI8SNDlg.h"
 				>
 			</File>
 			<File
@@ -274,15 +274,15 @@
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
 			<File
-				RelativePath=".\res\FactoryTestI8.ico"
+				RelativePath=".\res\FactoryTestI8SN.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\FactoryTestI8.rc"
+				RelativePath=".\FactoryTestI8SN.rc"
 				>
 			</File>
 			<File
-				RelativePath=".\res\FactoryTestI8.rc2"
+				RelativePath=".\res\FactoryTestI8SN.rc2"
 				>
 			</File>
 		</Filter>

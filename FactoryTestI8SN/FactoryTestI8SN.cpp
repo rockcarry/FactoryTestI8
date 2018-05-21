@@ -1,39 +1,39 @@
-// FactoryTestI8.cpp : 定义应用程序的类行为。
+// FactoryTestI8SN.cpp : 定义应用程序的类行为。
 //
 
 #include "stdafx.h"
-#include "FactoryTestI8.h"
-#include "FactoryTestI8Dlg.h"
+#include "FactoryTestI8SN.h"
+#include "FactoryTestI8SNDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
 
-// CFactoryTestI8App
+// CFactoryTestI8SNApp
 
-BEGIN_MESSAGE_MAP(CFactoryTestI8App, CWinApp)
+BEGIN_MESSAGE_MAP(CFactoryTestI8SNApp, CWinApp)
     ON_COMMAND(ID_HELP, &CWinApp::OnHelp)
 END_MESSAGE_MAP()
 
 
-// CFactoryTestI8App 构造
+// CFactoryTestI8SNApp 构造
 
-CFactoryTestI8App::CFactoryTestI8App()
+CFactoryTestI8SNApp::CFactoryTestI8SNApp()
 {
     // TODO: 在此处添加构造代码，
     // 将所有重要的初始化放置在 InitInstance 中
 }
 
 
-// 唯一的一个 CFactoryTestI8App 对象
+// 唯一的一个 CFactoryTestI8SNApp 对象
 
-CFactoryTestI8App theApp;
+CFactoryTestI8SNApp theApp;
 
 
-// CFactoryTestI8App 初始化
+// CFactoryTestI8SNApp 初始化
 
-BOOL CFactoryTestI8App::InitInstance()
+BOOL CFactoryTestI8SNApp::InitInstance()
 {
     // 如果一个运行在 Windows XP 上的应用程序清单指定要
     // 使用 ComCtl32.dll 版本 6 或更高版本来启用可视化方式，
@@ -61,7 +61,7 @@ BOOL CFactoryTestI8App::InitInstance()
     // 例如修改为公司或组织名
     SetRegistryKey(_T("应用程序向导生成的本地应用程序"));
 
-    CFactoryTestI8Dlg dlg;
+    CFactoryTestI8SNDlg dlg;
     m_pMainWnd = &dlg;
     INT_PTR nResponse = dlg.DoModal();
     if (nResponse == IDOK) {

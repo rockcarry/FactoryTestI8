@@ -64,7 +64,7 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDR_MAINFRAME           ICON                    "res\\FactoryTestI8.ico"
+IDR_MAINFRAME           ICON                    "res\\FactoryTestI8SN.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -194,7 +194,7 @@ END
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)
 LANGUAGE 4, 2
 #pragma code_page(936)
-#include "res\FactoryTestI8.rc2"  // 非 Microsoft Visual C++ 编辑的资源
+#include "res\FactoryTestI8SN.rc2"  // 非 Microsoft Visual C++ 编辑的资源
 #include "afxres.rc"     // 标准组件
 #endif
 

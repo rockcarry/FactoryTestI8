@@ -1,10 +1,10 @@
-// FactoryTestI8Dlg.cpp : 实现文件
+// FactoryTestI8SNDlg.cpp : 实现文件
 //
 
 #include "stdafx.h"
 #include "tlhelp32.h"
-#include "FactoryTestI8.h"
-#include "FactoryTestI8Dlg.h"
+#include "FactoryTestI8SN.h"
+#include "FactoryTestI8SNDlg.h"
 #include "TestNetProtocol.h"
 #include "BenQGuruDll.h"
 #include "log.h"
@@ -124,12 +124,12 @@ static void kill_process_by_name(char *name)
 
 static DWORD WINAPI DeviceTestThreadProc(LPVOID pParam)
 {
-    CFactoryTestI8Dlg *dlg = (CFactoryTestI8Dlg*)pParam;
+    CFactoryTestI8SNDlg *dlg = (CFactoryTestI8SNDlg*)pParam;
     dlg->DoDeviceTest();
     return 0;
 }
 
-void CFactoryTestI8Dlg::DoDeviceTest()
+void CFactoryTestI8SNDlg::DoDeviceTest()
 {
     m_bResultDone = FALSE;
 
@@ -175,7 +175,7 @@ void CFactoryTestI8Dlg::DoDeviceTest()
         if (!throughput) throughput = 25;
         m_strWiFiThroughPut.Format(TEXT("%.1f MBytes/sec"), wifi);
         PostMessage(WM_TNP_UPDATE_UI);
-        if (wifi > throughput) {
+        if (wifi >= throughput) {
             m_bResultTestNet = TRUE;
         } else {
             m_bResultTestNet = FALSE;
@@ -247,7 +247,7 @@ void CFactoryTestI8Dlg::DoDeviceTest()
     m_hTestThread = NULL;
 }
 
-void CFactoryTestI8Dlg::StartDeviceTest()
+void CFactoryTestI8SNDlg::StartDeviceTest()
 {
     if (m_hTestThread) {
         log_printf("device test is running, please wait test done !\n");
@@ -259,7 +259,7 @@ void CFactoryTestI8Dlg::StartDeviceTest()
     m_hTestThread = CreateThread(NULL, 0, DeviceTestThreadProc, this, 0, NULL);
 }
 
-void CFactoryTestI8Dlg::StopDeviceTest()
+void CFactoryTestI8SNDlg::StopDeviceTest()
 {
     m_bTestCancel = TRUE;
     tnp_test_cancel(m_pTnpContext, TRUE);
@@ -300,10 +300,10 @@ BEGIN_MESSAGE_MAP(CAboutDlg, CDialog)
 END_MESSAGE_MAP()
 
 
-// CFactoryTestI8Dlg 对话框
+// CFactoryTestI8SNDlg 对话框
 
-CFactoryTestI8Dlg::CFactoryTestI8Dlg(CWnd* pParent /*=NULL*/)
-    : CDialog(CFactoryTestI8Dlg::IDD, pParent)
+CFactoryTestI8SNDlg::CFactoryTestI8SNDlg(CWnd* pParent /*=NULL*/)
+    : CDialog(CFactoryTestI8SNDlg::IDD, pParent)
     , m_strMesLoginState(_T(""))
     , m_strMesResource(_T(""))
     , m_strConnectState(_T(""))
@@ -319,7 +319,7 @@ CFactoryTestI8Dlg::CFactoryTestI8Dlg(CWnd* pParent /*=NULL*/)
     m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
 
-void CFactoryTestI8Dlg::DoDataExchange(CDataExchange* pDX)
+void CFactoryTestI8SNDlg::DoDataExchange(CDataExchange* pDX)
 {
     CDialog::DoDataExchange(pDX);
     DDX_Text(pDX, IDC_TXT_MES_LOGIN, m_strMesLoginState);
@@ -333,23 +333,23 @@ void CFactoryTestI8Dlg::DoDataExchange(CDataExchange* pDX)
     DDX_Text(pDX, IDC_EDT_IPREF_RESULT, m_strWiFiThroughPut);
 }
 
-BEGIN_MESSAGE_MAP(CFactoryTestI8Dlg, CDialog)
+BEGIN_MESSAGE_MAP(CFactoryTestI8SNDlg, CDialog)
     ON_WM_SYSCOMMAND()
     ON_WM_PAINT()
     ON_WM_CTLCOLOR()
     ON_WM_QUERYDRAGICON()
     ON_WM_DESTROY()
     ON_WM_CLOSE()
-    ON_EN_CHANGE(IDC_EDT_SCAN_SN, &CFactoryTestI8Dlg::OnEnChangeEdtScanSn)
-    ON_MESSAGE(WM_TNP_UPDATE_UI   , &CFactoryTestI8Dlg::OnTnpUpdateUI   )
-    ON_MESSAGE(WM_TNP_DEVICE_FOUND, &CFactoryTestI8Dlg::OnTnpDeviceFound)
-    ON_MESSAGE(WM_TNP_DEVICE_LOST , &CFactoryTestI8Dlg::OnTnpDeviceLost )
+    ON_EN_CHANGE(IDC_EDT_SCAN_SN, &CFactoryTestI8SNDlg::OnEnChangeEdtScanSn)
+    ON_MESSAGE(WM_TNP_UPDATE_UI   , &CFactoryTestI8SNDlg::OnTnpUpdateUI   )
+    ON_MESSAGE(WM_TNP_DEVICE_FOUND, &CFactoryTestI8SNDlg::OnTnpDeviceFound)
+    ON_MESSAGE(WM_TNP_DEVICE_LOST , &CFactoryTestI8SNDlg::OnTnpDeviceLost )
 END_MESSAGE_MAP()
 
 
-// CFactoryTestI8Dlg 消息处理程序
+// CFactoryTestI8SNDlg 消息处理程序
 
-BOOL CFactoryTestI8Dlg::OnInitDialog()
+BOOL CFactoryTestI8SNDlg::OnInitDialog()
 {
     CDialog::OnInitDialog();
 
@@ -427,7 +427,7 @@ BOOL CFactoryTestI8Dlg::OnInitDialog()
     return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
-void CFactoryTestI8Dlg::OnDestroy()
+void CFactoryTestI8SNDlg::OnDestroy()
 {
     CDialog::OnDestroy();
 
@@ -444,7 +444,7 @@ void CFactoryTestI8Dlg::OnDestroy()
 #endif
 }
 
-void CFactoryTestI8Dlg::OnSysCommand(UINT nID, LPARAM lParam)
+void CFactoryTestI8SNDlg::OnSysCommand(UINT nID, LPARAM lParam)
 {
     if ((nID & 0xFFF0) == IDM_ABOUTBOX) {
         CAboutDlg dlgAbout;
@@ -456,7 +456,7 @@ void CFactoryTestI8Dlg::OnSysCommand(UINT nID, LPARAM lParam)
 
 // 当用户拖动最小化窗口时系统调用此函数取得光标显示。
 //
-HCURSOR CFactoryTestI8Dlg::OnQueryDragIcon()
+HCURSOR CFactoryTestI8SNDlg::OnQueryDragIcon()
 {
     return static_cast<HCURSOR>(m_hIcon);
 }
@@ -465,7 +465,7 @@ HCURSOR CFactoryTestI8Dlg::OnQueryDragIcon()
 // 来绘制该图标。对于使用文档/视图模型的 MFC 应用程序，
 // 这将由框架自动完成。
 
-void CFactoryTestI8Dlg::OnPaint()
+void CFactoryTestI8SNDlg::OnPaint()
 {
     if (IsIconic()) {
         CPaintDC dc(this); // 用于绘制的设备上下文
@@ -487,7 +487,7 @@ void CFactoryTestI8Dlg::OnPaint()
     }
 }
 
-HBRUSH CFactoryTestI8Dlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+HBRUSH CFactoryTestI8SNDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
     HBRUSH hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
     switch (pWnd->GetDlgCtrlID()) {
@@ -507,7 +507,7 @@ HBRUSH CFactoryTestI8Dlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
     return hbr;
 }
 
-void CFactoryTestI8Dlg::OnEnChangeEdtScanSn()
+void CFactoryTestI8SNDlg::OnEnChangeEdtScanSn()
 {
     // TODO:  If this is a RICHEDIT control, the control will not
     // send this notification unless you override the CDialog::OnInitDialog()
@@ -560,13 +560,13 @@ void CFactoryTestI8Dlg::OnEnChangeEdtScanSn()
     }
 }
 
-LRESULT CFactoryTestI8Dlg::OnTnpUpdateUI(WPARAM wParam, LPARAM lParam)
+LRESULT CFactoryTestI8SNDlg::OnTnpUpdateUI(WPARAM wParam, LPARAM lParam)
 {
     UpdateData(FALSE);
     return 0;
 }
 
-LRESULT CFactoryTestI8Dlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
+LRESULT CFactoryTestI8SNDlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
 {
     if (strcmp(m_strDeviceIP, "") != 0) {
         log_printf("already have a device connected !\n");
@@ -597,7 +597,7 @@ LRESULT CFactoryTestI8Dlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-LRESULT CFactoryTestI8Dlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
+LRESULT CFactoryTestI8SNDlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
 {
     struct in_addr addr;
     addr.S_un.S_addr = (u_long)lParam;
@@ -623,16 +623,16 @@ LRESULT CFactoryTestI8Dlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-void CFactoryTestI8Dlg::OnCancel() {}
-void CFactoryTestI8Dlg::OnOK()     {}
+void CFactoryTestI8SNDlg::OnCancel() {}
+void CFactoryTestI8SNDlg::OnOK()     {}
 
-void CFactoryTestI8Dlg::OnClose()
+void CFactoryTestI8SNDlg::OnClose()
 {
     CDialog::OnClose();
     EndDialog(IDCANCEL);
 }
 
-BOOL CFactoryTestI8Dlg::PreTranslateMessage(MSG *pMsg)
+BOOL CFactoryTestI8SNDlg::PreTranslateMessage(MSG *pMsg)
 {
     if (pMsg->message == WM_KEYDOWN) {
         GetDlgItem(IDC_EDT_SCAN_SN)->SetFocus();
