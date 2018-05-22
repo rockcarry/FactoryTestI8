@@ -46,7 +46,7 @@ static void parse_params(const char *str, const char *key, char *val)
     }
 }
 
-static int load_config_from_file(char *user, char *passwd, char *res, char *login, char *route, char *log)
+static int load_config_from_file(char *user, char *passwd, char *res, char *gongdan, char *login, char *route, char *log)
 {
     char  file[MAX_PATH];
     FILE *fp = NULL;
@@ -65,12 +65,13 @@ static int load_config_from_file(char *user, char *passwd, char *res, char *logi
         if (buf) {
             fseek(fp, 0, SEEK_SET);
             fread(buf, len, 1, fp);
-            parse_params(buf, "username"  , user  );
-            parse_params(buf, "password"  , passwd);
-            parse_params(buf, "resource"  , res   );
-            parse_params(buf, "loginmode" , login );
-            parse_params(buf, "routecheck", route );
-            parse_params(buf, "logfile"   , log   );
+            parse_params(buf, "username"  , user   );
+            parse_params(buf, "password"  , passwd );
+            parse_params(buf, "resource"  , res    );
+            parse_params(buf, "gongdan"   , gongdan);
+            parse_params(buf, "loginmode" , login  );
+            parse_params(buf, "routecheck", route  );
+            parse_params(buf, "logfile"   , log    );
             free(buf);
         }
         fclose(fp);
@@ -135,7 +136,7 @@ BOOL CFactoryTestI8FocusDlg::OnInitDialog()
     strcpy(m_strLoginMode , "alert_and_exit");
     strcpy(m_strRouteCheck, "yes"           );
     strcpy(m_strLogFile   , "DEBUGER"       );
-    int ret = load_config_from_file(m_strUserName, m_strPassWord, m_strResource, m_strLoginMode, m_strRouteCheck, m_strLogFile);
+    int ret = load_config_from_file(m_strUserName, m_strPassWord, m_strResource, m_strGongDan, m_strLoginMode, m_strRouteCheck, m_strLogFile);
     if (ret != 0) {
         AfxMessageBox(TEXT("无法打开测试配置文件！"), MB_OK);
     }
@@ -337,6 +338,7 @@ void CFactoryTestI8FocusDlg::OnBnClickedBtnUpload()
     } else {
         strTestResult = "NG";
     }
+    strMO = m_strGongDan;
     if (m_bMesLoginOK) {
         BOOL ret = MesDLL::GetInstance().SetMobileDataWithMO(m_strCurSN, CString(m_strResource), CString(m_strUserName), strTestResult, strErrCode, strMO, strErrMsg);
         if (!ret) {

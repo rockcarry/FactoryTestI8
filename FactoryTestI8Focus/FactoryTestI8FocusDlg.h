@@ -12,7 +12,7 @@ public:
     CFactoryTestI8FocusDlg(CWnd* pParent = NULL); // 标准构造函数
 
 // 对话框数据
-    enum { IDD = IDD_FACTORYTESTFOCUS_DIALOG };
+    enum { IDD = IDD_FACTORYTESTI8FOCUS_DIALOG };
 
 protected:
     virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
@@ -46,6 +46,7 @@ private:
     char    m_strUserName  [32];
     char    m_strPassWord  [32];
     char    m_strResource  [32];
+    char    m_strGongDan   [32];
     char    m_strLoginMode [32];
     char    m_strRouteCheck[32];
     char    m_strLogFile   [32];
