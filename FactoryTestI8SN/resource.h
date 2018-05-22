@@ -5,7 +5,7 @@
 #define IDM_ABOUTBOX                    0x0010
 #define IDD_ABOUTBOX                    100
 #define IDS_ABOUTBOX                    101
-#define IDD_FACTORYTESTI8_DIALOG        102
+#define IDD_FACTORYTESTI8SN_DIALOG      102
 #define IDP_SOCKETS_INIT_FAILED         103
 #define IDR_MAINFRAME                   128
 #define IDC_EDT_SCAN_SN                 1000

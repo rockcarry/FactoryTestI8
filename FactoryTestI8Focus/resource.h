@@ -2,7 +2,7 @@
 // Microsoft Visual C++ generated include file.
 // Used by FactoryTestI8Focus.rc
 //
-#define IDD_FACTORYTESTFOCUS_DIALOG     102
+#define IDD_FACTORYTESTI8FOCUS_DIALOG   102
 #define IDP_SOCKETS_INIT_FAILED         103
 #define IDR_MAINFRAME                   128
 #define IDC_EDT_SCAN_SN                 1000

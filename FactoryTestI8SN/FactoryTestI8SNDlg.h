@@ -12,7 +12,7 @@ public:
     CFactoryTestI8SNDlg(CWnd* pParent = NULL);    // 标准构造函数
 
 // 对话框数据
-    enum { IDD = IDD_FACTORYTESTI8_DIALOG };
+    enum { IDD = IDD_FACTORYTESTI8SN_DIALOG };
 
 protected:
     virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持

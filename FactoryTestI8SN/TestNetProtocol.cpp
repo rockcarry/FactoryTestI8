@@ -434,9 +434,14 @@ int tnp_test_spkmic_manual(void *ctxt)
         return -1;
     }
 
-    if (recv(context->sock, (char*)&data, sizeof(data), 0) == -1) {
-        log_printf("tnp_test_spkmic_manual recv tcp data failed !\n");
-        return -1;
+    for (int i=0; i<10; i++) {
+        if (context->test_status & TNP_TEST_CANCEL) break;
+        if (recv(context->sock, (char*)&data, sizeof(data), 0) == -1) {
+            log_printf("tnp_test_spkmic_manual recv tcp data failed ! retry %d\n", i);
+            continue;
+        } else {
+            break;
+        }
     }
 
     return 0;

@@ -217,9 +217,9 @@ int tnp_connect(void *ctxt, struct in_addr addr)
     }
 
     context->sock = socket(AF_INET, SOCK_STREAM, 0);
-//  int opt;
-//  opt = TNP_TCP_SENDTIMEO; setsockopt(context->sock, SOL_SOCKET, SO_SNDTIMEO, (char*)&opt, sizeof(int));
-//  opt = TNP_TCP_RECVTIMEO; setsockopt(context->sock, SOL_SOCKET, SO_RCVTIMEO, (char*)&opt, sizeof(int));
+    int opt;
+    opt = TNP_TCP_SENDTIMEO; setsockopt(context->sock, SOL_SOCKET, SO_SNDTIMEO, (char*)&opt, sizeof(int));
+    opt = TNP_TCP_RECVTIMEO; setsockopt(context->sock, SOL_SOCKET, SO_RCVTIMEO, (char*)&opt, sizeof(int));
 
     struct sockaddr_in sockaddr;
     sockaddr.sin_family = AF_INET;
@@ -434,9 +434,14 @@ int tnp_test_spkmic_manual(void *ctxt)
         return -1;
     }
 
-    if (recv(context->sock, (char*)&data, sizeof(data), 0) == -1) {
-        log_printf("tnp_test_spkmic_manual recv tcp data failed !\n");
-        return -1;
+    for (int i=0; i<10; i++) {
+        if (context->test_status & TNP_TEST_CANCEL) break;
+        if (recv(context->sock, (char*)&data, sizeof(data), 0) == -1) {
+            log_printf("tnp_test_spkmic_manual recv tcp data failed ! retry %d\n", i);
+            continue;
+        } else {
+            break;
+        }
     }
 
     return 0;
