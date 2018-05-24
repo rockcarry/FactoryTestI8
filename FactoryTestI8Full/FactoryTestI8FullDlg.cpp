@@ -450,7 +450,7 @@ void CFactoryTestI8FullDlg::OnEnChangeEdtScanSn()
             }
 
             // set timeout to 6s
-            tnp_set_timeout(m_pTnpContext, 6000);
+            tnp_set_timeout(m_pTnpContext, 10000);
 
             // refresh camera
             OnBnClickedBtnRefreshCamera();
@@ -504,7 +504,7 @@ LRESULT CFactoryTestI8FullDlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
         }
 
         // set timeout to 6s
-        tnp_set_timeout(m_pTnpContext, 6000);
+        tnp_set_timeout(m_pTnpContext, 10000);
 
         // refresh camera
         OnBnClickedBtnRefreshCamera();
@@ -728,6 +728,7 @@ void CFactoryTestI8FullDlg::OnBnClickedBtnUploadReport()
     if (strTestResult.Compare("OK") == 0) {
         tnp_test_done(m_pTnpContext);
     }
+    tnp_set_timeout(m_pTnpContext, 3000);
 #endif
 }
 

@@ -134,7 +134,7 @@ void CFactoryTestI8SNDlg::DoDeviceTest()
     m_bResultDone = FALSE;
 
     // set timeout to 6s
-    tnp_set_timeout(m_pTnpContext, 6000);
+    tnp_set_timeout(m_pTnpContext, 10000);
 
     if (!m_bTestCancel) {
         m_strTestInfo   = "ÕýÔÚÐ´ºÅ ...\r\n";
