@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "FactoryTestI8Focus.h"
 #include "FactoryTestI8FocusDlg.h"
+#include "TestNetProtocol.h"
 #include "BenQGuruDll.h"
 #include "log.h"
 
@@ -12,6 +13,7 @@
 #endif
 
 #define ENABLE_MES_SYSTEM   TRUE
+#define TIMER_ID_SCAN_NEXT  1
 
 static void get_app_dir(char *path, int size)
 {
@@ -90,6 +92,8 @@ CFactoryTestI8FocusDlg::CFactoryTestI8FocusDlg(CWnd* pParent /*=NULL*/)
     , m_strScanSN(_T(""))
     , m_strCurSN(_T(""))
     , m_strTestInfo(_T(""))
+    , m_strDeviceIP(_T("no device"))
+    , m_pTnpContext(NULL)
 {
     m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -102,6 +106,7 @@ void CFactoryTestI8FocusDlg::DoDataExchange(CDataExchange* pDX)
     DDX_Text(pDX, IDC_EDT_SCAN_SN, m_strScanSN);
     DDX_Text(pDX, IDC_EDT_CUR_SN, m_strCurSN);
     DDX_Text(pDX, IDC_TXT_TEST_INFO, m_strTestInfo);
+    DDX_Text(pDX, IDC_TXT_DEVICE_IP, m_strDeviceIP);
 }
 
 BEGIN_MESSAGE_MAP(CFactoryTestI8FocusDlg, CDialog)
@@ -114,6 +119,8 @@ BEGIN_MESSAGE_MAP(CFactoryTestI8FocusDlg, CDialog)
     ON_EN_CHANGE(IDC_EDT_SCAN_SN, &CFactoryTestI8FocusDlg::OnEnChangeEdtScanSn)
     ON_BN_CLICKED(IDC_BTN_TEST_RESULT, &CFactoryTestI8FocusDlg::OnBnClickedBtnTestResult)
     ON_BN_CLICKED(IDC_BTN_UPLOAD, &CFactoryTestI8FocusDlg::OnBnClickedBtnUpload)
+    ON_MESSAGE(WM_TNP_DEVICE_FOUND, &CFactoryTestI8FocusDlg::OnTnpDeviceFound)
+    ON_MESSAGE(WM_TNP_DEVICE_LOST , &CFactoryTestI8FocusDlg::OnTnpDeviceLost )
 END_MESSAGE_MAP()
 
 
@@ -164,6 +171,8 @@ BOOL CFactoryTestI8FocusDlg::OnInitDialog()
     m_bSnScaned         = FALSE;
     m_nFocusTestResult  = -1;
     UpdateData(FALSE);
+
+    m_pTnpContext = tnp_init(GetSafeHwnd());
     return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -171,6 +180,7 @@ void CFactoryTestI8FocusDlg::OnDestroy()
 {
     CDialog::OnDestroy();
 
+    tnp_free(m_pTnpContext);
     log_done();
 
 #if ENABLE_MES_SYSTEM
@@ -311,6 +321,38 @@ BOOL CFactoryTestI8FocusDlg::PreTranslateMessage(MSG *pMsg)
     return CDialog::PreTranslateMessage(pMsg);
 }
 
+
+LRESULT CFactoryTestI8FocusDlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
+{
+    if (strcmp(m_strDeviceIP, "no device") != 0) {
+        log_printf("already have a device connected !\n");
+        return 0;
+    }
+
+    struct in_addr addr;
+    addr.S_un.S_addr = (u_long)lParam;
+    m_strDeviceIP = inet_ntoa(addr);
+    UpdateData(FALSE);
+    return 0;
+}
+
+LRESULT CFactoryTestI8FocusDlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
+{
+    struct in_addr addr;
+    addr.S_un.S_addr = (u_long)lParam;
+    if (strcmp(m_strDeviceIP, inet_ntoa(addr)) != 0) {
+        log_printf("this is not current connected device lost !\n");
+        return 0;
+    }
+
+    m_strDeviceIP = "no device";
+    m_bSnScaned   = FALSE;
+    m_nFocusTestResult = -1;
+    GetDlgItem(IDC_BTN_TEST_RESULT)->SetWindowText("NG");
+    UpdateData(FALSE);
+    return 0;
+}
+
 void CFactoryTestI8FocusDlg::OnBnClickedBtnTestResult()
 {
     if (!m_bSnScaned) return;
@@ -337,14 +379,21 @@ void CFactoryTestI8FocusDlg::OnBnClickedBtnUpload()
         strTestResult = "OK";
     } else {
         strTestResult = "NG";
+        strErrCode    = "L008";
     }
     strMO = m_strGongDan;
     if (m_bMesLoginOK) {
         BOOL ret = MesDLL::GetInstance().SetMobileDataWithMO(m_strCurSN, CString(m_strResource), CString(m_strUserName), strTestResult, strErrCode, strMO, strErrMsg);
         if (!ret) {
-            m_strTestInfo = "上传测试结果失败！";
+            if (strErrMsg.Find("CS_Route_Failed_FirstOP") != -1) {
+                m_strTestInfo = "重复采集";
+            } else {
+                m_strTestInfo = "上传测试结果失败！";
+            }
+            AfxMessageBox(m_strTestInfo);
         } else {
-            m_strTestInfo = "请扫描条码...";
+            m_strTestInfo = "上传测试结果成功！";
+            SetTimer(TIMER_ID_SCAN_NEXT, 2000, NULL);
         }
     }
 #endif
@@ -354,3 +403,16 @@ void CFactoryTestI8FocusDlg::OnBnClickedBtnUpload()
     GetDlgItem(IDC_BTN_TEST_RESULT)->SetWindowText("NG");
     UpdateData(FALSE);
 }
+
+void CFactoryTestI8FocusDlg::OnTimer(UINT_PTR nIDEvent)
+{
+    switch (nIDEvent) {
+    case TIMER_ID_SCAN_NEXT:
+        KillTimer(TIMER_ID_SCAN_NEXT);
+        m_strTestInfo = "请扫描条码...";
+        UpdateData(FALSE);
+        break;
+    }
+    CDialog::OnTimer(nIDEvent);
+}
+

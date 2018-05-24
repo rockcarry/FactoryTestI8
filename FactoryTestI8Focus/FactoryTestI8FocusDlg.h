@@ -30,8 +30,11 @@ protected:
     afx_msg void OnClose();
     afx_msg void OnPaint();
     afx_msg void OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct);
+    afx_msg void OnTimer(UINT_PTR nIDEvent);
     afx_msg HBRUSH  OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
     afx_msg HCURSOR OnQueryDragIcon();
+    afx_msg LRESULT OnTnpDeviceFound(WPARAM wParam, LPARAM lParam);
+    afx_msg LRESULT OnTnpDeviceLost (WPARAM wParam, LPARAM lParam);
     afx_msg void OnEnChangeEdtScanSn();
     afx_msg void OnBnClickedBtnTestResult();
     afx_msg void OnBnClickedBtnUpload();
@@ -43,6 +46,9 @@ private:
     CString m_strTestInfo;
     CString m_strScanSN;
     CString m_strCurSN;
+    CString m_strDeviceIP;
+
+    void   *m_pTnpContext;
     char    m_strUserName  [32];
     char    m_strPassWord  [32];
     char    m_strResource  [32];

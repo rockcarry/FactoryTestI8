@@ -10,6 +10,7 @@
 #define IDC_BTN_TEST_RESULT             1002
 #define IDC_BTN_UPLOAD                  1003
 #define IDC_TXT_TEST_INFO               1004
+#define IDC_TXT_DEVICE_IP               1005
 #define IDC_TXT_MES_RESOURCE            1007
 #define IDC_TXT_MES_LOGIN               1008
 
