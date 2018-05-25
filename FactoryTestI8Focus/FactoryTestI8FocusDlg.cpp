@@ -379,17 +379,23 @@ void CFactoryTestI8FocusDlg::OnBnClickedBtnUpload()
         strTestResult = "OK";
     } else {
         strTestResult = "NG";
-        strErrCode    = "L008";
+        strErrCode    = "L011";
     }
     strMO = m_strGongDan;
     if (m_bMesLoginOK) {
         BOOL ret = MesDLL::GetInstance().SetMobileDataWithMO(m_strCurSN, CString(m_strResource), CString(m_strUserName), strTestResult, strErrCode, strMO, strErrMsg);
         if (!ret) {
             if (strErrMsg.Find("CS_Route_Failed_FirstOP") != -1) {
-                m_strTestInfo = "重复采集";
+                m_strTestInfo = "资源码错误！";
+            }
+            else if (strErrMsg.Find("CS_ID_Has_Already_Belong_To_This_MO") != -1) {
+                m_strTestInfo = "重复采集！";
+            } else if (strErrMsg.Find("CS_MO_NOT_EXIST") != -1) {
+                m_strTestInfo = "工单错误！";
             } else {
                 m_strTestInfo = "上传测试结果失败！";
             }
+//          AfxMessageBox(strErrMsg);
             AfxMessageBox(m_strTestInfo);
         } else {
             m_strTestInfo = "上传测试结果成功！";
