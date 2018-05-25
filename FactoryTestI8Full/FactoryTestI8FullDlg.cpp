@@ -160,14 +160,16 @@ BEGIN_MESSAGE_MAP(CFactoryTestI8FullDlg, CDialog)
     ON_MESSAGE(WM_TNP_DEVICE_LOST , &CFactoryTestI8FullDlg::OnTnpDeviceLost )
     ON_BN_CLICKED(IDC_BTN_LED_RESULT, &CFactoryTestI8FullDlg::OnBnClickedBtnLedResult)
     ON_BN_CLICKED(IDC_BTN_CAMERA_RESULT, &CFactoryTestI8FullDlg::OnBnClickedBtnCameraResult)
+    ON_BN_CLICKED(IDC_BTN_MIC_RESULT, &CFactoryTestI8FullDlg::OnBnClickedBtnMicResult)
+    ON_BN_CLICKED(IDC_BTN_SPK_RESULT, &CFactoryTestI8FullDlg::OnBnClickedBtnSpkResult)
     ON_BN_CLICKED(IDC_BTN_IR_RESULT, &CFactoryTestI8FullDlg::OnBnClickedBtnIrResult)
-    ON_BN_CLICKED(IDC_BTN_SPKMIC_RESULT, &CFactoryTestI8FullDlg::OnBnClickedBtnSpkmicResult)
+    ON_BN_CLICKED(IDC_BTN_SPK_TEST, &CFactoryTestI8FullDlg::OnBnClickedBtnSpkTest)
     ON_BN_CLICKED(IDC_BTN_IR_TEST, &CFactoryTestI8FullDlg::OnBnClickedBtnIrTest)
-    ON_BN_CLICKED(IDC_BTN_SPKMIC_TEST, &CFactoryTestI8FullDlg::OnBnClickedBtnSpkmicTest)
     ON_BN_CLICKED(IDC_BTN_KEY_TEST, &CFactoryTestI8FullDlg::OnBnClickedBtnKeyTest)
     ON_BN_CLICKED(IDC_BTN_UPLOAD_REPORT, &CFactoryTestI8FullDlg::OnBnClickedBtnUploadReport)
-    ON_BN_CLICKED(IDC_BTN_REFRESH_CAMERA, &CFactoryTestI8FullDlg::OnBnClickedBtnRefreshCamera)
     ON_WM_TIMER()
+    ON_WM_LBUTTONDBLCLK()
+    ON_WM_SIZE()
 END_MESSAGE_MAP()
 
 
@@ -244,7 +246,8 @@ BOOL CFactoryTestI8FullDlg::OnInitDialog()
     m_nLedTestResult    = -1;
     m_nCameraTestResult = -1;
     m_nIRTestResult     = -1;
-    m_nSpkMicTestResult = -1;
+    m_nSpkTestResult    = -1;
+    m_nMicTestResult    = -1;
     m_nKeyTestResult    = -1;
     m_nLSensorTestResult= -1;
     m_nSnTestResult     = -1;
@@ -260,7 +263,8 @@ void CFactoryTestI8FullDlg::OnDestroy()
 {
     CDialog::OnDestroy();
 
-    tnp_disconnect(m_pTnpContext);
+    tnp_test_cancel(m_pTnpContext, TRUE);
+    tnp_disconnect (m_pTnpContext);
     tnp_free(m_pTnpContext);
     log_done();
 
@@ -320,8 +324,6 @@ HBRUSH CFactoryTestI8FullDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
     HBRUSH hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
     switch (pWnd->GetDlgCtrlID()) {
-    case IDC_STATIC_VIDEO:
-        return (HBRUSH)GetStockObject(NULL_BRUSH);
     case IDC_TXT_MES_LOGIN:
         pDC->SetTextColor(m_bMesLoginOK ? RGB(0, 180, 0) : RGB(255, 0, 0));
         break;
@@ -336,7 +338,8 @@ int CFactoryTestI8FullDlg::GetBackColorByCtrlId(int id)
     case IDC_BTN_LED_RESULT:    result = m_nLedTestResult;    break;
     case IDC_BTN_IR_RESULT:     result = m_nIRTestResult;     break;
     case IDC_BTN_CAMERA_RESULT: result = m_nCameraTestResult; break;
-    case IDC_BTN_SPKMIC_RESULT: result = m_nSpkMicTestResult; break;
+    case IDC_BTN_SPK_RESULT:    result = m_nSpkTestResult;    break;
+    case IDC_BTN_MIC_RESULT:    result = m_nMicTestResult;    break;
     case IDC_BTN_KEY_RESULT:    result = m_nKeyTestResult;    break;
     case IDC_BTN_LSENSOR_RESULT:result = m_nLSensorTestResult;break;
     case IDC_BTN_SN_RESULT:     result = m_nSnTestResult;     break;
@@ -357,7 +360,8 @@ void CFactoryTestI8FullDlg::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemSt
     case IDC_BTN_LED_RESULT:
     case IDC_BTN_IR_RESULT:
     case IDC_BTN_CAMERA_RESULT:
-    case IDC_BTN_SPKMIC_RESULT:
+    case IDC_BTN_SPK_RESULT:
+    case IDC_BTN_MIC_RESULT:
     case IDC_BTN_KEY_RESULT:
     case IDC_BTN_LSENSOR_RESULT:
     case IDC_BTN_SN_RESULT:
@@ -384,12 +388,12 @@ void CFactoryTestI8FullDlg::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemSt
 
 void CFactoryTestI8FullDlg::OnEnChangeEdtScanSn()
 {
-    // TODO:  If this is a RICHEDIT control, the control will not
+    // TODO: If this is a RICHEDIT control, the control will not
     // send this notification unless you override the CDialog::OnInitDialog()
     // function and call CRichEditCtrl().SetEventMask()
     // with the ENM_CHANGE flag ORed into the mask.
 
-    // TODO:  Add your control notification handler code here
+    // TODO: Add your control notification handler code here
     UpdateData(TRUE);
     if (m_strScanSN.GetLength() >= 15) {
         m_strCurSN  = m_strScanSN;
@@ -453,7 +457,8 @@ void CFactoryTestI8FullDlg::OnEnChangeEdtScanSn()
             tnp_set_timeout(m_pTnpContext, 10000);
 
             // refresh camera
-            OnBnClickedBtnRefreshCamera();
+            m_bPlayerOpenOK = FALSE;
+            SetTimer(TIMER_ID_OPEN_PLAYER, 0, NULL);
         } else {
             m_bSnScaned = TRUE;
             m_strTestInfo = "请打开设备，进入测试模式。\r\n";
@@ -507,7 +512,8 @@ LRESULT CFactoryTestI8FullDlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
         tnp_set_timeout(m_pTnpContext, 10000);
 
         // refresh camera
-        OnBnClickedBtnRefreshCamera();
+        m_bPlayerOpenOK = FALSE;
+        SetTimer(TIMER_ID_OPEN_PLAYER, 0, NULL);;
         UpdateData(FALSE);
     }
 
@@ -546,7 +552,8 @@ LRESULT CFactoryTestI8FullDlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
     m_nLedTestResult    = -1;
     m_nCameraTestResult = -1;
     m_nIRTestResult     = -1;
-    m_nSpkMicTestResult = -1;
+    m_nSpkTestResult    = -1;
+    m_nMicTestResult    = -1;
     m_nKeyTestResult    = -1;
     m_nLSensorTestResult= -1;
     m_nSnTestResult     = -1;
@@ -559,7 +566,8 @@ LRESULT CFactoryTestI8FullDlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
     GetDlgItem(IDC_BTN_LED_RESULT    )->SetWindowText("NG");
     GetDlgItem(IDC_BTN_CAMERA_RESULT )->SetWindowText("NG");
     GetDlgItem(IDC_BTN_IR_RESULT     )->SetWindowText("NG");
-    GetDlgItem(IDC_BTN_SPKMIC_RESULT )->SetWindowText("NG");
+    GetDlgItem(IDC_BTN_SPK_RESULT    )->SetWindowText("NG");
+    GetDlgItem(IDC_BTN_MIC_RESULT    )->SetWindowText("NG");
     GetDlgItem(IDC_BTN_KEY_RESULT    )->SetWindowText("NG");
     GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText("NG");
     GetDlgItem(IDC_BTN_SN_RESULT     )->SetWindowText("NG");
@@ -588,6 +596,11 @@ BOOL CFactoryTestI8FullDlg::PreTranslateMessage(MSG *pMsg)
             log_printf("MSG_OPEN_DONE\n");
             m_bPlayerOpenOK = TRUE;
             player_play(m_pFanPlayer);
+            RECT rect = {0};
+            int  mode = VIDEO_MODE_STRETCHED;
+            GetClientRect(&rect);
+            player_setrect (m_pFanPlayer, 0, 218, 68, rect.right - 218, rect.bottom - 68);
+            player_setparam(m_pFanPlayer, PARAM_VIDEO_MODE, &mode);
         }
     }
     return CDialog::PreTranslateMessage(pMsg);
@@ -615,6 +628,28 @@ void CFactoryTestI8FullDlg::OnBnClickedBtnCameraResult()
     }
 }
 
+void CFactoryTestI8FullDlg::OnBnClickedBtnMicResult()
+{
+    if (m_nMicTestResult != 1) {
+        m_nMicTestResult = 1;
+        GetDlgItem(IDC_BTN_MIC_RESULT)->SetWindowText("PASS");
+    } else {
+        m_nMicTestResult = 0;
+        GetDlgItem(IDC_BTN_MIC_RESULT)->SetWindowText("NG");
+    }
+}
+
+void CFactoryTestI8FullDlg::OnBnClickedBtnSpkResult()
+{
+    if (m_nSpkTestResult != 1) {
+        m_nSpkTestResult = 1;
+        GetDlgItem(IDC_BTN_SPK_RESULT)->SetWindowText("PASS");
+    } else {
+        m_nSpkTestResult = 0;
+        GetDlgItem(IDC_BTN_SPK_RESULT)->SetWindowText("NG");
+    }
+}
+
 void CFactoryTestI8FullDlg::OnBnClickedBtnIrResult()
 {
     if (m_nIRTestResult != 1) {
@@ -626,53 +661,45 @@ void CFactoryTestI8FullDlg::OnBnClickedBtnIrResult()
     }
 }
 
-void CFactoryTestI8FullDlg::OnBnClickedBtnSpkmicResult()
+void CFactoryTestI8FullDlg::OnBnClickedBtnSpkTest()
 {
-    if (m_nSpkMicTestResult != 1) {
-        m_nSpkMicTestResult = 1;
-        GetDlgItem(IDC_BTN_SPKMIC_RESULT)->SetWindowText("PASS");
-    } else {
-        m_nSpkMicTestResult = 0;
-        GetDlgItem(IDC_BTN_SPKMIC_RESULT)->SetWindowText("NG");
+    GetDlgItem(IDC_BTN_IR_TEST )->EnableWindow(FALSE);
+    GetDlgItem(IDC_BTN_SPK_TEST)->EnableWindow(FALSE);
+    GetDlgItem(IDC_BTN_KEY_TEST)->EnableWindow(FALSE);
+    if (tnp_test_spkonly_manual(m_pTnpContext, !m_bSpkOnOffState) == 0) {
+        m_bSpkOnOffState = !m_bSpkOnOffState;
+        GetDlgItem(IDC_BTN_IR_TEST)->SetWindowText(m_bSpkOnOffState ? "喇叭-已开" : "喇叭-已关");
     }
+    GetDlgItem(IDC_BTN_IR_TEST )->EnableWindow(TRUE );
+    GetDlgItem(IDC_BTN_SPK_TEST)->EnableWindow(TRUE );
+    GetDlgItem(IDC_BTN_KEY_TEST)->EnableWindow(TRUE );
 }
 
 void CFactoryTestI8FullDlg::OnBnClickedBtnIrTest()
 {
-    GetDlgItem(IDC_BTN_IR_TEST    )->EnableWindow(FALSE);
-    GetDlgItem(IDC_BTN_SPKMIC_TEST)->EnableWindow(FALSE);
-    GetDlgItem(IDC_BTN_KEY_TEST   )->EnableWindow(FALSE);
+    GetDlgItem(IDC_BTN_IR_TEST )->EnableWindow(FALSE);
+    GetDlgItem(IDC_BTN_SPK_TEST)->EnableWindow(FALSE);
+    GetDlgItem(IDC_BTN_KEY_TEST)->EnableWindow(FALSE);
     if (tnp_test_ir_and_filter(m_pTnpContext, !m_bIrOnOffState) == 0) {
         m_bIrOnOffState = !m_bIrOnOffState;
         GetDlgItem(IDC_BTN_IR_TEST)->SetWindowText(m_bIrOnOffState ? "红外灯-已开" : "红外灯-已关");
     }
-    GetDlgItem(IDC_BTN_IR_TEST    )->EnableWindow(TRUE );
-    GetDlgItem(IDC_BTN_SPKMIC_TEST)->EnableWindow(TRUE );
-    GetDlgItem(IDC_BTN_KEY_TEST   )->EnableWindow(TRUE );
-}
-
-void CFactoryTestI8FullDlg::OnBnClickedBtnSpkmicTest()
-{
-    GetDlgItem(IDC_BTN_IR_TEST    )->EnableWindow(FALSE);
-    GetDlgItem(IDC_BTN_SPKMIC_TEST)->EnableWindow(FALSE);
-    GetDlgItem(IDC_BTN_KEY_TEST   )->EnableWindow(FALSE);
-    tnp_test_spkmic_manual(m_pTnpContext);
-    GetDlgItem(IDC_BTN_IR_TEST    )->EnableWindow(TRUE );
-    GetDlgItem(IDC_BTN_SPKMIC_TEST)->EnableWindow(TRUE );
-    GetDlgItem(IDC_BTN_KEY_TEST   )->EnableWindow(TRUE );
+    GetDlgItem(IDC_BTN_IR_TEST )->EnableWindow(TRUE );
+    GetDlgItem(IDC_BTN_SPK_TEST)->EnableWindow(TRUE );
+    GetDlgItem(IDC_BTN_KEY_TEST)->EnableWindow(TRUE );
 }
 
 void CFactoryTestI8FullDlg::OnBnClickedBtnKeyTest()
 {
-    GetDlgItem(IDC_BTN_IR_TEST    )->EnableWindow(FALSE);
-    GetDlgItem(IDC_BTN_SPKMIC_TEST)->EnableWindow(FALSE);
-    GetDlgItem(IDC_BTN_KEY_TEST   )->EnableWindow(FALSE);
+    GetDlgItem(IDC_BTN_IR_TEST )->EnableWindow(FALSE);
+    GetDlgItem(IDC_BTN_SPK_TEST)->EnableWindow(FALSE);
+    GetDlgItem(IDC_BTN_KEY_TEST)->EnableWindow(FALSE);
     if (tnp_test_button(m_pTnpContext, &m_nKeyTestResult) == 0) {
         GetDlgItem(IDC_BTN_KEY_RESULT )->SetWindowText(m_nKeyTestResult ? "PASS" : "NG");
     }
-    GetDlgItem(IDC_BTN_IR_TEST    )->EnableWindow(TRUE );
-    GetDlgItem(IDC_BTN_SPKMIC_TEST)->EnableWindow(TRUE );
-    GetDlgItem(IDC_BTN_KEY_TEST   )->EnableWindow(TRUE );
+    GetDlgItem(IDC_BTN_IR_TEST )->EnableWindow(TRUE );
+    GetDlgItem(IDC_BTN_SPK_TEST)->EnableWindow(TRUE );
+    GetDlgItem(IDC_BTN_KEY_TEST)->EnableWindow(TRUE );
 }
 
 void CFactoryTestI8FullDlg::OnBnClickedBtnUploadReport()
@@ -690,25 +717,28 @@ void CFactoryTestI8FullDlg::OnBnClickedBtnUploadReport()
     if (m_nIRTestResult != 1) {
         strErrCode += "L003,";
     }
-    if (m_nSpkMicTestResult != 1) {
+    if (m_nSpkTestResult != 1) {
         strErrCode += "L004,";
     }
-    if (m_nKeyTestResult != 1) {
+    if (m_nMicTestResult != 1) {
         strErrCode += "L005,";
     }
-    if (m_nLSensorTestResult != 1) {
+    if (m_nKeyTestResult != 1) {
         strErrCode += "L006,";
     }
-    if (m_nSnTestResult != 1) {
+    if (m_nLSensorTestResult != 1) {
         strErrCode += "L007,";
     }
-    if (m_nMacTestResult != 1) {
+    if (m_nSnTestResult != 1) {
         strErrCode += "L008,";
     }
-    if (m_nVersionTestResult != 1) {
+    if (m_nMacTestResult != 1) {
         strErrCode += "L009,";
     }
-    if (  m_nLedTestResult == 1 && m_nCameraTestResult == 1 && m_nIRTestResult == 1 && m_nSpkMicTestResult == 1
+    if (m_nVersionTestResult != 1) {
+        strErrCode += "L010,";
+    }
+    if (  m_nLedTestResult == 1 && m_nCameraTestResult == 1 && m_nIRTestResult == 1 && m_nSpkTestResult == 1 && m_nMicTestResult == 1
        && m_nKeyTestResult == 1 && m_nLSensorTestResult == 1 && m_nSnTestResult == 1 && m_nMacTestResult == 1 && m_nVersionTestResult == 1) {
         strTestResult = "OK";
     } else {
@@ -732,12 +762,6 @@ void CFactoryTestI8FullDlg::OnBnClickedBtnUploadReport()
 #endif
 }
 
-void CFactoryTestI8FullDlg::OnBnClickedBtnRefreshCamera()
-{
-    m_pFanPlayer = FALSE;
-    SetTimer(TIMER_ID_OPEN_PLAYER, 0, NULL);
-}
-
 void CFactoryTestI8FullDlg::OnTimer(UINT_PTR nIDEvent)
 {
     switch (nIDEvent) {
@@ -756,11 +780,28 @@ void CFactoryTestI8FullDlg::OnTimer(UINT_PTR nIDEvent)
                 sprintf(url, "rtsp://%s:8554//main", m_strDeviceIP);
                 PLAYER_INIT_PARAMS params = {0};
                 params.init_timeout = 10000;
-                m_pFanPlayer = player_open(url, GetDlgItem(IDC_STATIC_VIDEO)->GetSafeHwnd(), &params);
+                m_pFanPlayer = player_open(url, GetSafeHwnd(), &params);
             }
             //-- reopen fanplayer to play rtsp stream
         }
         break;
     }
     CDialog::OnTimer(nIDEvent);
+}
+
+void CFactoryTestI8FullDlg::OnSize(UINT nType, int cx, int cy)
+{
+    CDialog::OnSize(nType, cx, cy);
+    if (nType != SIZE_MINIMIZED) {
+        RECT rect = {0};
+        GetClientRect(&rect);
+        player_setrect (m_pFanPlayer, 0, 218, 68, rect.right - 218, rect.bottom - 68);
+    }
+}
+
+void CFactoryTestI8FullDlg::OnLButtonDblClk(UINT nFlags, CPoint point)
+{
+    m_bPlayerOpenOK = FALSE;
+    SetTimer(TIMER_ID_OPEN_PLAYER, 0, NULL);
+    CDialog::OnLButtonDblClk(nFlags, point);
 }

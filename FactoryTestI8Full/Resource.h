@@ -17,13 +17,13 @@
 #define IDC_BTN_IR_TEST                 1006
 #define IDC_TXT_MES_RESOURCE            1007
 #define IDC_TXT_MES_LOGIN               1008
-#define IDC_BTN_SPKMIC_TEST             1009
+#define IDC_BTN_SPK_TEST                1009
 #define IDC_BTN_KEY_TEST                1010
 #define IDC_BTN_LED_RESULT              1011
 #define IDC_BTN_UPLOAD_REPORT           1012
 #define IDC_BTN_IR_RESULT               1013
 #define IDC_BTN_CAMERA_RESULT           1014
-#define IDC_BTN_SPKMIC_RESULT           1015
+#define IDC_BTN_SPK_RESULT              1015
 #define IDC_BTN_KEY_RESULT              1016
 #define IDC_BTN_SN_TEST                 1017
 #define IDC_BTN_SN_RESULT               1018
@@ -32,11 +32,11 @@
 #define IDC_BTN_VERSION_TEST            1021
 #define IDC_BTN_VERSION_RESULT          1022
 #define IDC_TXT_TEST_INFO               1023
-#define IDC_STATIC_VIDEO                1024
 #define IDC_BTN_LSENSOR_TEST            1025
 #define IDC_BTN_LSENSOR_RESULT          1026
 #define IDC_TXT_SN_MAC_VER              1027
-#define IDC_BTN_REFRESH_CAMERA          1028
+#define IDC_BTN_MIC_TEST                1029
+#define IDC_BTN_MIC_RESULT              1030
 
 // Next default values for new objects
 // 

@@ -32,6 +32,8 @@ protected:
     afx_msg void OnPaint();
     afx_msg void OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct);
     afx_msg void OnTimer(UINT_PTR nIDEvent);
+    afx_msg void OnSize(UINT nType, int cx, int cy);
+    afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
     afx_msg HBRUSH  OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
     afx_msg HCURSOR OnQueryDragIcon();
     afx_msg LRESULT OnTnpUpdateUI   (WPARAM wParam, LPARAM lParam);
@@ -40,13 +42,13 @@ protected:
     afx_msg void OnEnChangeEdtScanSn();
     afx_msg void OnBnClickedBtnLedResult();
     afx_msg void OnBnClickedBtnCameraResult();
+    afx_msg void OnBnClickedBtnMicResult();
+    afx_msg void OnBnClickedBtnSpkResult();
     afx_msg void OnBnClickedBtnIrResult();
-    afx_msg void OnBnClickedBtnSpkmicResult();
+    afx_msg void OnBnClickedBtnSpkTest();
     afx_msg void OnBnClickedBtnIrTest();
-    afx_msg void OnBnClickedBtnSpkmicTest();
     afx_msg void OnBnClickedBtnKeyTest();
     afx_msg void OnBnClickedBtnUploadReport();
-    afx_msg void OnBnClickedBtnRefreshCamera();
     DECLARE_MESSAGE_MAP()
 
 private:
@@ -71,12 +73,14 @@ private:
     BOOL    m_bMesLoginOK;
     BOOL    m_bConnectState;
     BOOL    m_bSnScaned;
+    BOOL    m_bSpkOnOffState;
     BOOL    m_bIrOnOffState;
     BOOL    m_bPlayerOpenOK;
     int     m_nLedTestResult;
     int     m_nCameraTestResult;
     int     m_nIRTestResult;
-    int     m_nSpkMicTestResult;
+    int     m_nMicTestResult;
+    int     m_nSpkTestResult;
     int     m_nKeyTestResult;
     int     m_nLSensorTestResult;
     int     m_nSnTestResult;
