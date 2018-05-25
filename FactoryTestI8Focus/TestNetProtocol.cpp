@@ -415,7 +415,7 @@ int tnp_test_ir_and_filter(void *ctxt, int onoff)
     return 0;
 }
 
-int tnp_test_spkmic_manual(void *ctxt)
+int tnp_test_spkonly_manual(void *ctxt, int onoff)
 {
     TNPCONTEXT *context = (TNPCONTEXT*)ctxt;
     if (!ctxt) return -1;
@@ -427,7 +427,7 @@ int tnp_test_spkmic_manual(void *ctxt)
 
     FACTORYTEST_DATA data = {0};
     data.MAGIC   = SIG_MAGIC;
-    data.testSPK = data.testMic = '2';
+    data.testSPK = data.testMic = onoff ? '2' : '3';
 
     if (send(context->sock, (const char*)&data, sizeof(data), 0) == -1) {
         log_printf("tnp_test_spkmic_manual send tcp data failed !\n");
