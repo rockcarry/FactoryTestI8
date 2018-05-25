@@ -668,7 +668,7 @@ void CFactoryTestI8FullDlg::OnBnClickedBtnSpkTest()
     GetDlgItem(IDC_BTN_KEY_TEST)->EnableWindow(FALSE);
     if (tnp_test_spkonly_manual(m_pTnpContext, !m_bSpkOnOffState) == 0) {
         m_bSpkOnOffState = !m_bSpkOnOffState;
-        GetDlgItem(IDC_BTN_IR_TEST)->SetWindowText(m_bSpkOnOffState ? "喇叭-已开" : "喇叭-已关");
+        GetDlgItem(IDC_BTN_SPK_TEST)->SetWindowText(m_bSpkOnOffState ? "喇叭-已开" : "喇叭-已关");
     }
     GetDlgItem(IDC_BTN_IR_TEST )->EnableWindow(TRUE );
     GetDlgItem(IDC_BTN_SPK_TEST)->EnableWindow(TRUE );
