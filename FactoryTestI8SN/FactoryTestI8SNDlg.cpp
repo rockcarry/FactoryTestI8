@@ -431,7 +431,8 @@ void CFactoryTestI8SNDlg::OnDestroy()
 {
     CDialog::OnDestroy();
 
-    tnp_disconnect(m_pTnpContext);
+    tnp_test_cancel(m_pTnpContext, TRUE);
+    tnp_disconnect (m_pTnpContext);
     tnp_free(m_pTnpContext);
     log_done();
 
