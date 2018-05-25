@@ -116,12 +116,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "爱培科科技股份有限公司"
             VALUE "FileDescription", "工厂测试工具 I8-FOCUS 验焦测试"
-            VALUE "FileVersion", "1.0.0.1"
+            VALUE "FileVersion", "1.0.0.1 20180528"
             VALUE "InternalName", "FactoryTestI8Focus.exe"
             VALUE "LegalCopyright", "(C) <APICAL>。保留所有权利。"
             VALUE "OriginalFilename", "FactoryTestI8Focus.exe"
             VALUE "ProductName", "工厂测试工具 I8-FOCUS"
-            VALUE "ProductVersion", "1.0.0.1"
+            VALUE "ProductVersion", "1.0.0.1 20180528"
         END
     END
     BLOCK "VarFileInfo"

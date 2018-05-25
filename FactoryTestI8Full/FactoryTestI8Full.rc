@@ -118,7 +118,7 @@ BEGIN
     LTEXT           "资源号：",IDC_STATIC,8,9,39,10
     LTEXT           "",IDC_TXT_MES_LOGIN,50,27,50,10
     LTEXT           "登录状态：",IDC_STATIC,8,27,39,10
-    LTEXT           "工厂测试工具-I8-FULL v1.0.0 20180522",IDC_STATIC,112,9,159,10
+    LTEXT           "工厂测试工具-I8-FULL v1.0.0 20180525",IDC_STATIC,112,9,159,10
     LTEXT           "",IDC_TXT_CONNECT_STATE,153,27,120,10
     GROUPBOX        "手动测试项目",IDC_STATIC,7,108,114,167
     GROUPBOX        "自动测试项目",IDC_STATIC,7,280,114,106
