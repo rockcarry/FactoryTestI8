@@ -117,7 +117,9 @@ BEGIN_MESSAGE_MAP(CFactoryTestI8FocusDlg, CDialog)
     ON_WM_DESTROY()
     ON_WM_CLOSE()
     ON_EN_CHANGE(IDC_EDT_SCAN_SN, &CFactoryTestI8FocusDlg::OnEnChangeEdtScanSn)
-    ON_BN_CLICKED(IDC_BTN_TEST_RESULT, &CFactoryTestI8FocusDlg::OnBnClickedBtnTestResult)
+    ON_BN_CLICKED(IDC_BTN_TEST_RESULT1, &CFactoryTestI8FocusDlg::OnBnClickedBtnTestResult1)
+    ON_BN_CLICKED(IDC_BTN_TEST_RESULT2, &CFactoryTestI8FocusDlg::OnBnClickedBtnTestResult2)
+    ON_BN_CLICKED(IDC_BTN_TEST_RESULT3, &CFactoryTestI8FocusDlg::OnBnClickedBtnTestResult3)
     ON_BN_CLICKED(IDC_BTN_UPLOAD, &CFactoryTestI8FocusDlg::OnBnClickedBtnUpload)
     ON_MESSAGE(WM_TNP_DEVICE_FOUND, &CFactoryTestI8FocusDlg::OnTnpDeviceFound)
     ON_MESSAGE(WM_TNP_DEVICE_LOST , &CFactoryTestI8FocusDlg::OnTnpDeviceLost )
@@ -134,7 +136,7 @@ BOOL CFactoryTestI8FocusDlg::OnInitDialog()
     // 执行此操作
     SetIcon(m_hIcon, TRUE);         // 设置大图标
     SetIcon(m_hIcon, FALSE);        // 设置小图标
-    m_fntTestResult.CreatePointFont(255, TEXT("黑体"), NULL);
+    m_fntTestResult.CreatePointFont(188, TEXT("黑体"), NULL);
 
     // 在此添加额外的初始化代码
     strcpy(m_strUserName  , "username"      );
@@ -169,10 +171,13 @@ BOOL CFactoryTestI8FocusDlg::OnInitDialog()
     m_strMesResource    = CString(m_strResource);
     m_strTestInfo       = TEXT("请扫描条码...");
     m_bSnScaned         = FALSE;
-    m_nFocusTestResult  = -1;
+    m_nFocusTestResult1 = -1;
+    m_nFocusTestResult2 = -1;
+    m_nFocusTestResult3 = -1;
     UpdateData(FALSE);
 
     m_pTnpContext = tnp_init(GetSafeHwnd());
+    tnp_set_timeout(m_pTnpContext, 5000);
     return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -240,7 +245,9 @@ int CFactoryTestI8FocusDlg::GetBackColorByCtrlId(int id)
 {
     int result = -1;
     switch (id) {
-    case IDC_BTN_TEST_RESULT: result = m_nFocusTestResult; break;
+    case IDC_BTN_TEST_RESULT1: result = m_nFocusTestResult1; break;
+    case IDC_BTN_TEST_RESULT2: result = m_nFocusTestResult2; break;
+    case IDC_BTN_TEST_RESULT3: result = m_nFocusTestResult3; break;
     }
 
     switch (result) {
@@ -253,7 +260,9 @@ int CFactoryTestI8FocusDlg::GetBackColorByCtrlId(int id)
 void CFactoryTestI8FocusDlg::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct)
 {
     switch (nIDCtl) {
-    case IDC_BTN_TEST_RESULT:
+    case IDC_BTN_TEST_RESULT1:
+    case IDC_BTN_TEST_RESULT2:
+    case IDC_BTN_TEST_RESULT3:
         {
             RECT rect;
             CDC  dc;
@@ -347,21 +356,51 @@ LRESULT CFactoryTestI8FocusDlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
 
     m_strDeviceIP = "no device";
     m_bSnScaned   = FALSE;
-    m_nFocusTestResult = -1;
-    GetDlgItem(IDC_BTN_TEST_RESULT)->SetWindowText("NG");
+    m_nFocusTestResult1 = -1;
+    m_nFocusTestResult2 = -1;
+    m_nFocusTestResult3 = -1;
+    GetDlgItem(IDC_BTN_TEST_RESULT1)->SetWindowText("NG");
+    GetDlgItem(IDC_BTN_TEST_RESULT2)->SetWindowText("NG");
+    GetDlgItem(IDC_BTN_TEST_RESULT3)->SetWindowText("NG");
     UpdateData(FALSE);
     return 0;
 }
 
-void CFactoryTestI8FocusDlg::OnBnClickedBtnTestResult()
+void CFactoryTestI8FocusDlg::OnBnClickedBtnTestResult1()
 {
     if (!m_bSnScaned) return;
-    if (m_nFocusTestResult != 1) {
-        m_nFocusTestResult = 1;
-        GetDlgItem(IDC_BTN_TEST_RESULT)->SetWindowText("PASS");
+    if (m_nFocusTestResult1 != 1) {
+        m_nFocusTestResult1 = 1;
+        GetDlgItem(IDC_BTN_TEST_RESULT1)->SetWindowText("PASS");
     } else {
-        m_nFocusTestResult = 0;
-        GetDlgItem(IDC_BTN_TEST_RESULT)->SetWindowText("NG");
+        m_nFocusTestResult1 = 0;
+        GetDlgItem(IDC_BTN_TEST_RESULT1)->SetWindowText("NG");
+    }
+    UpdateData(FALSE);
+}
+
+void CFactoryTestI8FocusDlg::OnBnClickedBtnTestResult2()
+{
+    if (!m_bSnScaned) return;
+    if (m_nFocusTestResult2 != 1) {
+        m_nFocusTestResult2 = 1;
+        GetDlgItem(IDC_BTN_TEST_RESULT2)->SetWindowText("PASS");
+    } else {
+        m_nFocusTestResult2 = 0;
+        GetDlgItem(IDC_BTN_TEST_RESULT2)->SetWindowText("NG");
+    }
+    UpdateData(FALSE);
+}
+
+void CFactoryTestI8FocusDlg::OnBnClickedBtnTestResult3()
+{
+    if (!m_bSnScaned) return;
+    if (m_nFocusTestResult3 != 1) {
+        m_nFocusTestResult3 = 1;
+        GetDlgItem(IDC_BTN_TEST_RESULT3)->SetWindowText("PASS");
+    } else {
+        m_nFocusTestResult3 = 0;
+        GetDlgItem(IDC_BTN_TEST_RESULT3)->SetWindowText("NG");
     }
     m_strTestInfo = TEXT("请上传测试结果...");
     UpdateData(FALSE);
@@ -369,18 +408,30 @@ void CFactoryTestI8FocusDlg::OnBnClickedBtnTestResult()
 
 void CFactoryTestI8FocusDlg::OnBnClickedBtnUpload()
 {
+    if (!m_bSnScaned) return;
+
 #if ENABLE_MES_SYSTEM
     CString strTestResult;
     CString strErrCode;
     CString strMO;
     CString strErrMsg;
 
-    if (m_nFocusTestResult == 1) {
+    if (m_nFocusTestResult1 == 1 && m_nFocusTestResult2 == 1 && m_nFocusTestResult3 == 1) {
         strTestResult = "OK";
     } else {
         strTestResult = "NG";
-        strErrCode    = "L011";
     }
+
+    if (m_nFocusTestResult1 != 1) {
+        strErrCode    = "L017";
+    }
+    if (m_nFocusTestResult2 != 1) {
+        strErrCode    = "L015";
+    }
+    if (m_nFocusTestResult3 != 1) {
+        strErrCode    = "L016";
+    }
+
     strMO = m_strGongDan;
     if (m_bMesLoginOK) {
         BOOL ret = MesDLL::GetInstance().SetMobileDataWithMO(m_strCurSN, CString(m_strResource), CString(m_strUserName), strTestResult, strErrCode, strMO, strErrMsg);
@@ -401,12 +452,18 @@ void CFactoryTestI8FocusDlg::OnBnClickedBtnUpload()
             m_strTestInfo = "上传测试结果成功！";
             SetTimer(TIMER_ID_SCAN_NEXT, 2000, NULL);
         }
+    } else {
+        m_strTestInfo = "上传失败，MES 系统未登录！";
     }
 #endif
 
     m_bSnScaned = FALSE;
-    m_nFocusTestResult = -1;
-    GetDlgItem(IDC_BTN_TEST_RESULT)->SetWindowText("NG");
+    m_nFocusTestResult1 = -1;
+    m_nFocusTestResult2 = -1;
+    m_nFocusTestResult3 = -1;
+    GetDlgItem(IDC_BTN_TEST_RESULT1)->SetWindowText("NG");
+    GetDlgItem(IDC_BTN_TEST_RESULT2)->SetWindowText("NG");
+    GetDlgItem(IDC_BTN_TEST_RESULT3)->SetWindowText("NG");
     UpdateData(FALSE);
 }
 

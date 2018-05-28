@@ -36,7 +36,9 @@ protected:
     afx_msg LRESULT OnTnpDeviceFound(WPARAM wParam, LPARAM lParam);
     afx_msg LRESULT OnTnpDeviceLost (WPARAM wParam, LPARAM lParam);
     afx_msg void OnEnChangeEdtScanSn();
-    afx_msg void OnBnClickedBtnTestResult();
+    afx_msg void OnBnClickedBtnTestResult1();
+    afx_msg void OnBnClickedBtnTestResult2();
+    afx_msg void OnBnClickedBtnTestResult3();
     afx_msg void OnBnClickedBtnUpload();
     DECLARE_MESSAGE_MAP()
 
@@ -58,7 +60,9 @@ private:
     char    m_strLogFile   [32];
     BOOL    m_bMesLoginOK;
     BOOL    m_bSnScaned;
-    int     m_nFocusTestResult;
+    int     m_nFocusTestResult1;
+    int     m_nFocusTestResult2;
+    int     m_nFocusTestResult3;
     CFont   m_fntTestResult;
 
 private:
