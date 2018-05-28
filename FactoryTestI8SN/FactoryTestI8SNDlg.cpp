@@ -133,7 +133,7 @@ void CFactoryTestI8SNDlg::DoDeviceTest()
 {
     m_bResultDone = FALSE;
 
-    // set timeout to 6s
+    // set timeout to 10s
     tnp_set_timeout(m_pTnpContext, 10000);
 
     if (!m_bTestCancel) {
@@ -240,8 +240,8 @@ void CFactoryTestI8SNDlg::DoDeviceTest()
 #endif
     }
 
-    // set timeout to 3s
-    tnp_set_timeout(m_pTnpContext, 3000);
+    // set timeout to 5s
+    tnp_set_timeout(m_pTnpContext, 5000);
 
     CloseHandle(m_hTestThread);
     m_hTestThread = NULL;
