@@ -27,21 +27,19 @@
 
 #define TAG "Sample-Ai-Ref"
 
-#define REF_AEC_SAMPLE_RATE 16000
-#define REF_AEC_SAMPLE_TIME 10
+#define REF_AEC_SAMPLE_RATE  16000
+#define REF_AEC_SAMPLE_TIME  10
 
-#define REF_AUDIO_BUF_SIZE (REF_AEC_SAMPLE_RATE * sizeof(short) * REF_AEC_SAMPLE_TIME / 1000)
+#define REF_AUDIO_BUF_SIZE  (REF_AEC_SAMPLE_RATE * sizeof(short) * REF_AEC_SAMPLE_TIME / 1000)
 #define REF_AUDIO_RECORD_NUM 500
 
 #define REF_AUDIO_RECORD_FILE_FOR_PLAY "/tmp/ref_test_for_play.pcm"
-#define REF_AUDIO_RECORD_FILE_FOR_PLAY_SIN "./sin1khz.pcm"
 #define REF_AUDIO_RECORD_FILE "/tmp/ref_test_record.pcm"
-#define REF_AUDIO_REF_FILE "/tmp/ref_test_ref.pcm"
 
 #include "FFT.c"
 
-int g_PlaySinOver=0;
-int g_TestOK=0;
+int g_PlaySinOver = 0;
+int g_TestOK = 0;
 
 #if 0
 static void *IMP_Audio_Record_Thread(void *argv)
@@ -173,9 +171,8 @@ static void *IMP_Audio_Record_Thread(void *argv)
             return NULL;
         }
 
-        //ld@apical.com.cn
-        if (g_PlaySinOver)
-        {
+        // ld@apical.com.cn
+        if (g_PlaySinOver) {
             printf("play test 1Khz pcm sound over\r\n");
             break;
         }
@@ -209,10 +206,10 @@ static void* IMP_Audio_Record_Ref_Thread(void *argv)
     int record_num = 0;
 
     char buf[1025];
-    int bufpos=0;
-    int pos=0;
+    int  bufpos = 0;
+    int  pos    = 0;
 
-    //printf("REC IMP_Audio_Record_Ref_Thread start \r\n");
+//  printf("REC IMP_Audio_Record_Ref_Thread start \r\n");
 
     if (argv == NULL) {
         printf("REC:Please input the record file name.\n");
@@ -318,7 +315,7 @@ static void* IMP_Audio_Record_Ref_Thread(void *argv)
 
     while(1) {
         /* get audio record frame. */
-        //printf("REC:Audio Frame 1\n");
+//      printf("REC:Audio Frame 1\n");
         ret = IMP_AI_PollingFrame(devID, chnID, 1000);
         if (ret != 0 ) {
             printf("REC:Audio Polling Frame Data error\n");
@@ -330,28 +327,23 @@ static void* IMP_Audio_Record_Ref_Thread(void *argv)
             printf("REC:Audio Get Frame Data error\n");
             return NULL;
         }
-        //printf("REC:Audio Frame :%d, %d\n", frm.len, ref.len);
+//      printf("REC:Audio Frame :%d, %d\n", frm.len, ref.len);
 
         pos += frm.len;
-        if (pos > 0x4000)
-        {
-            if ( (bufpos+frm.len) <= sizeof(buf))
-            {
+        if (pos > 0x4000) {
+            if ((bufpos+frm.len) <= sizeof(buf)) {
                 memcpy(buf+bufpos, frm.virAddr, frm.len);
                 bufpos += frm.len;
                 printf("copy buf %d bytes bufpos=%d\r\n", frm.len, bufpos);
-            }
-            else
-            {
-                if (bufpos < sizeof(buf))
-                {
+            } else {
+                if (bufpos < sizeof(buf)) {
                     memcpy(buf+bufpos, frm.virAddr, sizeof(buf)-bufpos);
                     bufpos = sizeof(buf);
                     printf("End: copy buf %d(of%d) bytes bufpos=%d\r\n", sizeof(buf)-bufpos, frm.len, bufpos);
                 }
             }
         }
-        //printf("REC:Audio Frame 3\n");
+//      printf("REC:Audio Frame 3\n");
         /* release the audio record frame. */
         ret = IMP_AI_ReleaseFrame(devID, chnID, &frm);
         if (ret != 0) {
@@ -359,23 +351,20 @@ static void* IMP_Audio_Record_Ref_Thread(void *argv)
             return NULL;
         }
 
-        //printf("REC:Audio Frame 4\n");
+//      printf("REC:Audio Frame 4\n");
         //ld@apical.com.cn
-        if (g_PlaySinOver)
-        {
+        if (g_PlaySinOver) {
             printf("REC: g_PlaySinOver\n");
             break;
         }
 
-        if (++record_num >= REF_AUDIO_RECORD_NUM)
-        {
+        if (++record_num >= REF_AUDIO_RECORD_NUM) {
             printf("REC: record_num:%d >= %d\n", record_num, REF_AUDIO_RECORD_NUM);
             break;
         }
     }
 
-    if (1)
-    {
+    if (1) {
         printf("start FFT (%x %x)!\r\n", buf[0], buf[1]);
         g_TestOK = Is1Khz(buf);
         printf("end FFT!\r\n");
@@ -409,23 +398,11 @@ static int g_need_sleep= 0;
 static void *IMP_Audio_Play_Thread(void *argv)
 {
     unsigned char *buf = NULL;
-    int size = 0;
-    int ret = -1;
+    int size =  0;
+    int ret  = -1;
 
     if (argv == NULL) {
         IMP_LOG_ERR(TAG, "[ERROR] %s: Please input the play file name.\n", __func__);
-        return NULL;
-    }
-
-    buf = (unsigned char *)malloc(REF_AUDIO_BUF_SIZE);
-    if (buf == NULL) {
-        IMP_LOG_ERR(TAG, "[ERROR] %s: malloc audio buf error\n", __func__);
-        return NULL;
-    }
-
-    FILE *play_file = fopen(argv, "rb");
-    if (play_file == NULL) {
-        IMP_LOG_ERR(TAG, "[ERROR] %s: fopen %s failed\n", __func__, argv);
         return NULL;
     }
 
@@ -502,6 +479,18 @@ static void *IMP_Audio_Play_Thread(void *argv)
     }
     IMP_LOG_INFO(TAG, "Audio Out GetGain    gain : %d\n", aogain);
 
+    buf = (unsigned char *)malloc(REF_AUDIO_BUF_SIZE);
+    if (buf == NULL) {
+        IMP_LOG_ERR(TAG, "[ERROR] %s: malloc audio buf error\n", __func__);
+        return NULL;
+    }
+
+    FILE *play_file = fopen(argv, "rb");
+    if (play_file == NULL) {
+        IMP_LOG_ERR(TAG, "[ERROR] %s: fopen %s failed\n", __func__, argv);
+        return NULL;
+    }
+
     while (!g_play_stop) {
         size = fread(buf, 1, REF_AUDIO_BUF_SIZE, play_file);
         if (size < REF_AUDIO_BUF_SIZE) {
@@ -538,6 +527,10 @@ static void *IMP_Audio_Play_Thread(void *argv)
         sleep(g_need_sleep);
     }
 
+    g_need_sleep = 0;
+    fclose(play_file);
+    free(buf);
+
     /* Step 6: disable the audio channel. */
     ret = IMP_AO_DisableChn(devID, chnID);
     if (ret != 0) {
@@ -552,30 +545,20 @@ static void *IMP_Audio_Play_Thread(void *argv)
         return NULL;
     }
 
-    g_need_sleep = 0;
-    fclose(play_file);
-    free(buf);
     pthread_exit(0);
 }
 
 #include "server.c"
 
-//int  main(int argc, char *argv[])
 int TEST_SPK_MIC(int argc, FACTORYTEST_DATA* plFtD)
 {
     int ret;
-
     pthread_t tid_record, tid_play;
-    g_PlaySinOver=0;
-
-    printf("[INFO] Start audio record test argc=%d.\n", argc);
-    //printf("[INFO] Can create the %s file.\n", REF_AUDIO_RECORD_FILE_FOR_PLAY);
-    //printf("[INFO] Please input any key to continue.\n");
-    //getchar();
+    g_PlaySinOver = 0;
 
     InitFFT();
 
-    ret = pthread_create(&tid_play, NULL, IMP_Audio_Play_Thread, REF_AUDIO_RECORD_FILE_FOR_PLAY_SIN);
+    ret = pthread_create(&tid_play, NULL, IMP_Audio_Play_Thread, "./sin1khz.pcm");
     if (ret != 0) {
         IMP_LOG_ERR(TAG, "[ERROR] %s: pthread_create Audio Play failed\n", __func__);
         DeinitFFT();
@@ -603,30 +586,24 @@ int TEST_SPK_MIC(int argc, FACTORYTEST_DATA* plFtD)
     pthread_join(tid_record, NULL);
     printf("g_TestOK=%d (%d)\r\n", g_TestOK, plFtD->rtMic);
 
-    if (g_TestOK)
-    {
+    if (g_TestOK) {
         plFtD->rtMic = 1;
         plFtD->rtSPK = 1;
-    }
-    else
-    {
+    } else {
         plFtD->rtMic = 0;
         plFtD->rtSPK = 0;
     }
 
 #if 1
     if (argc >= 2) {
-        g_need_sleep = 2;
-        if (g_TestOK)
-        {
+        g_need_sleep = 1;
+        if (g_TestOK) {
             plFtD->rtMic = 1;
             plFtD->rtSPK = 1;
             if (argc >= 2) {
                 ret = pthread_create(&tid_play, NULL, IMP_Audio_Play_Thread, "./testOK.pcm");
             }
-        }
-        else
-        {
+        } else {
             plFtD->rtMic = 0;
             plFtD->rtSPK = 0;
             if (argc >= 2) {
@@ -643,8 +620,7 @@ int TEST_SPK_MIC(int argc, FACTORYTEST_DATA* plFtD)
 #endif
 
     DeinitFFT();
-
-    //printf("test spk & mic over\r\n");
+//  printf("test spk & mic over\r\n");
     return 0;
 }
 
@@ -657,7 +633,7 @@ int TEST_SPK_ONLY(int onoff)
             g_play_loop = 1;
             g_play_stop = 0;
             printf("create playback thread\r\n");
-            pthread_create(&g_tid_play, NULL, IMP_Audio_Play_Thread, REF_AUDIO_RECORD_FILE_FOR_PLAY);
+            pthread_create(&g_tid_play, NULL, IMP_Audio_Play_Thread, "./startrecord.pcm");
         }
     } else {
         g_play_stop = 1;
@@ -688,24 +664,26 @@ int changeSensorDayNightMode(int mDay)
 #if 0
     int res = 0;
     static onece = 1;
-    if (onece)
-    {
-        if (IMP_System_Init())
+    if (onece) {
+        if (IMP_System_Init()) {
             printf("IMP_System_Init failed! \r\n");
+        }
         IMP_ISP_DisableTuning();
-        if (IMP_ISP_EnableTuning())
+        if (IMP_ISP_EnableTuning()) {
             printf("IMP_ISP_EnableTuning failed! \r\n");
-
+        }
         onece = 0;
     }
 
-    if (mDay)
+    if (mDay) {
         res = IMP_ISP_Tuning_SetISPRunningMode(IMPISP_RUNNING_MODE_DAY);
-    else
-        res =  IMP_ISP_Tuning_SetISPRunningMode(IMPISP_RUNNING_MODE_NIGHT);
+    } else {
+        res = IMP_ISP_Tuning_SetISPRunningMode(IMPISP_RUNNING_MODE_NIGHT);
+    }
 
-    if (res)
+    if (res) {
         printf("IMP_ISP_Tuning_SetISPRunningMode failed!\r\n");
+    }
 
     return res;
 #endif
