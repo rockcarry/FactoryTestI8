@@ -126,7 +126,7 @@ CFactoryTestI8FullDlg::CFactoryTestI8FullDlg(CWnd* pParent /*=NULL*/)
     , m_strCurSN(_T(""))
     , m_strCurMac(_T(""))
     , m_strTestInfo(_T(""))
-    , m_strSnMacVer(_T(""))
+    , m_strSnMacVer(_T("设备实际 SN： \r\n设备实际 MAC：\r\n设备实际 VER："))
     , m_pTnpContext(NULL)
     , m_pFanPlayer(NULL)
 {
@@ -200,7 +200,7 @@ BOOL CFactoryTestI8FullDlg::OnInitDialog()
     SetIcon(m_hIcon, TRUE );        // 设置大图标
     SetIcon(m_hIcon, FALSE);        // 设置小图标
 
-    m_fntTestInfo.CreatePointFont(220, TEXT("黑体"), NULL);
+    m_fntTestInfo.CreatePointFont(160, TEXT("黑体"), NULL);
     GetDlgItem(IDC_TXT_TEST_INFO)->SetFont(&m_fntTestInfo);
 
     // 在此添加额外的初始化代码
@@ -421,7 +421,7 @@ void CFactoryTestI8FullDlg::OnEnChangeEdtScanSn()
             if (ret) {
                 m_strCurMac = strMAC;
             } else {
-                m_strTestInfo  += "无法从 MES 系统获取 MAC\r\n";
+                m_strTestInfo  += "获取 MAC 失败！\r\n";
                 return;
             }
         } else {
@@ -439,8 +439,8 @@ void CFactoryTestI8FullDlg::OnEnChangeEdtScanSn()
         int ret = tnp_connect_by_sn(m_pTnpContext, strsn, &addr);
         if (ret == 0) {
             strcpy(m_strDeviceIP, inet_ntoa(addr));
-            m_strConnectState.Format(TEXT("设备连接成功！（%s）"), CString(m_strDeviceIP));
-            m_strTestInfo   = "设备连接成功，开始测试...";
+            m_strConnectState.Format(TEXT("已连接 %s"), CString(m_strDeviceIP));
+            m_strTestInfo   = "连接成功开始测试...";
             m_bConnectState = TRUE;
             m_bSnScaned     = FALSE;
 
@@ -458,11 +458,11 @@ void CFactoryTestI8FullDlg::OnEnChangeEdtScanSn()
             tnp_set_timeout(m_pTnpContext, 10000);
 
             // refresh camera
-            m_bPlayerOpenOK = FALSE;
-            SetTimer(TIMER_ID_OPEN_PLAYER, 0, NULL);
+//          m_bPlayerOpenOK = FALSE;
+//          SetTimer(TIMER_ID_OPEN_PLAYER, 0, NULL);
         } else {
             m_bSnScaned = TRUE;
-            m_strTestInfo = "请打开设备进入测试模式...\r\n";
+            m_strTestInfo = "请打开设备...\r\n";
         }
         UpdateData(FALSE);
     }
@@ -494,8 +494,8 @@ LRESULT CFactoryTestI8FullDlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
     int ret = tnp_connect_by_sn(m_pTnpContext, strsn, &addr);
     if (ret == 0) {
         strcpy(m_strDeviceIP, inet_ntoa(addr));
-        m_strConnectState.Format(TEXT("设备连接成功！（%s）"), CString(m_strDeviceIP));
-        m_strTestInfo   = "设备连接成功，开始测试...";
+        m_strConnectState.Format(TEXT("已连接 %s"), CString(m_strDeviceIP));
+        m_strTestInfo   = "连接成功开始测试...";
         m_bConnectState = TRUE;
         m_bSnScaned     = FALSE;
 
@@ -513,8 +513,8 @@ LRESULT CFactoryTestI8FullDlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
         tnp_set_timeout(m_pTnpContext, 10000);
 
         // refresh camera
-        m_bPlayerOpenOK = FALSE;
-        SetTimer(TIMER_ID_OPEN_PLAYER, 0, NULL);;
+//      m_bPlayerOpenOK = FALSE;
+//      SetTimer(TIMER_ID_OPEN_PLAYER, 0, NULL);;
         UpdateData(FALSE);
     }
 
@@ -802,7 +802,7 @@ void CFactoryTestI8FullDlg::OnSize(UINT nType, int cx, int cy)
 
 void CFactoryTestI8FullDlg::OnLButtonDblClk(UINT nFlags, CPoint point)
 {
-    m_bPlayerOpenOK = FALSE;
-    SetTimer(TIMER_ID_OPEN_PLAYER, 0, NULL);
+//  m_bPlayerOpenOK = FALSE;
+//  SetTimer(TIMER_ID_OPEN_PLAYER, 0, NULL);
     CDialog::OnLButtonDblClk(nFlags, point);
 }
