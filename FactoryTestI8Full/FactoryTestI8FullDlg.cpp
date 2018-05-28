@@ -241,6 +241,7 @@ BOOL CFactoryTestI8FullDlg::OnInitDialog()
     m_strTestInfo       = "请扫描条码...\r\n";
     m_bConnectState     = FALSE;
     m_bSnScaned         = FALSE;
+    m_bSpkOnOffState    = FALSE;
     m_bIrOnOffState     = FALSE;
     m_bPlayerOpenOK     = FALSE;
     m_nLedTestResult    = -1;
@@ -461,7 +462,7 @@ void CFactoryTestI8FullDlg::OnEnChangeEdtScanSn()
             SetTimer(TIMER_ID_OPEN_PLAYER, 0, NULL);
         } else {
             m_bSnScaned = TRUE;
-            m_strTestInfo = "请打开设备，进入测试模式。\r\n";
+            m_strTestInfo = "请打开设备进入测试模式...\r\n";
         }
         UpdateData(FALSE);
     }
