@@ -342,7 +342,7 @@ int tnp_test_spkmic(void *ctxt)
         return -1;
     }
 
-    for (int i=0; i<5; i++) {
+    for (int i=0; i<10; i++) {
         if (context->test_status & TNP_TEST_CANCEL) break;
         if (recv(context->sock, (char*)&data, sizeof(data), 0) == -1) {
             log_printf("tnp_test_spkmic recv tcp data failed ! retry %d\n", i);
@@ -434,7 +434,8 @@ int tnp_test_spkonly_manual(void *ctxt, int onoff)
         return -1;
     }
 
-    for (int i=0; i<10; i++) {
+    int i;
+    for (i=0; i<10; i++) {
         if (context->test_status & TNP_TEST_CANCEL) break;
         if (recv(context->sock, (char*)&data, sizeof(data), 0) == -1) {
             log_printf("tnp_test_spkmic_manual recv tcp data failed ! retry %d\n", i);
@@ -444,7 +445,7 @@ int tnp_test_spkonly_manual(void *ctxt, int onoff)
         }
     }
 
-    return 0;
+    return i == 10 ? -1 : 0;
 }
 
 int tnp_test_sensor_snmac_version(void *ctxt, char *sn, char *mac, char *version, int *rsltsensor, int *rsltsn, int *rsltmac, int *rsltver)

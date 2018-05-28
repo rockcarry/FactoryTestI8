@@ -342,7 +342,7 @@ int tnp_test_spkmic(void *ctxt)
         return -1;
     }
 
-    for (int i=0; i<5; i++) {
+    for (int i=0; i<10; i++) {
         if (context->test_status & TNP_TEST_CANCEL) break;
         if (recv(context->sock, (char*)&data, sizeof(data), 0) == -1) {
             log_printf("tnp_test_spkmic recv tcp data failed ! retry %d\n", i);
