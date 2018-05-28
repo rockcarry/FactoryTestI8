@@ -126,7 +126,7 @@ CFactoryTestI8FullDlg::CFactoryTestI8FullDlg(CWnd* pParent /*=NULL*/)
     , m_strCurSN(_T(""))
     , m_strCurMac(_T(""))
     , m_strTestInfo(_T(""))
-    , m_strSnMacVer(_T("设备实际 SN： \r\n设备实际 MAC：\r\n设备实际 VER："))
+    , m_strSnMacVer(_T("设备实际 SN ： \r\n设备实际 MAC：\r\n设备实际 VER："))
     , m_pTnpContext(NULL)
     , m_pFanPlayer(NULL)
 {
@@ -447,7 +447,7 @@ void CFactoryTestI8FullDlg::OnEnChangeEdtScanSn()
             if (tnp_test_sensor_snmac_version(m_pTnpContext, strsn, strmac, strver,
                     &m_nLSensorTestResult, &m_nSnTestResult, &m_nMacTestResult, &m_nVersionTestResult) == 0)
             {
-                m_strSnMacVer.Format("设备实际 SN： %s\r\n设备实际 MAC：%s\r\n设备实际 VER：%s", strsn, strmac, strver);
+                m_strSnMacVer.Format("设备实际 SN ： %s\r\n设备实际 MAC：%s\r\n设备实际 VER：%s", strsn, strmac, strver);
                 GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText(m_nLSensorTestResult ? "PASS" : "NG");
                 GetDlgItem(IDC_BTN_SN_RESULT     )->SetWindowText(m_nSnTestResult      ? "PASS" : "NG");
                 GetDlgItem(IDC_BTN_MAC_RESULT    )->SetWindowText(m_nMacTestResult     ? "PASS" : "NG");
@@ -502,7 +502,7 @@ LRESULT CFactoryTestI8FullDlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
         if (tnp_test_sensor_snmac_version(m_pTnpContext, strsn, strmac, strver,
                 &m_nLSensorTestResult, &m_nSnTestResult, &m_nMacTestResult, &m_nVersionTestResult) == 0)
         {
-            m_strSnMacVer.Format("设备实际 SN： %s\r\n设备实际 MAC：%s\r\n设备实际 VER：%s", strsn, strmac, strver);
+            m_strSnMacVer.Format("设备实际 SN ： %s\r\n设备实际 MAC：%s\r\n设备实际 VER：%s", strsn, strmac, strver);
             GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText(m_nLSensorTestResult ? "PASS" : "NG");
             GetDlgItem(IDC_BTN_SN_RESULT     )->SetWindowText(m_nSnTestResult      ? "PASS" : "NG");
             GetDlgItem(IDC_BTN_MAC_RESULT    )->SetWindowText(m_nMacTestResult     ? "PASS" : "NG");

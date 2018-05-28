@@ -136,7 +136,7 @@ BOOL CFactoryTestI8FocusDlg::OnInitDialog()
     // 执行此操作
     SetIcon(m_hIcon, TRUE);         // 设置大图标
     SetIcon(m_hIcon, FALSE);        // 设置小图标
-    m_fntTestResult.CreatePointFont(188, TEXT("黑体"), NULL);
+//  m_fntTestResult.CreatePointFont(160, TEXT("黑体"), NULL);
 
     // 在此添加额外的初始化代码
     strcpy(m_strUserName  , "username"      );
@@ -274,7 +274,7 @@ void CFactoryTestI8FocusDlg::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemS
             dc.SetTextColor(RGB(0 ,0, 0));
             TCHAR buffer[MAX_PATH] = {0};
             ::GetWindowText(lpDrawItemStruct->hwndItem, buffer, MAX_PATH);
-            dc.SelectObject(m_fntTestResult);
+//          dc.SelectObject(m_fntTestResult);
             dc.DrawText(buffer, &rect, DT_CENTER|DT_VCENTER|DT_SINGLELINE);
             dc.Detach();
         }
