@@ -224,7 +224,14 @@ int tnp_connect(void *ctxt, struct in_addr addr)
     sockaddr.sin_family = AF_INET;
     sockaddr.sin_port   = htons(TNP_TCP_PORT);;
     sockaddr.sin_addr   = addr;
-    return connect(context->sock, (struct sockaddr*)&sockaddr, sizeof(sockaddr));
+    if (connect(context->sock, (struct sockaddr*)&sockaddr, sizeof(sockaddr)) == -1) {
+        context->device_list[addr.S_un.S_un_b.s_b4].addr.S_un.S_addr = 0;
+        context->device_list[addr.S_un.S_un_b.s_b4].sn[0]            = '\0';
+        context->device_list[addr.S_un.S_un_b.s_b4].tick             = 0;
+        return -1;
+    } else {
+        return  0;
+    }
 }
 
 void tnp_disconnect(void *ctxt)
