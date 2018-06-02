@@ -1,27 +1,22 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
-#include <sys/prctl.h>
 #include <sys/time.h>
 #include <sys/wait.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
-#include <math.h>
 #include <errno.h>
 #include <pthread.h>
-#include <semaphore.h>
 #include <fcntl.h>
-#include <netdb.h>
-
 #include <net/if.h>
 #include <arpa/inet.h>
 
 // mips-linux-uclibc-gnu-gcc -muclibc -march=mips32r2 sn.c -o sn.o
 char MacBuffer[1566];
 
-#define SIG_MAGIC ('N'<<24)+('S'<<16)+('8'<<8)+('I'<<0)
+#define SIG_MAGIC (('N'<<24)+('S'<<16)+('8'<<8)+('I'<<0))
 
 #pragma pack(4)
 typedef struct {
@@ -209,33 +204,6 @@ int dumpChar(char *name, char *src, int cnt)
     return 0;
 }
 
-void printld(FACTORYTEST_DATA lFtD, char *str)
-{
-    char buf[256];
-    int cnt = 0;
-
-    memcpy(buf, &lFtD.MAGIC, 64+32);
-    printf("%s:\r\n", str);
-    for (cnt=0; cnt<4; cnt++)
-        printf("%02x ", buf[cnt]);
-    printf("\r\n");
-    for (; cnt<(4+16); cnt++)
-        printf("%02x ", buf[cnt]);
-    printf("\r\n");
-    for (; cnt<(4+16+16); cnt++)
-        printf("%02x ", buf[cnt]&0xFF);
-    printf("\r\n");
-    for (; cnt<(4+16+16+32); cnt++)
-        printf("%02x ", buf[cnt]&0xFF);
-    printf("\r\n");
-    for (; cnt<(4+16+16+32+14); cnt++)
-        printf("%02x ", buf[cnt]&0xFF);
-    printf("\r\n");
-    for (; cnt<(4+16+16+32+14+15); cnt++)
-        printf("%02x ", buf[cnt]&0xFF);
-    printf("\r\n");
-}
-
 int CheckSD(FACTORYTEST_DATA *plFtD)
 {
     // because this APP run from sdcard, so sd is ok here
@@ -393,10 +361,6 @@ int ChechVersion(FACTORYTEST_DATA *plFtD)
 int TestIRCut(FACTORYTEST_DATA *plFtD)
 {
 //  printf("\r\n\r\nstart TestIRCut: %d\r\n", plFtD->testIRCut);
-    system("echo 81 > /sys/class/gpio/export");
-    system("echo out > /sys/class/gpio/gpio81/direction");
-    system("echo 82 > /sys/class/gpio/export");
-    system("echo out > /sys/class/gpio/gpio82/direction");
     if (plFtD->testIRCut == '1') {
         system("echo 0 > /sys/class/gpio/gpio81/value");
         system("echo 1 > /sys/class/gpio/gpio82/value");
@@ -411,8 +375,6 @@ int TestIRCut(FACTORYTEST_DATA *plFtD)
 int EnIR(FACTORYTEST_DATA *plFtD)
 {
 //  printf("\r\n\r\nstart EnIR: %d\r\n", plFtD->testIR);
-    system("echo 61 > /sys/class/gpio/export");
-    system("echo out > /sys/class/gpio/gpio61/direction");
     if (plFtD->testIR == '1') {
         system("echo 0 > /sys/class/gpio/gpio61/value");
     } else if (plFtD->testIR == '2') {
@@ -462,12 +424,8 @@ int TestLightSensor(FACTORYTEST_DATA *plFtD)
 int TestKey(FACTORYTEST_DATA *plFtD)
 {
     int val = 0;
-    int fd;
-
+    int fd  = 0;
     const char *cName = "/sys/class/gpio/gpio60/value";
-
-    system("echo 60 > /sys/class/gpio/export");
-    system("echo in > /sys/class/gpio/gpio60/direction");
 
     ///printf("\r\n\r\nstart TestKey: \r\n");
     plFtD->rtKey = 0;
@@ -496,7 +454,6 @@ int TestKey(FACTORYTEST_DATA *plFtD)
 int EnIRCutForAuto(int en)
 {
 //  printf("\r\n\r\nstart EnIRCut: %d\r\n", en);
-
     if (en == 1) {
         system("echo 0 > /sys/class/gpio/gpio81/value");
         system("echo 1 > /sys/class/gpio/gpio82/value");
@@ -504,32 +461,27 @@ int EnIRCutForAuto(int en)
         system("echo 1 > /sys/class/gpio/gpio81/value");
         system("echo 0 > /sys/class/gpio/gpio82/value");
     }
-
     return 0;
 }
 
 int EnIRForAuto(int en)
 {
 //  printf("\r\n\r\nstart EnIR: %d\r\n", en);
-
     if (en == 1) {
         system("echo 0 > /sys/class/gpio/gpio61/value");
     } else {
         system("echo 1 > /sys/class/gpio/gpio61/value");
     }
-
     return 0;
 }
 
 int GetLightSensor()
 {
     int val = 0;
-    int fd;
-
+    int fd  = 0;
     const char *cName = "/dev/jz_adc_aux_0";
 
 //  printf("\r\n\r\nGettLightSensor value\r\n");
-
     fd = open(cName, O_RDONLY, 0644);
     if (fd < 0) {
         printf("GetLightSensor:open %s error\n", cName);
@@ -586,24 +538,6 @@ static void *heart_beat_thread(void *argv)
     // note !!, the msg.IP is used for store SN
     memcpy(msg.MAG, "NMSG", 4);
     strcpy(msg.IP , SN);
-
-    //++ init gpios
-    system("echo 72 > /sys/class/gpio/export");
-    system("echo out > /sys/class/gpio/gpio72/direction");
-    system("echo 50 > /sys/class/gpio/export");
-    system("echo out > /sys/class/gpio/gpio50/direction");
-    system("echo 49 > /sys/class/gpio/export");
-    system("echo out > /sys/class/gpio/gpio49/direction");
-    system("echo 0 > /sys/class/gpio/gpio49/value");
-
-    system("echo 81 > /sys/class/gpio/export");
-    system("echo out > /sys/class/gpio/gpio81/direction");
-    system("echo 82 > /sys/class/gpio/export");
-    system("echo out > /sys/class/gpio/gpio82/direction");
-
-    system("echo 61 > /sys/class/gpio/export");
-    system("echo out > /sys/class/gpio/gpio61/direction");
-    //-- init gpios
 
     // open socket
     sockfd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -698,20 +632,6 @@ static void* button_monitor_thread(void *argv)
     int press = 0;
     const char *cName = "/sys/class/gpio/gpio60/value";
 
-    // button gpio
-    system("echo 60 > /sys/class/gpio/export");
-    system("echo in > /sys/class/gpio/gpio60/direction");
-
-    // ir
-    system("echo 61 > /sys/class/gpio/export");
-    system("echo out > /sys/class/gpio/gpio61/direction");
-
-    // filter
-    system("echo 81 > /sys/class/gpio/export");
-    system("echo out > /sys/class/gpio/gpio81/direction");
-    system("echo 82 > /sys/class/gpio/export");
-    system("echo out > /sys/class/gpio/gpio82/direction");
-
     while (!g_stop_button_monitor) {
         fd = open(cName, O_RDONLY, 0644);
         if (fd) {
@@ -754,32 +674,8 @@ void StartAgainTest()
     int led = 0;
 
     int val = 0;
-    int fd;
+    int fd  = 0;
     const char *cName = "/sys/class/gpio/gpio60/value";
-    system("echo 60 > /sys/class/gpio/export");
-    system("echo in > /sys/class/gpio/gpio60/direction");
-
-    // run play sound thread
-
-    // run switch led
-    // led bgr
-    system("echo 72 > /sys/class/gpio/export");
-    system("echo out > /sys/class/gpio/gpio72/direction");
-    system("echo 50 > /sys/class/gpio/export");
-    system("echo out > /sys/class/gpio/gpio50/direction");
-    system("echo 49 > /sys/class/gpio/export");
-    system("echo out > /sys/class/gpio/gpio49/direction");
-    system("echo 0 > /sys/class/gpio/gpio49/value");
-
-    // ircut
-    system("echo 81 > /sys/class/gpio/export");
-    system("echo out > /sys/class/gpio/gpio81/direction");
-    system("echo 82 > /sys/class/gpio/export");
-    system("echo out > /sys/class/gpio/gpio82/direction");
-
-    // ir
-    system("echo 61 > /sys/class/gpio/export");
-    system("echo out > /sys/class/gpio/gpio61/direction");
 
     while (1) {
         // switch ir & ircut
@@ -813,7 +709,7 @@ void StartAgainTest()
             }
             if (cnt > 5) {
                 // 销毁程序
-                printf("Test over, destory!!!\r\n");
+                printf("test over, destory!!!\r\n");
                 system("mv /etc/init.d/rcS.dh /etc/init.d/rcS");
                 system("rm -f /etc/apkft/stage");
                 system("rm -f /etc/apkft/apkft.sh");
@@ -849,6 +745,31 @@ int main(int argc, char *argv[]) {
     int  cnt = 0;
     int  iRecvBytes;
     char buf[MAXDATASIZE];
+
+    //++ init gpios
+    // led gpio rgb
+    system("echo 50 > /sys/class/gpio/export");
+    system("echo out > /sys/class/gpio/gpio50/direction");
+    system("echo 72 > /sys/class/gpio/export");
+    system("echo out > /sys/class/gpio/gpio72/direction");
+    system("echo 49 > /sys/class/gpio/export");
+    system("echo out > /sys/class/gpio/gpio49/direction");
+    system("echo 0 > /sys/class/gpio/gpio49/value"); // turn off blue led
+
+    // button gpio
+    system("echo 60 > /sys/class/gpio/export");
+    system("echo in > /sys/class/gpio/gpio60/direction");
+
+    // ir gpio
+    system("echo 61 > /sys/class/gpio/export");
+    system("echo out > /sys/class/gpio/gpio61/direction");
+
+    // filter gpio
+    system("echo 81 > /sys/class/gpio/export");
+    system("echo out > /sys/class/gpio/gpio81/direction");
+    system("echo 82 > /sys/class/gpio/export");
+    system("echo out > /sys/class/gpio/gpio82/direction");
+    //-- init gpios
 
     myport = 7838;
     lisnum = 5;
@@ -907,24 +828,8 @@ int main(int argc, char *argv[]) {
                 break;
             }
 
-//          printld(lFtD, "recv");
             memset(buf, 0, sizeof(buf));
             memcpy(buf, &lFtD.MAGIC, 4);
-
-#if 0
-            printf("\r\nserver:recv: MAGIC:%s (0x%08x)\r\n", buf, lFtD.MAGIC);
-            for (cnt=0; cnt<16; cnt++) {
-                printf("%02x ", buf[cnt]);
-            }
-            printf("\r\n\r\nserver:recv: SN:%s\r\n", lFtD.SN);
-            for (cnt=0; cnt<16; cnt++) {
-                printf("%02x ", lFtD.SN[cnt]);
-            }
-            printf("\r\n\r\nserver:recv: MAC:%s\r\n", lFtD.MAC);
-            for (cnt=0; cnt<16; cnt++) {
-                printf("%02x ", lFtD.MAC[cnt]);
-            }
-#endif
 
             // iperf
             if (lFtD.testWifi) {

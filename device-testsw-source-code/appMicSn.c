@@ -7,19 +7,11 @@
 //mips-linux-uclibc-gnu-g++ -O2 -Wall -march=mips32r2 -lpthread -lm -lrt -ldl -muclibc ../../lib/uclibc/libalog.a ../../lib/uclibc/libimp.a  -I../../include sample-Ai-Ref.c -o audio.o
 
 #include <unistd.h>
-#include <sys/ioctl.h>
-#include <sys/prctl.h>
-#include <sys/time.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <stdint.h>
-#include <math.h>
-#include <errno.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include <pthread.h>
-#include <semaphore.h>
-#include <signal.h>
-#include <fcntl.h>
 
 #include <imp/imp_isp.h>
 #include <imp/imp_audio.h>
