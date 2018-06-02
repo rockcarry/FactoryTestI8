@@ -728,7 +728,7 @@ void CFactoryTestI8FullDlg::OnSize(UINT nType, int cx, int cy)
 void CFactoryTestI8FullDlg::OnLButtonDblClk(UINT nFlags, CPoint point)
 {
     m_bPlayerOpenOK = FALSE;
-    SetTimer(TIMER_ID_OPEN_PLAYER, 0, NULL);
+    SetTimer(TIMER_ID_OPEN_PLAYER, 1000, NULL);
     CDialog::OnLButtonDblClk(nFlags, point);
 }
 
