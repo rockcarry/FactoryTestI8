@@ -4,8 +4,8 @@
 #include "stdafx.h"
 #include "FactoryTestI8Focus.h"
 #include "FactoryTestI8FocusDlg.h"
-#include "TestNetProtocol.h"
 #include "BenQGuruDll.h"
+#include "fanplayer.h"
 #include "log.h"
 
 #ifdef _DEBUG
@@ -13,7 +13,7 @@
 #endif
 
 #define ENABLE_MES_SYSTEM   TRUE
-#define TIMER_ID_SCAN_NEXT  1
+#define TIMER_ID_SET_FOCUS  2
 
 static void get_app_dir(char *path, int size)
 {
@@ -89,11 +89,10 @@ CFactoryTestI8FocusDlg::CFactoryTestI8FocusDlg(CWnd* pParent /*=NULL*/)
     : CDialog(CFactoryTestI8FocusDlg::IDD, pParent)
     , m_strMesLoginState(_T(""))
     , m_strMesResource(_T(""))
+    , m_strMesGongDan(_T(""))
     , m_strScanSN(_T(""))
     , m_strCurSN(_T(""))
     , m_strTestInfo(_T(""))
-    , m_strDeviceIP(_T("no device"))
-    , m_pTnpContext(NULL)
 {
     m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -103,10 +102,10 @@ void CFactoryTestI8FocusDlg::DoDataExchange(CDataExchange* pDX)
     CDialog::DoDataExchange(pDX);
     DDX_Text(pDX, IDC_TXT_MES_LOGIN, m_strMesLoginState);
     DDX_Text(pDX, IDC_TXT_MES_RESOURCE, m_strMesResource);
+    DDX_Text(pDX, IDC_TXT_MES_GONGDAN, m_strMesGongDan);
     DDX_Text(pDX, IDC_EDT_SCAN_SN, m_strScanSN);
     DDX_Text(pDX, IDC_EDT_CUR_SN, m_strCurSN);
     DDX_Text(pDX, IDC_TXT_TEST_INFO, m_strTestInfo);
-    DDX_Text(pDX, IDC_TXT_DEVICE_IP, m_strDeviceIP);
 }
 
 BEGIN_MESSAGE_MAP(CFactoryTestI8FocusDlg, CDialog)
@@ -116,13 +115,12 @@ BEGIN_MESSAGE_MAP(CFactoryTestI8FocusDlg, CDialog)
     ON_WM_QUERYDRAGICON()
     ON_WM_DESTROY()
     ON_WM_CLOSE()
+    ON_WM_TIMER()
     ON_EN_CHANGE(IDC_EDT_SCAN_SN, &CFactoryTestI8FocusDlg::OnEnChangeEdtScanSn)
     ON_BN_CLICKED(IDC_BTN_TEST_RESULT1, &CFactoryTestI8FocusDlg::OnBnClickedBtnTestResult1)
     ON_BN_CLICKED(IDC_BTN_TEST_RESULT2, &CFactoryTestI8FocusDlg::OnBnClickedBtnTestResult2)
     ON_BN_CLICKED(IDC_BTN_TEST_RESULT3, &CFactoryTestI8FocusDlg::OnBnClickedBtnTestResult3)
     ON_BN_CLICKED(IDC_BTN_UPLOAD, &CFactoryTestI8FocusDlg::OnBnClickedBtnUpload)
-    ON_MESSAGE(WM_TNP_DEVICE_FOUND, &CFactoryTestI8FocusDlg::OnTnpDeviceFound)
-    ON_MESSAGE(WM_TNP_DEVICE_LOST , &CFactoryTestI8FocusDlg::OnTnpDeviceLost )
 END_MESSAGE_MAP()
 
 
@@ -142,6 +140,7 @@ BOOL CFactoryTestI8FocusDlg::OnInitDialog()
     strcpy(m_strUserName  , "username"      );
     strcpy(m_strPassWord  , "password"      );
     strcpy(m_strResource  , "resource"      );
+    strcpy(m_strGongDan   , "gongdan"       );
     strcpy(m_strLoginMode , "alert_and_exit");
     strcpy(m_strRouteCheck, "yes"           );
     strcpy(m_strLogFile   , "DEBUGER"       );
@@ -153,6 +152,7 @@ BOOL CFactoryTestI8FocusDlg::OnInitDialog()
     log_printf("username = %s\n", m_strUserName);
     log_printf("password = %s\n", m_strPassWord);
     log_printf("resource = %s\n", m_strResource);
+    log_printf("gongdan  = %s\n", m_strGongDan );
     log_printf("logfile  = %s\n", m_strLogFile );
 
 #if ENABLE_MES_SYSTEM
@@ -169,15 +169,15 @@ BOOL CFactoryTestI8FocusDlg::OnInitDialog()
 #endif
 
     m_strMesResource    = CString(m_strResource);
-    m_strTestInfo       = TEXT("请扫描条码...");
+    m_strMesGongDan     = CString(m_strGongDan );
+    m_strTestInfo       = TEXT("请扫描条码..." );
     m_bSnScaned         = FALSE;
     m_nFocusTestResult1 = -1;
     m_nFocusTestResult2 = -1;
     m_nFocusTestResult3 = -1;
     UpdateData(FALSE);
 
-    m_pTnpContext = tnp_init(GetSafeHwnd());
-    tnp_set_timeout(m_pTnpContext, 5000);
+    SetTimer(TIMER_ID_SET_FOCUS, 1000, NULL);
     return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -185,7 +185,6 @@ void CFactoryTestI8FocusDlg::OnDestroy()
 {
     CDialog::OnDestroy();
 
-    tnp_free(m_pTnpContext);
     log_done();
 
 #if ENABLE_MES_SYSTEM
@@ -236,6 +235,15 @@ HBRUSH CFactoryTestI8FocusDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
     switch (pWnd->GetDlgCtrlID()) {
     case IDC_TXT_MES_LOGIN:
         pDC->SetTextColor(m_bMesLoginOK ? RGB(0, 180, 0) : RGB(255, 0, 0));
+        break;
+    case IDC_TXT_TEST_INFO:
+        if (m_strTestInfo.Find("成功") != -1) {
+            pDC->SetTextColor(RGB(0, 180, 0));
+        } else if (m_strTestInfo.Find("失败") != -1) {
+            pDC->SetTextColor(RGB(255, 0, 0));
+        } else {
+            pDC->SetTextColor(RGB(0, 120, 255));
+        }
         break;
     }
     return hbr;
@@ -292,23 +300,24 @@ void CFactoryTestI8FocusDlg::OnEnChangeEdtScanSn()
 
     // TODO:  Add your control notification handler code here
     UpdateData(TRUE);
-    if (m_strScanSN.GetLength() >= 15) {
-        m_strCurSN  = m_strScanSN;
+    if (m_strScanSN.GetLength() >= 16) {
+        m_strCurSN  = m_strScanSN.Trim();
         m_strScanSN = "";
+        m_bSnScaned = TRUE;
 
 #if ENABLE_MES_SYSTEM
         if (m_bMesLoginOK && stricmp(m_strRouteCheck, "yes") == 0) {
             CString strErrMsg;
             BOOL ret = MesDLL::GetInstance().CheckRoutePassed(m_strCurSN, CString(m_strResource), strErrMsg);
-            if (!ret) {
-                AfxMessageBox(TEXT("该工位没有按照途程生产！"), MB_OK);
+            if (!ret && strErrMsg.Compare("SN_Not_Exist") != 0) {
+                AfxMessageBox(CString("该工位没有按照途程生产！\r\n") + strErrMsg, MB_OK);
+                UpdateData(FALSE);
                 return;
             }
         }
 #endif
 
-        m_bSnScaned   = TRUE;
-        m_strTestInfo = TEXT("请进行调焦并测试...");
+        m_strTestInfo = TEXT("请进行验焦测试...");
         UpdateData(FALSE);
     }
 }
@@ -324,51 +333,20 @@ void CFactoryTestI8FocusDlg::OnClose()
 
 BOOL CFactoryTestI8FocusDlg::PreTranslateMessage(MSG *pMsg)
 {
-    if (pMsg->message == WM_KEYDOWN) {
-        GetDlgItem(IDC_EDT_SCAN_SN)->SetFocus();
+    if (pMsg->message == WM_KEYDOWN || pMsg->message == WM_KEYUP) {
+        switch (pMsg->wParam) {
+        case 'Z'     : if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnTestResult1(); return TRUE;
+        case 'X'     : if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnTestResult2(); return TRUE;
+        case 'C'     : if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnTestResult3(); return TRUE;
+        case VK_SPACE: if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnUpload     (); return TRUE;
+        }
     }
     return CDialog::PreTranslateMessage(pMsg);
 }
 
-
-LRESULT CFactoryTestI8FocusDlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
-{
-    if (strcmp(m_strDeviceIP, "no device") != 0) {
-        log_printf("already have a device connected !\n");
-        return 0;
-    }
-
-    struct in_addr addr;
-    addr.S_un.S_addr = (u_long)lParam;
-    m_strDeviceIP = inet_ntoa(addr);
-    UpdateData(FALSE);
-    return 0;
-}
-
-LRESULT CFactoryTestI8FocusDlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
-{
-    struct in_addr addr;
-    addr.S_un.S_addr = (u_long)lParam;
-    if (strcmp(m_strDeviceIP, inet_ntoa(addr)) != 0) {
-        log_printf("this is not current connected device lost !\n");
-        return 0;
-    }
-
-    m_strDeviceIP = "no device";
-    m_bSnScaned   = FALSE;
-    m_nFocusTestResult1 = -1;
-    m_nFocusTestResult2 = -1;
-    m_nFocusTestResult3 = -1;
-    GetDlgItem(IDC_BTN_TEST_RESULT1)->SetWindowText("NG");
-    GetDlgItem(IDC_BTN_TEST_RESULT2)->SetWindowText("NG");
-    GetDlgItem(IDC_BTN_TEST_RESULT3)->SetWindowText("NG");
-    UpdateData(FALSE);
-    return 0;
-}
-
 void CFactoryTestI8FocusDlg::OnBnClickedBtnTestResult1()
 {
-    if (!m_bSnScaned) return;
+    GetDlgItem(IDC_EDT_SCAN_SN)->SetFocus();
     if (m_nFocusTestResult1 != 1) {
         m_nFocusTestResult1 = 1;
         GetDlgItem(IDC_BTN_TEST_RESULT1)->SetWindowText("PASS");
@@ -381,7 +359,7 @@ void CFactoryTestI8FocusDlg::OnBnClickedBtnTestResult1()
 
 void CFactoryTestI8FocusDlg::OnBnClickedBtnTestResult2()
 {
-    if (!m_bSnScaned) return;
+    GetDlgItem(IDC_EDT_SCAN_SN)->SetFocus();
     if (m_nFocusTestResult2 != 1) {
         m_nFocusTestResult2 = 1;
         GetDlgItem(IDC_BTN_TEST_RESULT2)->SetWindowText("PASS");
@@ -394,7 +372,7 @@ void CFactoryTestI8FocusDlg::OnBnClickedBtnTestResult2()
 
 void CFactoryTestI8FocusDlg::OnBnClickedBtnTestResult3()
 {
-    if (!m_bSnScaned) return;
+    GetDlgItem(IDC_EDT_SCAN_SN)->SetFocus();
     if (m_nFocusTestResult3 != 1) {
         m_nFocusTestResult3 = 1;
         GetDlgItem(IDC_BTN_TEST_RESULT3)->SetWindowText("PASS");
@@ -402,12 +380,12 @@ void CFactoryTestI8FocusDlg::OnBnClickedBtnTestResult3()
         m_nFocusTestResult3 = 0;
         GetDlgItem(IDC_BTN_TEST_RESULT3)->SetWindowText("NG");
     }
-    m_strTestInfo = TEXT("请上传测试结果...");
     UpdateData(FALSE);
 }
 
 void CFactoryTestI8FocusDlg::OnBnClickedBtnUpload()
 {
+    GetDlgItem(IDC_EDT_SCAN_SN)->SetFocus();
     if (!m_bSnScaned) return;
 
 #if ENABLE_MES_SYSTEM
@@ -446,18 +424,17 @@ void CFactoryTestI8FocusDlg::OnBnClickedBtnUpload()
             } else {
                 m_strTestInfo = "上传测试结果失败！";
             }
-//          AfxMessageBox(strErrMsg);
-            AfxMessageBox(m_strTestInfo);
         } else {
             m_strTestInfo = "上传测试结果成功！";
-            SetTimer(TIMER_ID_SCAN_NEXT, 2000, NULL);
         }
     } else {
         m_strTestInfo = "上传失败，MES 系统未登录！";
     }
+    AfxMessageBox(m_strTestInfo + "\r\n" + strErrMsg);
 #endif
 
-    m_bSnScaned = FALSE;
+    m_strTestInfo = "请扫描条码...";
+    m_bSnScaned   = FALSE;
     m_nFocusTestResult1 = -1;
     m_nFocusTestResult2 = -1;
     m_nFocusTestResult3 = -1;
@@ -470,10 +447,8 @@ void CFactoryTestI8FocusDlg::OnBnClickedBtnUpload()
 void CFactoryTestI8FocusDlg::OnTimer(UINT_PTR nIDEvent)
 {
     switch (nIDEvent) {
-    case TIMER_ID_SCAN_NEXT:
-        KillTimer(TIMER_ID_SCAN_NEXT);
-        m_strTestInfo = "请扫描条码...";
-        UpdateData(FALSE);
+    case TIMER_ID_SET_FOCUS:
+        GetDlgItem(IDC_EDT_SCAN_SN)->SetFocus();
         break;
     }
     CDialog::OnTimer(nIDEvent);

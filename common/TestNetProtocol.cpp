@@ -4,7 +4,6 @@
 #include "log.h"
 #include "TestNetProtocol.h"
 
-
 typedef struct {
     struct in_addr addr;
     DWORD  tick;
@@ -70,7 +69,7 @@ static DWORD WINAPI DeviceDetectThreadProc(LPVOID pParam)
             /*
             log_printf("receive datagram from %s:%d\n", inet_ntoa(from.sin_addr), from.sin_port);
             log_printf("msg.mag : %c%c%c%c\n", msg.mag[0], msg.mag[1], msg.mag[2], msg.mag[3]);
-            log_printf("msg.ip  : %s\n", msg.ip  );
+            log_printf("msg.sn  : %s\n", msg.sn  );
             log_printf("msg.port: %s\n", msg.port);
             */
             char *ip = inet_ntoa(from.sin_addr);
@@ -448,7 +447,7 @@ int tnp_test_spkonly_manual(void *ctxt, int onoff)
     return i == 10 ? -1 : 0;
 }
 
-int tnp_test_sensor_snmac_version(void *ctxt, char *sn, char *mac, char *version, int *rsltsensor, int *rsltsn, int *rsltmac, int *rsltver)
+int tnp_test_sensor_snmac_version(void *ctxt, char *sn, char *mac, char *version, int *rsltkey, int *rsltsensor, int *rsltsn, int *rsltmac, int *rsltver)
 {
     TNPCONTEXT *context = (TNPCONTEXT*)ctxt;
     if (!ctxt) return -1;
@@ -484,10 +483,12 @@ int tnp_test_sensor_snmac_version(void *ctxt, char *sn, char *mac, char *version
     }
 
     log_printf("tnp_test_sensor_snmac_version data received:\n");
+	log_printf("rtKey         = %d\n", data.rtKey        );
     log_printf("rtLightSensor = %d\n", data.rtLightSensor);
     log_printf("rtSN          = %d\n", data.rtSN         );
     log_printf("rtMAC         = %d\n", data.rtMAC        );
     log_printf("rtVersion     = %d\n", data.rtVersion    );
+	*rsltkey    = data.rtKey;
     *rsltsensor = data.rtLightSensor;
     *rsltsn     = data.rtSN;
     *rsltmac    = data.rtMAC;
@@ -496,6 +497,52 @@ int tnp_test_sensor_snmac_version(void *ctxt, char *sn, char *mac, char *version
     strcpy(mac    , data.MAC);
     strcpy(version, data.VER);
     return 0;
+}
+
+int tnp_test_smt(void *ctxt, char *version, int *rsltsensor, int *rslspkmic, int *rsltver)
+{
+	TNPCONTEXT *context = (TNPCONTEXT*)ctxt;
+	if (!ctxt) return -1;
+
+	if (!context->sock) {
+		log_printf("tnp_test_smt failed ! no connection !\n");
+		return -1;
+	}
+
+	FACTORYTEST_DATA data = {0};
+	data.MAGIC		      = SIG_MAGIC;
+	data.testLightSensor  = '1';
+	data.testSPK		  = '1';
+	data.testMic		  = '1';
+	data.testVersion      = '1';
+    strcpy(data.VER, version);
+
+	if (send(context->sock, (const char*)&data, sizeof(data), 0) == -1) {
+		log_printf("tnp_test_smt send tcp data failed !\n");
+		return -1;
+	}
+
+	int i;
+	for (i=0; i<10; i++) {
+		if (context->test_status & TNP_TEST_CANCEL) break;
+		if (recv(context->sock, (char*)&data, sizeof(data), 0) == -1) {
+			log_printf("tnp_test_smt recv tcp data failed ! retry %d\n", i);
+			continue;
+		} else {
+			break;
+		}
+	}
+
+	log_printf("tnp_test_smt data received:\n");
+	log_printf("rtLightSensor = %d\n", data.rtLightSensor);
+	log_printf("rtSPK         = %d\n", data.rtSPK        );
+	log_printf("rtMic         = %d\n", data.rtMic        );
+	log_printf("rtVersion     = %d\n", data.rtVersion    );
+	*rsltsensor = data.rtLightSensor;
+	*rslspkmic  = data.rtSPK && data.rtMic;
+	*rsltver    = data.rtVersion;
+	strcpy(version, data.VER);
+	return i == 10 ? -1 : 0;
 }
 
 int tnp_test_done(void *ctxt)

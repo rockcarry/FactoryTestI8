@@ -47,6 +47,12 @@ BOOL CFactoryTestI8SNApp::InitInstance()
 
     CWinApp::InitInstance();
 
+    HWND hwnd = FindWindow("#32770", "FactoryTestI8SN");
+    if (hwnd) {
+        SwitchToThisWindow(hwnd, TRUE);
+        return FALSE;
+    }
+
     if (!AfxSocketInit()) {
         AfxMessageBox(IDP_SOCKETS_INIT_FAILED);
         return FALSE;

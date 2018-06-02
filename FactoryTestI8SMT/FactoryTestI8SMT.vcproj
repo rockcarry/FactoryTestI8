@@ -2,9 +2,9 @@
 <VisualStudioProject
     ProjectType="Visual C++"
     Version="8.00"
-    Name="FactoryTestI8SN"
-    ProjectGUID="{FDA4F93F-F5EA-48EF-AB6E-FC805E3F105B}"
-    RootNamespace="FactoryTestI8SN"
+    Name="FactoryTestI8SMT"
+    ProjectGUID="{069A9F6A-8C05-4DF8-BC2A-93CED329DB7E}"
+    RootNamespace="FactoryTestI8SMT"
     Keyword="MFCProj"
     >
     <Platforms>
@@ -21,7 +21,6 @@
             IntermediateDirectory="$(ConfigurationName)"
             ConfigurationType="1"
             UseOfMFC="2"
-            UseOfATL="2"
             CharacterSet="2"
             >
             <Tool
@@ -69,7 +68,7 @@
             />
             <Tool
                 Name="VCLinkerTool"
-                AdditionalDependencies="mesdll.lib"
+                AdditionalDependencies="fanplayer.lib"
                 LinkIncremental="2"
                 AdditionalLibraryDirectories="..\common"
                 GenerateDebugInformation="true"
@@ -109,7 +108,6 @@
             IntermediateDirectory="$(ConfigurationName)"
             ConfigurationType="1"
             UseOfMFC="2"
-            UseOfATL="2"
             CharacterSet="2"
             WholeProgramOptimization="1"
             >
@@ -156,7 +154,7 @@
             />
             <Tool
                 Name="VCLinkerTool"
-                AdditionalDependencies="mesdll.lib"
+                AdditionalDependencies="fanplayer.lib"
                 LinkIncremental="1"
                 AdditionalLibraryDirectories="..\common"
                 GenerateDebugInformation="true"
@@ -202,11 +200,11 @@
             UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
             >
             <File
-                RelativePath=".\FactoryTestI8SN.cpp"
+                RelativePath=".\FactoryTestI8SMT.cpp"
                 >
             </File>
             <File
-                RelativePath=".\FactoryTestI8SNDlg.cpp"
+                RelativePath=".\FactoryTestI8SMTDlg.cpp"
                 >
             </File>
             <File
@@ -244,11 +242,11 @@
             UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
             >
             <File
-                RelativePath=".\FactoryTestI8SN.h"
+                RelativePath=".\FactoryTestI8SMT.h"
                 >
             </File>
             <File
-                RelativePath=".\FactoryTestI8SNDlg.h"
+                RelativePath=".\FactoryTestI8SMTDlg.h"
                 >
             </File>
             <File
@@ -274,15 +272,15 @@
             UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
             >
             <File
-                RelativePath=".\res\FactoryTestI8SN.ico"
+                RelativePath=".\res\FactoryTestI8SMT.ico"
                 >
             </File>
             <File
-                RelativePath=".\FactoryTestI8SN.rc"
+                RelativePath=".\FactoryTestI8SMT.rc"
                 >
             </File>
             <File
-                RelativePath=".\res\FactoryTestI8SN.rc2"
+                RelativePath=".\res\FactoryTestI8SMT.rc2"
                 >
             </File>
         </Filter>
@@ -290,7 +288,7 @@
     <Globals>
         <Global
             Name="RESOURCE_FILE"
-            Value="FactoryTestI8SN.rc"
+            Value="FactoryTestI8SMT.rc"
         />
     </Globals>
 </VisualStudioProject>

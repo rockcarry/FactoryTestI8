@@ -14,6 +14,7 @@
 #endif
 
 #define ENABLE_MES_SYSTEM  TRUE
+#define TIMER_ID_SET_FOCUS 2
 
 static void get_app_dir(char *path, int size)
 {
@@ -233,8 +234,8 @@ void CFactoryTestI8SNDlg::DoDeviceTest()
                 } else {
                     m_strTestResult = "上传失败";
                 }
-                log_printf("MES SetMobileData failed !\nstrErrMsg = %s\n", strErrMsg);
                 PostMessage(WM_TNP_UPDATE_UI);
+                AfxMessageBox(m_strTestResult + "\r\n" + strErrMsg);
             }
         }
 #endif
@@ -267,38 +268,6 @@ void CFactoryTestI8SNDlg::StopDeviceTest()
         WaitForSingleObject(m_hTestThread, -1);
     }
 }
-
-
-// 用于应用程序“关于”菜单项的 CAboutDlg 对话框
-
-class CAboutDlg : public CDialog
-{
-public:
-    CAboutDlg();
-
-// 对话框数据
-    enum { IDD = IDD_ABOUTBOX };
-
-protected:
-    virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
-
-// 实现
-protected:
-    DECLARE_MESSAGE_MAP()
-};
-
-CAboutDlg::CAboutDlg() : CDialog(CAboutDlg::IDD)
-{
-}
-
-void CAboutDlg::DoDataExchange(CDataExchange* pDX)
-{
-    CDialog::DoDataExchange(pDX);
-}
-
-BEGIN_MESSAGE_MAP(CAboutDlg, CDialog)
-END_MESSAGE_MAP()
-
 
 // CFactoryTestI8SNDlg 对话框
 
@@ -340,6 +309,7 @@ BEGIN_MESSAGE_MAP(CFactoryTestI8SNDlg, CDialog)
     ON_WM_QUERYDRAGICON()
     ON_WM_DESTROY()
     ON_WM_CLOSE()
+    ON_WM_TIMER()
     ON_EN_CHANGE(IDC_EDT_SCAN_SN, &CFactoryTestI8SNDlg::OnEnChangeEdtScanSn)
     ON_MESSAGE(WM_TNP_UPDATE_UI   , &CFactoryTestI8SNDlg::OnTnpUpdateUI   )
     ON_MESSAGE(WM_TNP_DEVICE_FOUND, &CFactoryTestI8SNDlg::OnTnpDeviceFound)
@@ -352,22 +322,6 @@ END_MESSAGE_MAP()
 BOOL CFactoryTestI8SNDlg::OnInitDialog()
 {
     CDialog::OnInitDialog();
-
-    // 将“关于...”菜单项添加到系统菜单中。
-
-    // IDM_ABOUTBOX 必须在系统命令范围内。
-    ASSERT((IDM_ABOUTBOX & 0xFFF0) == IDM_ABOUTBOX);
-    ASSERT(IDM_ABOUTBOX < 0xF000);
-
-    CMenu* pSysMenu = GetSystemMenu(FALSE);
-    if (pSysMenu != NULL) {
-        CString strAboutMenu;
-        strAboutMenu.LoadString(IDS_ABOUTBOX);
-        if (!strAboutMenu.IsEmpty()) {
-            pSysMenu->AppendMenu(MF_SEPARATOR);
-            pSysMenu->AppendMenu(MF_STRING, IDM_ABOUTBOX, strAboutMenu);
-        }
-    }
 
     // 设置此对话框的图标。当应用程序主窗口不是对话框时，框架将自动
     // 执行此操作
@@ -424,6 +378,8 @@ BOOL CFactoryTestI8SNDlg::OnInitDialog()
     UpdateData(FALSE);
 
     m_pTnpContext = tnp_init(GetSafeHwnd());
+
+    SetTimer(TIMER_ID_SET_FOCUS, 1000, NULL);
     return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -443,16 +399,6 @@ void CFactoryTestI8SNDlg::OnDestroy()
         log_printf("MesDLL ATELogOut failed !\n");
     }
 #endif
-}
-
-void CFactoryTestI8SNDlg::OnSysCommand(UINT nID, LPARAM lParam)
-{
-    if ((nID & 0xFFF0) == IDM_ABOUTBOX) {
-        CAboutDlg dlgAbout;
-        dlgAbout.DoModal();
-    } else {
-        CDialog::OnSysCommand(nID, lParam);
-    }
 }
 
 // 当用户拖动最小化窗口时系统调用此函数取得光标显示。
@@ -517,16 +463,17 @@ void CFactoryTestI8SNDlg::OnEnChangeEdtScanSn()
 
     // TODO:  Add your control notification handler code here
     UpdateData(TRUE);
-    if (m_strScanSN.GetLength() >= 15) {
-        m_strCurSN  = m_strScanSN;
+    if (m_strScanSN.GetLength() >= 16) {
+        m_strCurSN  = m_strScanSN.Trim();
         m_strScanSN = "";
+        UpdateData(FALSE);
 
 #if ENABLE_MES_SYSTEM
         if (m_bMesLoginOK && stricmp(m_strRouteCheck, "yes") == 0) {
             CString strErrMsg;
             BOOL ret = MesDLL::GetInstance().CheckRoutePassed(m_strCurSN, CString(m_strResource), strErrMsg);
             if (!ret) {
-                AfxMessageBox(TEXT("该工位没有按照途程生产！"), MB_OK);
+                AfxMessageBox(CString("该工位没有按照途程生产！\r\n") + strErrMsg, MB_OK);
                 return;
             }
         }
@@ -542,13 +489,16 @@ void CFactoryTestI8SNDlg::OnEnChangeEdtScanSn()
             if (ret) {
                 m_strCurMac = strMAC;
             } else {
-                m_strTestInfo  += "无法从 MES 系统获取 MAC\r\n";
+                AfxMessageBox(TEXT("无法从 MES 系统获取 MAC 地址！"), MB_OK);
+                m_strCurMac = "xxxxxxxxxxxx";
+                UpdateData(FALSE);
                 return;
             }
-        } else {
+        } else
+#endif
+        {
             m_strCurMac = "4637E68F43E5";
         }
-#endif
 
         if (m_bConnectState) {
             m_bSnScaned = FALSE;
@@ -573,13 +523,12 @@ LRESULT CFactoryTestI8SNDlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
         log_printf("already have a device connected !\n");
         return 0;
     }
+
     struct in_addr addr;
     addr.S_un.S_addr = (u_long)lParam;
-    strcpy(m_strDeviceIP, inet_ntoa(addr));
-    m_strConnectState.Format(TEXT("发现设备 %s ！"), CString(m_strDeviceIP));
-
     int ret = tnp_connect(m_pTnpContext, addr);
     if (ret == 0) {
+        strcpy(m_strDeviceIP, inet_ntoa(addr));
         m_strConnectState.Format(TEXT("设备连接成功！（%s）"), CString(m_strDeviceIP));
         m_bConnectState = TRUE;
         if (m_bSnScaned) {
@@ -633,11 +582,12 @@ void CFactoryTestI8SNDlg::OnClose()
     EndDialog(IDCANCEL);
 }
 
-BOOL CFactoryTestI8SNDlg::PreTranslateMessage(MSG *pMsg)
+void CFactoryTestI8SNDlg::OnTimer(UINT_PTR nIDEvent)
 {
-    if (pMsg->message == WM_KEYDOWN) {
+    switch (nIDEvent) {
+    case TIMER_ID_SET_FOCUS:
         GetDlgItem(IDC_EDT_SCAN_SN)->SetFocus();
+        break;
     }
-    return CDialog::PreTranslateMessage(pMsg);
+    CDialog::OnTimer(nIDEvent);
 }
-

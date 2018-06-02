@@ -15,9 +15,10 @@
 #define IDC_BTN_TEST_RESULT1            1007
 #define IDC_BTN_TEST_RESULT2            1008
 #define IDC_BTN_TEST_RESULT3            1009
+#define IDC_TXT_MES_GONGDAN             1010
 
 // Next default values for new objects
-// 
+//
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        129

@@ -16,7 +16,6 @@ public:
 
 protected:
     virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV Ö§³Ö
-    virtual BOOL PreTranslateMessage(MSG* pMsg);
     virtual void OnCancel();
     virtual void OnOK();
 
@@ -28,8 +27,8 @@ protected:
     virtual BOOL OnInitDialog();
     afx_msg void OnDestroy();
     afx_msg void OnClose();
-    afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
     afx_msg void OnPaint();
+    afx_msg void OnTimer(UINT_PTR nIDEvent);
     afx_msg HBRUSH  OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
     afx_msg HCURSOR OnQueryDragIcon();
     afx_msg LRESULT OnTnpUpdateUI   (WPARAM wParam, LPARAM lParam);

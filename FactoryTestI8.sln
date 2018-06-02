@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FactoryTestI8SN", "FactoryT
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FactoryTestI8Focus", "FactoryTestI8Focus\FactoryTestI8Focus.vcproj", "{CF26A08D-2FE9-465B-8E17-FF9FFA396750}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FactoryTestI8SMT", "FactoryTestI8SMT\FactoryTestI8SMT.vcproj", "{069A9F6A-8C05-4DF8-BC2A-93CED329DB7E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -25,6 +27,10 @@ Global
 		{CF26A08D-2FE9-465B-8E17-FF9FFA396750}.Debug|Win32.Build.0 = Debug|Win32
 		{CF26A08D-2FE9-465B-8E17-FF9FFA396750}.Release|Win32.ActiveCfg = Release|Win32
 		{CF26A08D-2FE9-465B-8E17-FF9FFA396750}.Release|Win32.Build.0 = Release|Win32
+		{069A9F6A-8C05-4DF8-BC2A-93CED329DB7E}.Debug|Win32.ActiveCfg = Debug|Win32
+		{069A9F6A-8C05-4DF8-BC2A-93CED329DB7E}.Debug|Win32.Build.0 = Debug|Win32
+		{069A9F6A-8C05-4DF8-BC2A-93CED329DB7E}.Release|Win32.ActiveCfg = Release|Win32
+		{069A9F6A-8C05-4DF8-BC2A-93CED329DB7E}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

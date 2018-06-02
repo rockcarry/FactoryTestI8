@@ -48,7 +48,7 @@ BEGIN
     "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)\r\n"
     "LANGUAGE 4, 2\r\n"
     "#pragma code_page(936)\r\n"
-    "#include ""res\\FactoryTestI8Focus.rc2""  // 非 Microsoft Visual C++ 编辑的资源\r\n"
+    "#include ""res\\FactoryTestI8SMT.rc2""  // 非 Microsoft Visual C++ 编辑的资源\r\n"
     "#include ""afxres.rc""     // 标准组件\r\n"
     "#endif\r\n"
     "\0"
@@ -64,37 +64,39 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDR_MAINFRAME           ICON                    "res\\FactoryTestI8Focus.ico"
+IDR_MAINFRAME           ICON                    "res\\FactoryTestI8SMT.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // Dialog
 //
 
-IDD_FACTORYTESTI8FOCUS_DIALOG DIALOGEX 0, 0, 115, 250
-STYLE DS_SETFONT | DS_MODALFRAME | WS_MINIMIZEBOX | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-EXSTYLE WS_EX_TOPMOST | WS_EX_APPWINDOW
-CAPTION "FactoryTestI8Focus"
-FONT 12, "宋体", 400, 0, 0x86
+IDD_FACTORYTESTI8SMT_DIALOG DIALOGEX 0, 0, 395, 260
+STYLE DS_SETFONT | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+EXSTYLE WS_EX_APPWINDOW
+CAPTION "FactoryTestI8SMT"
+FONT 10, "宋体", 400, 0, 0x86
 BEGIN
-    EDITTEXT        IDC_EDT_SCAN_SN,29,80,82,15,ES_MULTILINE | ES_AUTOHSCROLL | ES_WANTRETURN | WS_VSCROLL
-    EDITTEXT        IDC_EDT_CUR_SN,29,101,82,15,ES_AUTOHSCROLL | ES_READONLY | NOT WS_TABSTOP
-    PUSHBUTTON      "上传测试结果",IDC_BTN_UPLOAD,5,219,107,27
-    LTEXT           "扫描：",IDC_STATIC,5,84,24,11
-    LTEXT           "SN：",IDC_STATIC,5,105,24,11
-    LTEXT           "",IDC_TXT_MES_RESOURCE,45,5,66,11
-    LTEXT           "资源号：",IDC_STATIC,5,5,40,11
-    LTEXT           "",IDC_TXT_MES_LOGIN,45,41,66,11
-    LTEXT           "登录状态：",IDC_STATIC,5,41,40,11
-    CONTROL         "NG",IDC_BTN_TEST_RESULT1,"Button",BS_OWNERDRAW | WS_TABSTOP,46,124,66,27
-    LTEXT           "",IDC_TXT_TEST_INFO,0,60,114,11
-    CONTROL         "NG",IDC_BTN_TEST_RESULT2,"Button",BS_OWNERDRAW | WS_TABSTOP,46,155,66,27
-    LTEXT           "镜头调焦：",IDC_STATIC,4,163,41,8
-    LTEXT           "正常开机：",IDC_STATIC,4,132,41,8
-    CONTROL         "NG",IDC_BTN_TEST_RESULT3,"Button",BS_OWNERDRAW | WS_TABSTOP,46,186,66,27
-    LTEXT           "暗角黑纹：",IDC_STATIC,4,194,41,8
-    LTEXT           "",IDC_TXT_MES_GONGDAN,45,23,66,11
-    LTEXT           "工单：",IDC_STATIC,5,23,40,11
+    CONTROL         "NG",IDC_BTN_LED_RESULT,"Button",BS_OWNERDRAW | WS_TABSTOP,65,53,50,22
+    CONTROL         "NG",IDC_BTN_CAMERA_RESULT,"Button",BS_OWNERDRAW | WS_TABSTOP,65,76,50,22
+    CONTROL         "NG",IDC_BTN_IR_RESULT,"Button",BS_OWNERDRAW | WS_TABSTOP,65,99,50,22
+    CONTROL         "NG",IDC_BTN_KEY_RESULT,"Button",BS_OWNERDRAW | WS_TABSTOP,65,122,50,22
+    CONTROL         "NG",IDC_BTN_LSENSOR_RESULT,"Button",BS_OWNERDRAW | WS_TABSTOP,65,170,50,22
+    CONTROL         "NG",IDC_BTN_VERSION_RESULT,"Button",BS_OWNERDRAW | WS_TABSTOP,65,216,50,22
+    LTEXT           "连接状态：",IDC_STATIC,4,6,45,10
+    LTEXT           "",IDC_TXT_CONNECT_STATE,48,6,85,10
+    GROUPBOX        "手动测试项目",IDC_STATIC,8,42,114,109
+    GROUPBOX        "自动测试项目",IDC_STATIC,8,160,114,84
+    LTEXT           "",IDC_TXT_CUR_VER,48,23,85,10
+    CONTROL         "NG",IDC_BTN_SPKMIC_RESULT,"Button",BS_OWNERDRAW | WS_TABSTOP,65,193,50,22
+    LTEXT           "光感：",IDC_STATIC,18,177,23,8
+    LTEXT           "版本号：",IDC_STATIC,18,223,31,8
+    LTEXT           "LED 指示灯：",IDC_STATIC,18,59,47,8
+    LTEXT           "摄像头：",IDC_STATIC,18,82,31,8
+    LTEXT           "喇叭咪头：",IDC_STATIC,18,200,38,8
+    LTEXT           "按键：",IDC_STATIC,18,129,23,8
+    LTEXT           "红外灯：",IDC_STATIC,18,105,31,8
+    LTEXT           "设备版本号：",IDC_STATIC,4,23,45,10
 END
 
 
@@ -121,12 +123,12 @@ BEGIN
         BLOCK "080403a8"
         BEGIN
             VALUE "CompanyName", "爱培科科技股份有限公司"
-            VALUE "FileDescription", "工厂测试工具 I8-FOCUS 验焦测试"
-            VALUE "FileVersion", "1.0.0.1 20180528"
-            VALUE "InternalName", "FactoryTestI8Focus.exe"
+            VALUE "FileDescription", "工厂测试工具 I8-SMT 全功能测试"
+            VALUE "FileVersion", "1.0.0.1"
+            VALUE "InternalName", "FactoryTestI8SMT.exe"
             VALUE "LegalCopyright", "(C) <APICAL>。保留所有权利。"
-            VALUE "OriginalFilename", "FactoryTestI8Focus.exe"
-            VALUE "ProductName", "工厂测试工具 I8-FOCUS"
+            VALUE "OriginalFilename", "FactoryTestI8SMT.exe"
+            VALUE "ProductName", "工厂测试工具 I8-SMT"
             VALUE "ProductVersion", "1.0.0.1 20180528"
         END
     END
@@ -165,7 +167,7 @@ END
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)
 LANGUAGE 4, 2
 #pragma code_page(936)
-#include "res\FactoryTestI8Focus.rc2"  // 非 Microsoft Visual C++ 编辑的资源
+#include "res\FactoryTestI8SMT.rc2"  // 非 Microsoft Visual C++ 编辑的资源
 #include "afxres.rc"     // 标准组件
 #endif
 
