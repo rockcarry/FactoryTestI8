@@ -1,0 +1,12 @@
+sensor_name     :jxh62
+i2c_addr        :0x30
+nrvbs        	:2
+fps_den         :1
+fps_num         :20
+width           :1280
+height          :720
+width_ori       :1280
+height_ori      :720
+second_width    :640
+second_height   :480
+adc             :0x350

@@ -711,8 +711,6 @@ void StartAgainTest()
                 // 销毁程序
                 printf("test over, destory!!!\r\n");
                 system("mv /etc/init.d/rcS.dh /etc/init.d/rcS");
-                system("rm -f /etc/apkft/stage");
-                system("rm -f /etc/apkft/apkft.sh");
                 system("rm -rf /etc/apkft");
                 system("sync");
                 printf("\r\n server:remove test app & exit.\n\r\n");
