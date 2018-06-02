@@ -25,7 +25,7 @@ if [ "$stage" == "camera" ]; then
     if [ -f /etc/apkft/carrier-server ]; then
         /etc/apkft/carrier-server --st=jxh62 &
     else
-        /etc/apkft/usbcamera_720v
+        /etc/apkft/usbcamera_720av
     fi
 fi
 
