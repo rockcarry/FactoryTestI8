@@ -470,7 +470,7 @@ void CFactoryTestI8SMTDlg::OnTimer(UINT_PTR nIDEvent)
             char  url_gb2312 [MAX_PATH];
             WCHAR url_unicode[MAX_PATH];
             char  url_utf8   [MAX_PATH];
-            sprintf(url_gb2312, "dshow://video=%s:audio=%s", m_strUVCDev, m_strUACDev);
+            sprintf(url_gb2312, "dshow://video=%s", m_strUVCDev);
             MultiByteToWideChar(CP_ACP , 0, url_gb2312 , -1, url_unicode, MAX_PATH);
             WideCharToMultiByte(CP_UTF8, 0, url_unicode, -1, url_utf8, MAX_PATH, NULL, NULL);
             m_pFanPlayer = player_open(url_utf8, GetSafeHwnd(), &params);
