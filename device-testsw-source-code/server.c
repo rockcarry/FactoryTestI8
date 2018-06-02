@@ -20,8 +20,6 @@
 
 // mips-linux-uclibc-gnu-gcc -muclibc -march=mips32r2 sn.c -o sn.o
 char MacBuffer[1566];
-char host     [32];
-char LocalIP  [32];
 
 #define SIG_MAGIC ('N'<<24)+('S'<<16)+('8'<<8)+('I'<<0)
 
@@ -80,16 +78,16 @@ typedef struct {
 } NOTIFY_MSG;
 #pragma pack()
 
-extern int AgingPlayTest();
-extern int TEST_SPK_MIC (int argc, FACTORYTEST_DATA *plFtD);
-extern int TEST_SPK_ONLY(int onoff);
+extern int AgingPlayTest  ();
+extern int TEST_SPK_MIC   (int argc, FACTORYTEST_DATA *plFtD);
+extern int TEST_PLAY_MUSIC(int onoff, int vol);
 
 FACTORYTEST_DATA lFtD;
 static int KeyL = 0;
 static int KeyH = 0;
-static int g_IrTestAuto  = 1;
-static int g_LedTestAuto = 1;
-static int g_Destory     = 0;
+static int g_IrTestAuto    = 1;
+static int g_LedTestAuto   = 1;
+static int g_StopHeartBeat = 0;
 
 int DrvSaveToFile(char *cName, char *pData, int len)
 {
@@ -265,29 +263,34 @@ int CheckSNAndMAC(FACTORYTEST_DATA *plFtD)
     printf("read SN:%s ?= %s \r\n", SN, plFtD->SN);
     if (memcmp(SN, plFtD->SN, 15)) {
         printf(">>> check SN failed!\r\n");
-        res += 2;
+        res |= (1 << 1);
         plFtD->rtSN = 0;
     } else {
         printf(">>> check SN OK!\r\n");
         plFtD->rtSN = 1;
     }
+    memcpy(plFtD->SN, SN, 15);
 
     // 2 check MAC
     for (i=0; i<6; i++) {
-        MAC[i*3] = plFtD->MAC[i*2];
+        MAC[i*3+0] = plFtD->MAC[i*2+0];
         MAC[i*3+1] = plFtD->MAC[i*2+1];
         MAC[i*3+2] = ' ';
     }
-    system("iwpriv wlan0 efuse_get realmap > /tmp/wifi_rel_efuse.map");  //read to file
+    system("iwpriv wlan0 efuse_get realmap > /tmp/wifi_rel_efuse.map");  // read to file
     iLen = sizeof(MacBuffer);
     DrvReadFileEx("/tmp/wifi_rel_efuse.map", pData, &iLen, 0);
-    if (mymemcmp(&pData[0x3e2], &MAC[0], 17)) {
+    if (mymemcmp(&pData[0x3e2], MAC, 17)) {
         printf(">>> check MAC failed!\r\n");
-        res += 1;
+        res |= (1 << 0);
         plFtD->rtMAC = 0;
     } else {
         printf(">>> check MAC OK!\r\n");
         plFtD->rtMAC = 1;
+    }
+    for (i=0; i<6; i++) {
+        plFtD->MAC[i*2+0] = MAC[i*3+0];
+        plFtD->MAC[i*2+1] = MAC[i*3+1];
     }
 
     return res;
@@ -321,7 +324,7 @@ int WriteAndCheckSN(FACTORYTEST_DATA *plFtD)
         printf("read SN:%s ?= %s \r\n", SN, plFtD->SN);
         if (memcmp(SN, plFtD->SN, 15)) {
             printf(">>> Write SN failed!\r\n");
-            res += 2;
+            res |= (1 << 1);
             plFtD->rtSN = 0;
         } else {
             printf(">>> Write SN OK!\r\n");
@@ -333,7 +336,7 @@ int WriteAndCheckSN(FACTORYTEST_DATA *plFtD)
     if (plFtD->rtMAC == 0) {
         if (plFtD->rtSD) {
             printf("Write MAC (SD):%s \r\n", plFtD->MAC);
-            iLen=0; //all file bytes
+            iLen = 0; // all file bytes
             DrvReadFileEx("./wifi_efuse_8189fs.map", MacBuffer, &iLen, 0);
             ReplanceMac((char*)&MacBuffer[0x35f], (char*)&plFtD->MAC, 6);
 //          dumpChar("MacBuffer1", MacBuffer, 1566);
@@ -350,7 +353,7 @@ int WriteAndCheckSN(FACTORYTEST_DATA *plFtD)
 //      dumpChar("\r\npData", pData, 1566);
         if (mymemcmp(&pData[0x3e2], &MacBuffer[0x35f], 17)) {
             printf(">>> Write MAC failed!\r\n");
-            res += 1;
+            res |= (1 << 0);
             plFtD->rtMAC = 0;
         } else {
             printf(">>> Write MAC OK!\r\n");
@@ -371,20 +374,19 @@ int ChechVersion(FACTORYTEST_DATA *plFtD)
     DrvReadFileEx("/etc/version", ver, &iLen, 0);
 
     ver[63] = 0;
-
     CutoffChar(plFtD->VERSION, '\r');
     CutoffChar(plFtD->VERSION, '\n');
     CutoffChar(ver, '\n');
     if (strcmp(plFtD->VERSION, ver)) {
         printf("ver:%s != %s\r\n", ver, plFtD->VERSION);
         plFtD->rtVersion = 0;
+        strcpy(plFtD->VERSION, ver);
         return -1;
     } else {
         printf("ver:%s == %s\r\n", ver, plFtD->VERSION);
         strcpy(plFtD->VERSION, ver);
         plFtD->rtVersion = 1;
     }
-
     return 0;
 }
 
@@ -417,55 +419,6 @@ int EnIR(FACTORYTEST_DATA *plFtD)
         system("echo 1 > /sys/class/gpio/gpio61/value");
     }
 
-    return 0;
-}
-
-int EnLED(FACTORYTEST_DATA *plFtD)
-{
-//  printf("\r\n\r\nstart EnLED: %d\r\n", plFtD->testLED);
-    system("echo 49 > /sys/class/gpio/export");
-    system("echo out > /sys/class/gpio/gpio49/direction");
-    system("echo 50 > /sys/class/gpio/export");
-    system("echo out > /sys/class/gpio/gpio50/direction");
-    if (plFtD->testLED == '1') {
-        // BLUE ON
-        system("echo 1 > /sys/class/gpio/gpio49/value");
-        // RED OFF
-        system("echo 0 > /sys/class/gpio/gpio50/value");
-    } else if (plFtD->testLED == '2') {
-        // RED ON
-        system("echo 1 > /sys/class/gpio/gpio50/value");
-        // BLUE OFF
-        system("echo 0 > /sys/class/gpio/gpio49/value");
-    } else if (plFtD->testLED == '3') {
-        // RED & BLUE  = purple
-        system("echo 1 > /sys/class/gpio/gpio49/value");
-        system("echo 1 > /sys/class/gpio/gpio50/value");
-    } else if (plFtD->testLED == '4') {
-        // GREEN ON
-        // BLUE OFF
-        system("echo 0 > /sys/class/gpio/gpio50/value");
-        system("echo 0 > /sys/class/gpio/gpio49/value");
-    } else if (plFtD->testLED == '8') {
-        system("echo 1 > /sys/class/gpio/gpio49/value");
-        system("echo 1 > /sys/class/gpio/gpio50/value");
-    } else if (plFtD->testLED == '9') {
-        system("echo 0 > /sys/class/gpio/gpio49/value");
-        system("echo 0 > /sys/class/gpio/gpio50/value");
-    }
-    plFtD->rtLED = 1;
-    return 0;
-}
-
-int EnLEDAuto(int on)
-{
-    if (on == 1) {
-        system("echo 0 > /sys/class/gpio/gpio72/value");
-        system("echo 1 > /sys/class/gpio/gpio50/value");
-    } else {
-        system("echo 1 > /sys/class/gpio/gpio72/value");
-        system("echo 0 > /sys/class/gpio/gpio50/value");
-    }
     return 0;
 }
 
@@ -511,7 +464,7 @@ int TestKey(FACTORYTEST_DATA *plFtD)
     int val = 0;
     int fd;
 
-    const char *cName="/sys/class/gpio/gpio60/value";
+    const char *cName = "/sys/class/gpio/gpio60/value";
 
     system("echo 60 > /sys/class/gpio/export");
     system("echo in > /sys/class/gpio/gpio60/direction");
@@ -596,35 +549,33 @@ int GetLightSensor()
     }
 }
 
-int getLocalIP(char *pLocIP)
+int getBroadcastIP(char *ip)
 {
     int inet_sock;
-    struct ifreq ifr;
+    struct ifreq ifr = {};
+    struct in_addr broadcastip = {};
 
     inet_sock = socket(AF_INET, SOCK_DGRAM, 0);
     strcpy(ifr.ifr_name, "wlan0");
     ioctl(inet_sock, SIOCGIFADDR, &ifr);
-    strcpy(pLocIP, inet_ntoa(((struct sockaddr_in*)&ifr.ifr_addr)->sin_addr));
-    printf("LocIP: %s\r\n", pLocIP);
-
-    if (pLocIP[0] == '1') {
-        return 0;
-    } else {
-        printf("getLocalIP error!\r\n");
-        return -1;
-    }
+    broadcastip = ((struct sockaddr_in*)&ifr.ifr_addr)->sin_addr;
+    broadcastip.s_addr |= (255 << 24);
+    strcpy(ip , inet_ntoa(broadcastip));
+//  printf("BroadcastIP: %s\r\n", ip);
+    return ip[0] == '1' ? 0 : -1;
 }
 
-int NotifyHost(char *pHostIP, char *pLocIP)
+static void *heart_beat_thread(void *argv)
 {
     struct sockaddr_in servaddr = {0};
     int    sockfd   = 0 ;
-//  NOTIFY_MSG rmsg = {};
     NOTIFY_MSG msg  = {};
-    char pData[64]  = {};
-    char SN   [16]  = {};
+    char pData [64] = {};
+    char SN    [16] = {};
+    char servip[16] = {};
     struct timeval t;
-    int    opt;
+    int    led = 0;
+    int    opt = 0;
 
     // read sn from mtd5
     int len = 32;
@@ -635,23 +586,6 @@ int NotifyHost(char *pHostIP, char *pLocIP)
     // note !!, the msg.IP is used for store SN
     memcpy(msg.MAG, "NMSG", 4);
     strcpy(msg.IP , SN);
-
-    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-    servaddr.sin_family = AF_INET;
-    servaddr.sin_port   = htons(8989);
-    inet_pton(AF_INET, pHostIP, &servaddr.sin_addr);
-
-    // set non-block io
-    opt = 1; ioctl(sockfd, FIONBIO, &opt);
-
-    // set udp send & recv timeout
-    t.tv_sec  = 1;
-    t.tv_usec = 0;
-    setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, (char*)&t, sizeof(t));
-    setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (char*)&t, sizeof(t));
-
-    // set udp broadcast
-    opt = 1; setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, (char*)&opt, sizeof(opt));
 
     //++ init gpios
     system("echo 72 > /sys/class/gpio/export");
@@ -671,25 +605,74 @@ int NotifyHost(char *pHostIP, char *pLocIP)
     system("echo out > /sys/class/gpio/gpio61/direction");
     //-- init gpios
 
-    while (!g_Destory) {
-        int led = 0;
-        int ret = sendto(sockfd, &msg, sizeof(msg), 0, (struct sockaddr*)&servaddr, sizeof(servaddr));
-        if (ret == -1) {
-            printf("sendto failed !\n");
-        } else {
-            printf("notify [%d]: host:%s, loc:%s\r\n", ret, pHostIP, pLocIP);
+    // open socket
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+
+    // set non-block io
+    opt = 1; ioctl(sockfd, FIONBIO, &opt);
+
+    // set udp send & recv timeout
+    t.tv_sec  = 1;
+    t.tv_usec = 0;
+    setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, (char*)&t, sizeof(t));
+    setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (char*)&t, sizeof(t));
+
+    // set udp broadcast
+    if (argv == NULL) {
+        opt = 1; setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, (char*)&opt, sizeof(opt));
+    }
+
+    // for server addr
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_port   = htons(8989);
+
+    while (!g_StopHeartBeat) {
+        if (servaddr.sin_addr.s_addr == 0) {
+            if (getBroadcastIP(servip) == 0) {
+                if (argv != NULL) {
+                    strcpy(servip, argv);
+                }
+                inet_pton(AF_INET, servip, &servaddr.sin_addr);
+                system("echo 1 > /sys/class/gpio/gpio49/value"); // turn on blue led
+            }
+        }
+        if (servaddr.sin_addr.s_addr != 0) {
+            if (sendto(sockfd, &msg, sizeof(msg), 0, (struct sockaddr*)&servaddr, sizeof(servaddr)) == -1) {
+                printf("sendto failed !\n");
+            } else {
+                printf("heartbeat: %s\r\n", servip);
+            }
         }
 
+        // auto led
         if (g_LedTestAuto) {
-            led = !led;
-            EnLEDAuto(led);
+            if (servaddr.sin_addr.s_addr) {
+                led++; led %= 3;
+            } else {
+                led++; led %= 2;
+            }
+            switch (led) {
+            case 0:
+                system("echo 1 > /sys/class/gpio/gpio50/value");
+                system("echo 0 > /sys/class/gpio/gpio72/value");
+                system("echo 0 > /sys/class/gpio/gpio49/value");
+                break;
+            case 1:
+                system("echo 0 > /sys/class/gpio/gpio50/value");
+                system("echo 1 > /sys/class/gpio/gpio72/value");
+                system("echo 0 > /sys/class/gpio/gpio49/value");
+                break;
+            case 2:
+                system("echo 0 > /sys/class/gpio/gpio50/value");
+                system("echo 0 > /sys/class/gpio/gpio72/value");
+                system("echo 1 > /sys/class/gpio/gpio49/value");
+                break;
+            }
         }
 
         // auto IRCut
-//      printf("\r\n server:testIR:%d \n\r\n", lFtD.testIR);
         if (g_IrTestAuto) {
-            if (GetLightSensor()==1)
-            {
+            if (GetLightSensor() == 1) {
                 EnIRForAuto   (1);
                 EnIRCutForAuto(1);
             } else {
@@ -700,35 +683,75 @@ int NotifyHost(char *pHostIP, char *pLocIP)
 
         sleep(1);
     }
-    close(sockfd);
-    return 0;
-}
 
-static void *Udp_Thread(void *argv)
-{
-    NotifyHost(host, LocalIP);
+    close(sockfd);
     return NULL;
 }
 
-static void *led_Thread(void *argv)
+static int g_button_test = 0;
+static int g_stop_button_monitor = 0;
+static void* button_monitor_thread(void *argv)
 {
-    while (!g_Destory) {
-        AgingPlayTest();
-        EnLEDAuto(1);
-        sleep(5);
-        AgingPlayTest();
-        EnLEDAuto(0);
-        sleep(5);
+    int fd    = 0;
+    int key   = 0;
+    int ir    = 0;
+    int press = 0;
+    const char *cName = "/sys/class/gpio/gpio60/value";
+
+    // button gpio
+    system("echo 60 > /sys/class/gpio/export");
+    system("echo in > /sys/class/gpio/gpio60/direction");
+
+    // ir
+    system("echo 61 > /sys/class/gpio/export");
+    system("echo out > /sys/class/gpio/gpio61/direction");
+
+    // filter
+    system("echo 81 > /sys/class/gpio/export");
+    system("echo out > /sys/class/gpio/gpio81/direction");
+    system("echo 82 > /sys/class/gpio/export");
+    system("echo out > /sys/class/gpio/gpio82/direction");
+
+    while (!g_stop_button_monitor) {
+        fd = open(cName, O_RDONLY, 0644);
+        if (fd) {
+            int val = 0;
+            if (1 == read(fd, &val, 1)) {
+                key = val == '0' ? 0 : 1;
+            }
+            close(fd);
+        }
+        if (key == 0) g_button_test |= (1 << 0);
+        if (key == 1) g_button_test |= (1 << 1);
+        if (key == 0) {
+            if (++press == 3) {
+                TEST_PLAY_MUSIC(0, 0);
+                g_IrTestAuto = 0;
+                ir = !ir;
+                if (ir) {
+                    system("echo 1 > /sys/class/gpio/gpio61/value");
+                    system("echo 1 > /sys/class/gpio/gpio81/value");
+                    system("echo 0 > /sys/class/gpio/gpio82/value");
+                } else {
+                    system("echo 0 > /sys/class/gpio/gpio61/value");
+                    system("echo 0 > /sys/class/gpio/gpio81/value");
+                    system("echo 1 > /sys/class/gpio/gpio82/value");
+                }
+            }
+        } else {
+            press = 0;
+        }
+        usleep(100000);
     }
     return NULL;
 }
 
-void AgainTest()
+void StartAgainTest()
 {
     int i   = 0;
     int cnt = 0;
     int ir  = 0;
-    pthread_t tid_led;
+    int led = 0;
 
     int val = 0;
     int fd;
@@ -747,7 +770,6 @@ void AgainTest()
     system("echo 49 > /sys/class/gpio/export");
     system("echo out > /sys/class/gpio/gpio49/direction");
     system("echo 0 > /sys/class/gpio/gpio49/value");
-    pthread_create(&tid_led, NULL, led_Thread, NULL);
 
     // ircut
     system("echo 81 > /sys/class/gpio/export");
@@ -759,17 +781,25 @@ void AgainTest()
     system("echo 61 > /sys/class/gpio/export");
     system("echo out > /sys/class/gpio/gpio61/direction");
 
-    g_Destory = 0;
     while (1) {
         // switch ir & ircut
+        ir = !ir;
         EnIRForAuto(ir);
         EnIRCutForAuto(ir);
-        ir = !ir;
 
         // check destory key
-        cnt = 0;
-        for (i=0; i<20; i++) {
-            sleep(1);
+        for (cnt=0,i=0; i<20; i++) {
+            if (i % 5 == 0) {
+                led = !led;
+                if (led) {
+                    system("echo 0 > /sys/class/gpio/gpio72/value");
+                    system("echo 1 > /sys/class/gpio/gpio50/value");
+                } else {
+                    system("echo 1 > /sys/class/gpio/gpio72/value");
+                    system("echo 0 > /sys/class/gpio/gpio50/value");
+                }
+            }
+
             fd = open(cName, O_RDONLY, 0644);
             if (fd) {
                 if (1 != read(fd, &val, 1)) {
@@ -778,9 +808,9 @@ void AgainTest()
                 close(fd);
             }
             printf("KEY:0x%x\r\n", val);
-            if (val=='0')
+            if (val == '0') {
                 cnt++;
-
+            }
             if (cnt > 5) {
                 // 销毁程序
                 printf("Test over, destory!!!\r\n");
@@ -794,7 +824,6 @@ void AgainTest()
                 system("echo 0 > /sys/class/gpio/gpio50/value");
                 system("echo 0 > /sys/class/gpio/gpio72/value");
 
-                g_Destory = 1;
                 while (1) {
                     // 蓝灯闪烁
                     system("echo 1 > /sys/class/gpio/gpio49/value");
@@ -803,18 +832,21 @@ void AgainTest()
                     usleep(300000); // 300ms
                 }
             }
+
+            sleep(1);
         }
     }
 }
 
-#define MAXDATASIZE 100 /*每次最大数据传输量 */
+#define MAXDATASIZE 100 /* 每次最大数据传输量 */
 int main(int argc, char *argv[]) {
     int    sockfd, new_fd; /* 监听 socket: sock_fd, 数据传输 socket: new_fd */
     struct sockaddr_in my_addr   = {0}; /* 本机地址信息 */
     struct sockaddr_in their_addr= {0}; /* 客户地址信息 */
     unsigned int myport, lisnum;
-    pthread_t tid_udp;
-    int  cnt = 0, i = 0;
+    pthread_t tid_heart_beat;
+    pthread_t tid_btn_monitor;
+    int  cnt = 0;
     int  iRecvBytes;
     char buf[MAXDATASIZE];
 
@@ -822,12 +854,18 @@ int main(int argc, char *argv[]) {
     lisnum = 5;
     if (argv[1]) {
         if (strcmp(argv[1], "aging") == 0) {
-            AgainTest();
+            TEST_PLAY_MUSIC(1, 20);
+            StartAgainTest();
+            return 0;
+        } else if (strcmp(argv[1], "all") == 0) {
+            TEST_PLAY_MUSIC(1, 0);
+            pthread_create(&tid_heart_beat , NULL, heart_beat_thread    , NULL);
+            pthread_create(&tid_btn_monitor, NULL, button_monitor_thread, NULL);
+        } else if (strstr(argv[1], "192.168.") == argv[1]) {
+            pthread_create(&tid_heart_beat , NULL, heart_beat_thread    , argv[1]);
+            pthread_create(&tid_btn_monitor, NULL, button_monitor_thread, NULL);
         } else {
-            strcpy(host, argv[1]);
-            if (0 == getLocalIP(LocalIP)) {
-                pthread_create(&tid_udp, NULL, Udp_Thread, NULL);
-            }
+            pthread_create(&tid_heart_beat , NULL, heart_beat_thread    , NULL);
         }
     }
 
@@ -855,38 +893,18 @@ int main(int argc, char *argv[]) {
 
     while (1) {
         unsigned sin_size = sizeof(struct sockaddr_in);
-        printf("server:accepting...\n");
         if ((new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size)) == -1) {
-            perror("accept");
+            printf("accept failed !");
             continue;
         }
 
-        {
-            struct timeval t;
-            int    opt;
-
-            // 设置长连接
-            opt = 1; setsockopt(new_fd, SOL_SOCKET,SO_LINGER,(char*)&opt, sizeof(int));
-
-            t.tv_sec  = 2;
-            t.tv_usec = 0;
-            setsockopt(new_fd, SOL_SOCKET,SO_SNDTIMEO, (char*)&t, sizeof(t));
-            setsockopt(new_fd, SOL_SOCKET,SO_RCVTIMEO, (char*)&t, sizeof(t));
-        }
-
         printf("\r\n>>[%d] server: got connection from %s\n", cnt++, inet_ntoa(their_addr.sin_addr));
-        if (1) {
-WAIT_DATA:
-            if ((iRecvBytes = recv(new_fd, &lFtD, sizeof(lFtD), 0)) == -1) {
-//              printf("\r\nserver:recv error %x\n\r\n", errno);
-                if (errno == EINTR || errno == EWOULDBLOCK || errno == EAGAIN) {
-//                  printf("\r\n recv %x [%x %x %x]! \r\n", errno, EINTR, EWOULDBLOCK, EAGAIN);
-                    goto WAIT_DATA;
-                }
-            } else if (iRecvBytes == 0) {
+        while (1) {
+            iRecvBytes = recv(new_fd, &lFtD, sizeof(lFtD), 0);
+            if (iRecvBytes <= 0) {
                 printf("\r\n server: recv connect losed! \r\n");
                 close(new_fd);
-                continue;
+                break;
             }
 
 //          printld(lFtD, "recv");
@@ -915,29 +933,28 @@ WAIT_DATA:
 
             // SN & MAC
             if (lFtD.testSN=='1') {
-                CheckSNAndMAC(&lFtD);
                 WriteAndCheckSN(&lFtD);
             }
             if (lFtD.testSN=='2') {
                 CheckSNAndMAC(&lFtD);
             }
 
-            // SPK & MAC
+            // SPK & MIC
             if (lFtD.testMic) {
                 switch (lFtD.testMic) {
                 case '1': // auto test spk & mic
                     TEST_SPK_MIC(2, &lFtD);
                     if (lFtD.rtMic) {
-                        // wifi 吞吐量测试通过，下一步功能测试
+                        // 写号 + wifi 吞吐量 + 喇叭咪头，测试通过，下一步功能测试
                         printf("change stage to all\r\n");
                         system("echo all > /etc/apkft/stage");
                     }
                     break;
                 case '2':
-                    TEST_SPK_ONLY(1);
+                    TEST_PLAY_MUSIC(1, 0);
                     break;
                 case '3':
-                    TEST_SPK_ONLY(0);
+                    TEST_PLAY_MUSIC(0, 0);
                     break;
                 }
             }
@@ -953,15 +970,8 @@ WAIT_DATA:
             }
 
             // KEY
-//          if (lFtD.testKey) {
-            if (1) {
-                TestKey(&lFtD);
-            }
-
-            // LED
-            if (lFtD.testLED) {
-                g_LedTestAuto = 0;
-                EnLED(&lFtD);
+            if (lFtD.testKey) {
+                lFtD.rtKey = (g_button_test == 3);
             }
 
             // IR LED
@@ -976,43 +986,31 @@ WAIT_DATA:
                 ChechVersion(&lFtD);
             }
 
-            printf("\r\nserver:sending...mic:%d , key=%d, exitTest=%d\n\r\n", lFtD.rtMic, lFtD.rtKey, lFtD.exitTest);
-            for (i=0; i<3; i++)
-            {
-//              printld(lFtD, "befor send");
-                int isend = send(new_fd, &lFtD, sizeof(lFtD), 0);
-                if (isend == -1) {
-                    printf("\r\nserver:send error :%x.\n\r\n", errno);
-                    close(new_fd);
-                    continue;
-                } else if (isend == 0) {
-                    printf("\r\nserver:send connect losed.\n\r\n");
-                    close(new_fd);
-                    continue;
-                } else break;
+            printf("\r\nserver:sending...mic:%d, key=%d, exitTest=%d\n\r\n", lFtD.rtMic, lFtD.rtKey, lFtD.exitTest);
+            if (send(new_fd, &lFtD, sizeof(lFtD), 0) <= 0) {
+                printf("\r\nserver:send connect losed.\n\r\n");
+                close(new_fd);
+                break;
             }
 
-            if (lFtD.exitTest == 0) {
-                goto WAIT_DATA;
-            } else if (lFtD.exitTest == 'c') {
-                // camera 测试通过，下一步测试wifi吞吐量
-                system("echo iperf > /etc/apkft/stage");
-                system("sync");
-            } else if (lFtD.exitTest == 'i') {
-                // wifi吞吐量测试通过，下一步功能测试
+            if (lFtD.exitTest == 'f') {
+                // 下一步进入功能测试
                 system("echo all > /etc/apkft/stage");
                 system("sync");
             } else if (lFtD.exitTest == 'a') {
-                // 功能测试通过，进入老化测试
+                // 下一步进入老化测试
                 system("echo aging > /etc/apkft/stage");
                 system("sync");
             }
         }
-
-        close(new_fd); /*父进程不再需要该socket*/
+        close(new_fd);
     }
 
-    g_Destory = 1;
+    g_StopHeartBeat       = 1;
+    g_stop_button_monitor = 1;
+    pthread_join(tid_heart_beat , NULL);
+    pthread_join(tid_btn_monitor, NULL);
+    TEST_PLAY_MUSIC(0, 0);
     printf("\r\nserver:EXIT.\n\r\n");
     return 0;
 }

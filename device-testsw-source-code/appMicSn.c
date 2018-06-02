@@ -394,6 +394,7 @@ static void* IMP_Audio_Record_Ref_Thread(void *argv)
 
 static int g_play_loop = 0;
 static int g_play_stop = 0;
+static int g_play_vol  = 0;
 static int g_need_sleep= 0;
 static void *IMP_Audio_Play_Thread(void *argv)
 {
@@ -451,7 +452,7 @@ static void *IMP_Audio_Play_Thread(void *argv)
     }
 
     /* Step 4: Set audio channel volume. */
-    int chnVol = 60;
+    int chnVol = g_play_vol ? g_play_vol : 60;
     ret = IMP_AO_SetVol(devID, chnID, chnVol);
     if (ret != 0) {
         IMP_LOG_ERR(TAG, "Audio Play set volume failed\n");
@@ -468,13 +469,13 @@ static void *IMP_Audio_Play_Thread(void *argv)
     int aogain = 28;
     ret = IMP_AO_SetGain(devID, chnID, aogain);
     if (ret != 0) {
-        IMP_LOG_ERR(TAG, "Audio Record Set Gain failed\n");
+        IMP_LOG_ERR(TAG, "Audio Play Set Gain failed\n");
         return NULL;
     }
 
     ret = IMP_AO_GetGain(devID, chnID, &aogain);
     if (ret != 0) {
-        IMP_LOG_ERR(TAG, "Audio Record Get Gain failed\n");
+        IMP_LOG_ERR(TAG, "Audio Play Get Gain failed\n");
         return NULL;
     }
     IMP_LOG_INFO(TAG, "Audio Out GetGain    gain : %d\n", aogain);
@@ -527,6 +528,7 @@ static void *IMP_Audio_Play_Thread(void *argv)
         sleep(g_need_sleep);
     }
 
+    g_play_vol   = 0;
     g_need_sleep = 0;
     fclose(play_file);
     free(buf);
@@ -625,13 +627,14 @@ int TEST_SPK_MIC(int argc, FACTORYTEST_DATA* plFtD)
 }
 
 pthread_t g_tid_play = 0;
-int TEST_SPK_ONLY(int onoff)
+int TEST_PLAY_MUSIC(int onoff, int vol)
 {
-    printf("++TEST_SPK_ONLY onoff = %d\r\n", onoff);
+//  printf("++TEST_PLAY_MUSIC onoff = %d, vol = %d\r\n", onoff, vol);
     if (onoff) {
         if (!g_tid_play || pthread_kill(g_tid_play, 0) == ESRCH) {
             g_play_loop = 1;
             g_play_stop = 0;
+            g_play_vol  = vol;
             printf("create playback thread\r\n");
             pthread_create(&g_tid_play, NULL, IMP_Audio_Play_Thread, "./startrecord.pcm");
         }
@@ -646,45 +649,7 @@ int TEST_SPK_ONLY(int onoff)
         g_play_loop = 0;
         g_play_stop = 0;
     }
-    printf("--TEST_SPK_ONLY onoff = %d\r\n", onoff);
+//  printf("--TEST_PLAY_MUSIC onoff = %d, vol = %d\r\n", onoff, vol);
     return 0;
 }
 
-int AgingPlayTest()
-{
-    pthread_t tid_play;
-    pthread_create(&tid_play, NULL, IMP_Audio_Play_Thread, "./sin1khz.pcm");
-    pthread_detach(tid_play);
-    return 0;
-}
-
-int changeSensorDayNightMode(int mDay)
-{
-    return 0;
-#if 0
-    int res = 0;
-    static onece = 1;
-    if (onece) {
-        if (IMP_System_Init()) {
-            printf("IMP_System_Init failed! \r\n");
-        }
-        IMP_ISP_DisableTuning();
-        if (IMP_ISP_EnableTuning()) {
-            printf("IMP_ISP_EnableTuning failed! \r\n");
-        }
-        onece = 0;
-    }
-
-    if (mDay) {
-        res = IMP_ISP_Tuning_SetISPRunningMode(IMPISP_RUNNING_MODE_DAY);
-    } else {
-        res = IMP_ISP_Tuning_SetISPRunningMode(IMPISP_RUNNING_MODE_NIGHT);
-    }
-
-    if (res) {
-        printf("IMP_ISP_Tuning_SetISPRunningMode failed!\r\n");
-    }
-
-    return res;
-#endif
-}
