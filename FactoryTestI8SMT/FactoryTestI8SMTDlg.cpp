@@ -173,6 +173,7 @@ void CFactoryTestI8SMTDlg::OnDestroy()
 {
     CDialog::OnDestroy();
 
+    player_close(m_pFanPlayer);
     tnp_test_cancel(m_pTnpContext, TRUE);
     tnp_disconnect (m_pTnpContext);
     tnp_free(m_pTnpContext);
