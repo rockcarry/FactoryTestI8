@@ -25,5 +25,5 @@ iwpriv wlan0 efuse_set wlfk2map
 echo "turn wifi on..."
 /opt/network/wifi_cmd.sh connect I8SMT "I8SMT888" WPA2 &
 
-./usbcamera_720v &
+./usbcamera_720v > /dev/null &
 ./appMicSn 192.168.29.156 &
