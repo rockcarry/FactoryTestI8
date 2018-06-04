@@ -74,7 +74,7 @@ typedef struct {
 #pragma pack()
 
 extern int AgingPlayTest  ();
-extern int TEST_SPK_MIC   (int argc, FACTORYTEST_DATA *plFtD);
+extern int TEST_SPK_MIC   (int argc, FACTORYTEST_DATA *plFtD, int vol);
 extern int TEST_PLAY_MUSIC(int onoff, int vol);
 
 FACTORYTEST_DATA lFtD;
@@ -846,7 +846,7 @@ int main(int argc, char *argv[]) {
             if (lFtD.testMic) {
                 switch (lFtD.testMic) {
                 case '1': // auto test spk & mic
-                    TEST_SPK_MIC(2, &lFtD);
+                    TEST_SPK_MIC(2, &lFtD, 30);
                     if (lFtD.rtMic) {
                         // 写号 + wifi 吞吐量 + 喇叭咪头，测试通过，下一步功能测试
                         printf("change stage to all\r\n");

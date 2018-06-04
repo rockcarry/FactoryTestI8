@@ -544,7 +544,7 @@ static void *IMP_Audio_Play_Thread(void *argv)
 
 #include "server.c"
 
-int TEST_SPK_MIC(int argc, FACTORYTEST_DATA* plFtD)
+int TEST_SPK_MIC(int argc, FACTORYTEST_DATA* plFtD, int vol)
 {
     int ret;
     pthread_t tid_record, tid_play;
@@ -552,6 +552,7 @@ int TEST_SPK_MIC(int argc, FACTORYTEST_DATA* plFtD)
 
     InitFFT();
 
+    g_play_vol = vol;
     ret = pthread_create(&tid_play, NULL, IMP_Audio_Play_Thread, "./sin1khz.pcm");
     if (ret != 0) {
         IMP_LOG_ERR(TAG, "[ERROR] %s: pthread_create Audio Play failed\n", __func__);
