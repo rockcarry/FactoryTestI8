@@ -31,7 +31,6 @@ protected:
     afx_msg void OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct);
     afx_msg void OnTimer(UINT_PTR nIDEvent);
     afx_msg void OnSize(UINT nType, int cx, int cy);
-    afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
     afx_msg HCURSOR OnQueryDragIcon();
     afx_msg LRESULT OnTnpUpdateUI   (WPARAM wParam, LPARAM lParam);
     afx_msg LRESULT OnTnpDeviceFound(WPARAM wParam, LPARAM lParam);
@@ -52,7 +51,7 @@ private:
     char    m_strUVCDev  [MAX_PATH];
     char    m_strUACDev  [MAX_PATH];
     char    m_strDeviceIP[32];
-    BOOL    m_bPlayerOpenOK;
+    int     m_nPlayerOpenOK;
     int     m_nLedTestResult;
     int     m_nCameraTestResult;
     int     m_nIRTestResult;

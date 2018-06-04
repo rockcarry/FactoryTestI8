@@ -121,7 +121,6 @@ BEGIN_MESSAGE_MAP(CFactoryTestI8FocusDlg, CDialog)
     ON_WM_CLOSE()
     ON_WM_TIMER()
     ON_WM_SIZE()
-    ON_WM_LBUTTONDBLCLK()
     ON_EN_CHANGE(IDC_EDT_SCAN_SN, &CFactoryTestI8FocusDlg::OnEnChangeEdtScanSn)
     ON_BN_CLICKED(IDC_BTN_TEST_RESULT1, &CFactoryTestI8FocusDlg::OnBnClickedBtnTestResult1)
     ON_BN_CLICKED(IDC_BTN_TEST_RESULT2, &CFactoryTestI8FocusDlg::OnBnClickedBtnTestResult2)
@@ -182,7 +181,7 @@ BOOL CFactoryTestI8FocusDlg::OnInitDialog()
     m_strMesGongDan     = CString(m_strGongDan );
     m_strTestInfo       = TEXT("请扫描条码..." );
     m_bSnScaned         = FALSE;
-    m_bPlayerOpenOK     = FALSE;
+    m_nPlayerOpenOK     =  0;
     m_nFocusTestResult1 = -1;
     m_nFocusTestResult2 = -1;
     m_nFocusTestResult3 = -1;
@@ -191,7 +190,7 @@ BOOL CFactoryTestI8FocusDlg::OnInitDialog()
     SetTimer(TIMER_ID_SET_FOCUS, 1000, NULL);
     if (strcmp(m_strUVCDev, "") != 0) {
         MoveWindow(0, 0, 1200, 780, FALSE);
-        SetTimer(TIMER_ID_OPEN_PLAYER, 5000, NULL);
+        SetTimer(TIMER_ID_OPEN_PLAYER, 1000, NULL);
     }
     return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -360,13 +359,16 @@ BOOL CFactoryTestI8FocusDlg::PreTranslateMessage(MSG *pMsg)
     } else if (pMsg->message == MSG_FFPLAYER) {
         if (pMsg->wParam == MSG_OPEN_DONE) {
             log_printf("MSG_OPEN_DONE\n");
-            m_bPlayerOpenOK = TRUE;
+            m_nPlayerOpenOK = 1;
             player_play(m_pFanPlayer);
             RECT rect = {0};
             int  mode = VIDEO_MODE_STRETCHED;
             GetClientRect(&rect);
             player_setrect (m_pFanPlayer, 0, 218, 0, rect.right - 218, rect.bottom);
             player_setparam(m_pFanPlayer, PARAM_VIDEO_MODE, &mode);
+        } else if (pMsg->wParam == MSG_OPEN_FAILED) {
+            log_printf("MSG_OPEN_FAILED\n");
+            m_nPlayerOpenOK = 0;
         }
     }
     return CDialog::PreTranslateMessage(pMsg);
@@ -479,18 +481,11 @@ void CFactoryTestI8FocusDlg::OnTimer(UINT_PTR nIDEvent)
         GetDlgItem(IDC_EDT_SCAN_SN)->SetFocus();
         break;
     case TIMER_ID_OPEN_PLAYER:
-        if (m_bPlayerOpenOK) {
+        if (m_nPlayerOpenOK == 1) {
             LONGLONG pos = 0;
             player_getparam(m_pFanPlayer, PARAM_MEDIA_POSITION, &pos);
-            if (pos == -1) m_bPlayerOpenOK = FALSE;
-            break;
-        }
-        //++ reopen fanplayer to play camera stream
-        if (m_pFanPlayer) {
-            player_close(m_pFanPlayer);
-            m_pFanPlayer = NULL;
-        }
-        if (TRUE) {
+            if (pos == -1) m_nPlayerOpenOK = 0;
+        } else if (m_nPlayerOpenOK == 0) { // reopen
             PLAYER_INIT_PARAMS params = {0};
             params.init_timeout = 5000;
             params.video_vwidth = 1280;
@@ -501,9 +496,13 @@ void CFactoryTestI8FocusDlg::OnTimer(UINT_PTR nIDEvent)
             sprintf(url_gb2312, "dshow://video=%s", m_strUVCDev);
             MultiByteToWideChar(CP_ACP , 0, url_gb2312 , -1, url_unicode, MAX_PATH);
             WideCharToMultiByte(CP_UTF8, 0, url_unicode, -1, url_utf8, MAX_PATH, NULL, NULL);
+            player_close(m_pFanPlayer);
             m_pFanPlayer = player_open(url_utf8, GetSafeHwnd(), &params);
+            m_nPlayerOpenOK = -1;
+        } else if (m_nPlayerOpenOK == -1) {
+            // wait open result
+            log_printf("m_nPlayerOpenOK = %d\n", m_nPlayerOpenOK);
         }
-        //-- reopen fanplayer to play camera stream
         break;
     }
     CDialog::OnTimer(nIDEvent);
@@ -519,11 +518,3 @@ void CFactoryTestI8FocusDlg::OnSize(UINT nType, int cx, int cy)
     }
 }
 
-void CFactoryTestI8FocusDlg::OnLButtonDblClk(UINT nFlags, CPoint point)
-{
-    if (strcmp(m_strUVCDev, "") != 0) {
-        m_bPlayerOpenOK = FALSE;
-        SetTimer(TIMER_ID_OPEN_PLAYER, 5000, NULL);
-    }
-    CDialog::OnLButtonDblClk(nFlags, point);
-}

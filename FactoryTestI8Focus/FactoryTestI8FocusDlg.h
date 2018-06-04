@@ -32,7 +32,6 @@ protected:
     afx_msg void OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct);
     afx_msg void OnTimer(UINT_PTR nIDEvent);
     afx_msg void OnSize(UINT nType, int cx, int cy);
-    afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
     afx_msg HBRUSH  OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
     afx_msg HCURSOR OnQueryDragIcon();
     afx_msg void OnEnChangeEdtScanSn();
@@ -62,7 +61,7 @@ private:
     char    m_strUACDev    [MAX_PATH];
     BOOL    m_bMesLoginOK;
     BOOL    m_bSnScaned;
-    BOOL    m_bPlayerOpenOK;
+    int     m_nPlayerOpenOK;
     int     m_nFocusTestResult1;
     int     m_nFocusTestResult2;
     int     m_nFocusTestResult3;

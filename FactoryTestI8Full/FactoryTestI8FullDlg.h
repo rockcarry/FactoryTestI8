@@ -32,7 +32,6 @@ protected:
     afx_msg void OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct);
     afx_msg void OnTimer(UINT_PTR nIDEvent);
     afx_msg void OnSize(UINT nType, int cx, int cy);
-    afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
     afx_msg HBRUSH  OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
     afx_msg HCURSOR OnQueryDragIcon();
     afx_msg LRESULT OnTnpUpdateUI   (WPARAM wParam, LPARAM lParam);
@@ -70,7 +69,7 @@ private:
     char    m_strDeviceIP  [32];
     BOOL    m_bMesLoginOK;
     BOOL    m_bSnScaned;
-    BOOL    m_bPlayerOpenOK;
+    int     m_nPlayerOpenOK;
     int     m_nLedTestResult;
     int     m_nSpkTestResult;
     int     m_nMicTestResult;
