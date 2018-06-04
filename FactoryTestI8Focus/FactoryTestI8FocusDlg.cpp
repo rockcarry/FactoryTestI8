@@ -12,8 +12,9 @@
 #define new DEBUG_NEW
 #endif
 
-#define ENABLE_MES_SYSTEM   TRUE
-#define TIMER_ID_SET_FOCUS  2
+#define ENABLE_MES_SYSTEM     TRUE
+#define TIMER_ID_SET_FOCUS    2
+#define TIMER_ID_OPEN_PLAYER  3
 
 static void get_app_dir(char *path, int size)
 {
@@ -38,7 +39,7 @@ static void parse_params(const char *str, const char *key, char *val)
         else p++;
     }
 
-    for (i=0; i<32; i++) {
+    for (i=0; i<MAX_PATH; i++) {
         if (*p == ',' || *p == ';' || *p == '\r' || *p == '\n' || *p == '\0') {
             val[i] = '\0';
             break;
@@ -48,7 +49,7 @@ static void parse_params(const char *str, const char *key, char *val)
     }
 }
 
-static int load_config_from_file(char *user, char *passwd, char *res, char *gongdan, char *login, char *route, char *log)
+static int load_config_from_file(char *user, char *passwd, char *res, char *gongdan, char *login, char *route, char *log, char *uvc, char *uac)
 {
     char  file[MAX_PATH];
     FILE *fp = NULL;
@@ -74,6 +75,8 @@ static int load_config_from_file(char *user, char *passwd, char *res, char *gong
             parse_params(buf, "loginmode" , login  );
             parse_params(buf, "routecheck", route  );
             parse_params(buf, "logfile"   , log    );
+            parse_params(buf, "uvcdev"    , uvc   );
+            parse_params(buf, "uacdev"    , uac   );
             free(buf);
         }
         fclose(fp);
@@ -93,6 +96,7 @@ CFactoryTestI8FocusDlg::CFactoryTestI8FocusDlg(CWnd* pParent /*=NULL*/)
     , m_strScanSN(_T(""))
     , m_strCurSN(_T(""))
     , m_strTestInfo(_T(""))
+    , m_pFanPlayer(NULL)
 {
     m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -116,6 +120,8 @@ BEGIN_MESSAGE_MAP(CFactoryTestI8FocusDlg, CDialog)
     ON_WM_DESTROY()
     ON_WM_CLOSE()
     ON_WM_TIMER()
+    ON_WM_SIZE()
+    ON_WM_LBUTTONDBLCLK()
     ON_EN_CHANGE(IDC_EDT_SCAN_SN, &CFactoryTestI8FocusDlg::OnEnChangeEdtScanSn)
     ON_BN_CLICKED(IDC_BTN_TEST_RESULT1, &CFactoryTestI8FocusDlg::OnBnClickedBtnTestResult1)
     ON_BN_CLICKED(IDC_BTN_TEST_RESULT2, &CFactoryTestI8FocusDlg::OnBnClickedBtnTestResult2)
@@ -144,7 +150,9 @@ BOOL CFactoryTestI8FocusDlg::OnInitDialog()
     strcpy(m_strLoginMode , "alert_and_exit");
     strcpy(m_strRouteCheck, "yes"           );
     strcpy(m_strLogFile   , "DEBUGER"       );
-    int ret = load_config_from_file(m_strUserName, m_strPassWord, m_strResource, m_strGongDan, m_strLoginMode, m_strRouteCheck, m_strLogFile);
+    strcpy(m_strUVCDev    , ""              );
+    strcpy(m_strUACDev    , ""              );
+    int ret = load_config_from_file(m_strUserName, m_strPassWord, m_strResource, m_strGongDan, m_strLoginMode, m_strRouteCheck, m_strLogFile, m_strUVCDev, m_strUACDev);
     if (ret != 0) {
         AfxMessageBox(TEXT("无法打开测试配置文件！"), MB_OK);
     }
@@ -154,6 +162,8 @@ BOOL CFactoryTestI8FocusDlg::OnInitDialog()
     log_printf("resource = %s\n", m_strResource);
     log_printf("gongdan  = %s\n", m_strGongDan );
     log_printf("logfile  = %s\n", m_strLogFile );
+    log_printf("uvcdev   = %s\n", m_strUVCDev  );
+    log_printf("uacdev   = %s\n", m_strUACDev  );
 
 #if ENABLE_MES_SYSTEM
     CString strJigCode;
@@ -172,12 +182,17 @@ BOOL CFactoryTestI8FocusDlg::OnInitDialog()
     m_strMesGongDan     = CString(m_strGongDan );
     m_strTestInfo       = TEXT("请扫描条码..." );
     m_bSnScaned         = FALSE;
+    m_bPlayerOpenOK     = FALSE;
     m_nFocusTestResult1 = -1;
     m_nFocusTestResult2 = -1;
     m_nFocusTestResult3 = -1;
     UpdateData(FALSE);
 
     SetTimer(TIMER_ID_SET_FOCUS, 1000, NULL);
+    if (strcmp(m_strUVCDev, "") != 0) {
+        MoveWindow(0, 0, 1200, 780, FALSE);
+        SetTimer(TIMER_ID_OPEN_PLAYER, 5000, NULL);
+    }
     return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -185,6 +200,8 @@ void CFactoryTestI8FocusDlg::OnDestroy()
 {
     CDialog::OnDestroy();
 
+    player_close(m_pFanPlayer);
+    player_close(m_pFanPlayer);
     log_done();
 
 #if ENABLE_MES_SYSTEM
@@ -340,6 +357,17 @@ BOOL CFactoryTestI8FocusDlg::PreTranslateMessage(MSG *pMsg)
         case 'C'     : if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnTestResult3(); return TRUE;
         case VK_SPACE: if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnUpload     (); return TRUE;
         }
+    } else if (pMsg->message == MSG_FFPLAYER) {
+        if (pMsg->wParam == MSG_OPEN_DONE) {
+            log_printf("MSG_OPEN_DONE\n");
+            m_bPlayerOpenOK = TRUE;
+            player_play(m_pFanPlayer);
+            RECT rect = {0};
+            int  mode = VIDEO_MODE_STRETCHED;
+            GetClientRect(&rect);
+            player_setrect (m_pFanPlayer, 0, 218, 0, rect.right - 218, rect.bottom);
+            player_setparam(m_pFanPlayer, PARAM_VIDEO_MODE, &mode);
+        }
     }
     return CDialog::PreTranslateMessage(pMsg);
 }
@@ -450,7 +478,52 @@ void CFactoryTestI8FocusDlg::OnTimer(UINT_PTR nIDEvent)
     case TIMER_ID_SET_FOCUS:
         GetDlgItem(IDC_EDT_SCAN_SN)->SetFocus();
         break;
+    case TIMER_ID_OPEN_PLAYER:
+        if (m_bPlayerOpenOK) {
+            LONGLONG pos = 0;
+            player_getparam(m_pFanPlayer, PARAM_MEDIA_POSITION, &pos);
+            if (pos == -1) m_bPlayerOpenOK = FALSE;
+            break;
+        }
+        //++ reopen fanplayer to play camera stream
+        if (m_pFanPlayer) {
+            player_close(m_pFanPlayer);
+            m_pFanPlayer = NULL;
+        }
+        if (TRUE) {
+            PLAYER_INIT_PARAMS params = {0};
+            params.init_timeout = 5000;
+            params.video_vwidth = 1280;
+            params.video_vheight= 720;
+            char  url_gb2312 [MAX_PATH];
+            WCHAR url_unicode[MAX_PATH];
+            char  url_utf8   [MAX_PATH];
+            sprintf(url_gb2312, "dshow://video=%s", m_strUVCDev);
+            MultiByteToWideChar(CP_ACP , 0, url_gb2312 , -1, url_unicode, MAX_PATH);
+            WideCharToMultiByte(CP_UTF8, 0, url_unicode, -1, url_utf8, MAX_PATH, NULL, NULL);
+            m_pFanPlayer = player_open(url_utf8, GetSafeHwnd(), &params);
+        }
+        //-- reopen fanplayer to play camera stream
+        break;
     }
     CDialog::OnTimer(nIDEvent);
 }
 
+void CFactoryTestI8FocusDlg::OnSize(UINT nType, int cx, int cy)
+{
+    CDialog::OnSize(nType, cx, cy);
+    if (nType != SIZE_MINIMIZED) {
+        RECT rect = {0};
+        GetClientRect (&rect);
+        player_setrect(m_pFanPlayer, 0, 218, 0, rect.right - 218, rect.bottom);
+    }
+}
+
+void CFactoryTestI8FocusDlg::OnLButtonDblClk(UINT nFlags, CPoint point)
+{
+    if (strcmp(m_strUVCDev, "") != 0) {
+        m_bPlayerOpenOK = FALSE;
+        SetTimer(TIMER_ID_OPEN_PLAYER, 5000, NULL);
+    }
+    CDialog::OnLButtonDblClk(nFlags, point);
+}

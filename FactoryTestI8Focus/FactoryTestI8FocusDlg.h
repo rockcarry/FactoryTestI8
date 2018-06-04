@@ -31,6 +31,8 @@ protected:
     afx_msg void OnPaint();
     afx_msg void OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct);
     afx_msg void OnTimer(UINT_PTR nIDEvent);
+    afx_msg void OnSize(UINT nType, int cx, int cy);
+    afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
     afx_msg HBRUSH  OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
     afx_msg HCURSOR OnQueryDragIcon();
     afx_msg void OnEnChangeEdtScanSn();
@@ -48,6 +50,7 @@ private:
     CString m_strScanSN;
     CString m_strCurSN;
 
+    void   *m_pFanPlayer;
     char    m_strUserName  [32];
     char    m_strPassWord  [32];
     char    m_strResource  [32];
@@ -55,8 +58,11 @@ private:
     char    m_strLoginMode [32];
     char    m_strRouteCheck[32];
     char    m_strLogFile   [32];
+    char    m_strUVCDev    [MAX_PATH];
+    char    m_strUACDev    [MAX_PATH];
     BOOL    m_bMesLoginOK;
     BOOL    m_bSnScaned;
+    BOOL    m_bPlayerOpenOK;
     int     m_nFocusTestResult1;
     int     m_nFocusTestResult2;
     int     m_nFocusTestResult3;
