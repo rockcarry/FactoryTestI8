@@ -213,7 +213,11 @@ BOOL CFactoryTestI8FullDlg::OnInitDialog()
 
     m_pTnpContext = tnp_init(GetSafeHwnd());
 
-    SetTimer(TIMER_ID_SET_FOCUS, 1000, NULL);
+    SetTimer(TIMER_ID_SET_FOCUS  , 1000, NULL);
+    if (strcmp(m_strUVCDev, "") != 0) {
+        MoveWindow(0, 0, 1200, 780, FALSE);
+        SetTimer(TIMER_ID_OPEN_PLAYER, 5000, NULL);
+    }
     return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -685,13 +689,10 @@ void CFactoryTestI8FullDlg::OnTimer(UINT_PTR nIDEvent)
         break;
     case TIMER_ID_OPEN_PLAYER:
         if (m_bPlayerOpenOK) {
-            int pos = 0;
+            LONGLONG pos = 0;
             player_getparam(m_pFanPlayer, PARAM_MEDIA_POSITION, &pos);
-            if (pos == -1) {
-                m_bPlayerOpenOK = FALSE;
-            } else {
-                return;
-            }
+            if (pos == -1) m_bPlayerOpenOK = FALSE;
+            break;
         }
         //++ reopen fanplayer to play camera stream
         if (m_pFanPlayer) {
@@ -700,7 +701,9 @@ void CFactoryTestI8FullDlg::OnTimer(UINT_PTR nIDEvent)
         }
         if (TRUE) {
             PLAYER_INIT_PARAMS params = {0};
-            params.init_timeout = 1000;
+            params.init_timeout = 5000;
+            params.video_vwidth = 1280;
+            params.video_vheight= 720;
             char  url_gb2312 [MAX_PATH];
             WCHAR url_unicode[MAX_PATH];
             char  url_utf8   [MAX_PATH];
@@ -727,8 +730,10 @@ void CFactoryTestI8FullDlg::OnSize(UINT nType, int cx, int cy)
 
 void CFactoryTestI8FullDlg::OnLButtonDblClk(UINT nFlags, CPoint point)
 {
-    m_bPlayerOpenOK = FALSE;
-    SetTimer(TIMER_ID_OPEN_PLAYER, 1000, NULL);
+    if (strcmp(m_strUVCDev, "") != 0) {
+        m_bPlayerOpenOK = FALSE;
+        SetTimer(TIMER_ID_OPEN_PLAYER, 5000, NULL);
+    }
     CDialog::OnLButtonDblClk(nFlags, point);
 }
 
