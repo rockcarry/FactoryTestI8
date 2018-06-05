@@ -127,6 +127,9 @@ BOOL CFactoryTestI8SMTDlg::OnInitDialog()
 {
     CDialog::OnInitDialog();
 
+    // init COM
+    CoInitialize(NULL);
+
     // 设置此对话框的图标。当应用程序主窗口不是对话框时，框架将自动
     //  执行此操作
     SetIcon(m_hIcon, TRUE);         // 设置大图标
@@ -162,7 +165,7 @@ BOOL CFactoryTestI8SMTDlg::OnInitDialog()
     m_pTnpContext = tnp_init(GetSafeHwnd());
     if (strcmp(m_strUVCDev, "") != 0) {
         MoveWindow(0, 0, 900, 600, FALSE);
-        SetTimer(TIMER_ID_OPEN_PLAYER, 1000, NULL);
+        SetTimer(TIMER_ID_OPEN_PLAYER, 100, NULL);
     }
 
     return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
@@ -177,6 +180,9 @@ void CFactoryTestI8SMTDlg::OnDestroy()
     tnp_disconnect (m_pTnpContext);
     tnp_free(m_pTnpContext);
     log_done();
+
+    // uninit COM
+    CoUninitialize();
 }
 
 //当用户拖动最小化窗口时系统调用此函数取得光标显示。
@@ -279,7 +285,7 @@ void CFactoryTestI8SMTDlg::DoDeviceTest()
         GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText(m_nLSensorTestResult ? "PASS" : "NG");
         GetDlgItem(IDC_BTN_SPKMIC_RESULT )->SetWindowText(m_nSpkMicTestResult  ? "PASS" : "NG");
         GetDlgItem(IDC_BTN_VERSION_RESULT)->SetWindowText(m_nVersionTestResult ? "PASS" : "NG");
-        m_strCurVer = strVer;
+        m_strCurVer = CString(strVer).Trim();
         PostMessage(WM_TNP_UPDATE_UI);
     }
 
@@ -477,6 +483,8 @@ void CFactoryTestI8SMTDlg::OnTimer(UINT_PTR nIDEvent)
         } else if (m_nPlayerOpenOK == -1) {
             // wait open result
             log_printf("m_nPlayerOpenOK = %d\n", m_nPlayerOpenOK);
+            RECT rect = {0}; GetClientRect(&rect); rect.left = 218;
+            InvalidateRect(&rect, TRUE);
         }
         break;
     }

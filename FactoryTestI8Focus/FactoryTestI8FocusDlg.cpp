@@ -135,6 +135,9 @@ BOOL CFactoryTestI8FocusDlg::OnInitDialog()
 {
     CDialog::OnInitDialog();
 
+    // init COM
+    CoInitialize(NULL);
+
     // 设置此对话框的图标。当应用程序主窗口不是对话框时，框架将自动
     // 执行此操作
     SetIcon(m_hIcon, TRUE);         // 设置大图标
@@ -190,7 +193,7 @@ BOOL CFactoryTestI8FocusDlg::OnInitDialog()
     SetTimer(TIMER_ID_SET_FOCUS, 1000, NULL);
     if (strcmp(m_strUVCDev, "") != 0) {
         MoveWindow(0, 0, 1200, 780, FALSE);
-        SetTimer(TIMER_ID_OPEN_PLAYER, 1000, NULL);
+        SetTimer(TIMER_ID_OPEN_PLAYER, 100, NULL);
     }
     return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -210,6 +213,9 @@ void CFactoryTestI8FocusDlg::OnDestroy()
         log_printf("MesDLL ATELogOut failed !\n");
     }
 #endif
+
+    // uninit COM
+    CoUninitialize();
 }
 
 // 当用户拖动最小化窗口时系统调用此函数取得光标显示。
@@ -502,6 +508,8 @@ void CFactoryTestI8FocusDlg::OnTimer(UINT_PTR nIDEvent)
         } else if (m_nPlayerOpenOK == -1) {
             // wait open result
             log_printf("m_nPlayerOpenOK = %d\n", m_nPlayerOpenOK);
+            RECT rect = {0}; GetClientRect(&rect); rect.left = 218;
+            InvalidateRect(&rect, TRUE);
         }
         break;
     }
