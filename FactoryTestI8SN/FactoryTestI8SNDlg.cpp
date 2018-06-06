@@ -49,7 +49,7 @@ static void parse_params(const char *str, const char *key, char *val)
     }
 }
 
-static int load_config_from_file(char *user, char *passwd, char *res, char *ver, char *login, char *route, char *throughput, char *log)
+static int load_config_from_file(char *user, char *passwd, char *res, char *ver, char *login, char *route, char *throughput, char *spkmic, char *log)
 {
     char  file[MAX_PATH];
     FILE *fp = NULL;
@@ -75,6 +75,7 @@ static int load_config_from_file(char *user, char *passwd, char *res, char *ver,
             parse_params(buf, "loginmode" , login     );
             parse_params(buf, "routecheck", route     );
             parse_params(buf, "throughput", throughput);
+            parse_params(buf, "testspkmic", spkmic    );
             parse_params(buf, "logfile"   , log       );
             free(buf);
         }
@@ -184,7 +185,7 @@ void CFactoryTestI8SNDlg::DoDeviceTest()
         PostMessage(WM_TNP_UPDATE_UI);
     }
 
-    if (!m_bTestCancel) {
+    if (!m_bTestCancel && stricmp(m_strTestSpkMic, "yes") == 0) {
         m_strTestInfo  += "正在测试喇叭咪头 ...\r\n\r\n";
         m_strTestResult = "正在测试";
         PostMessage(WM_TNP_UPDATE_UI);
@@ -339,9 +340,10 @@ BOOL CFactoryTestI8SNDlg::OnInitDialog()
     strcpy(m_strTnpVer    , "version"       );
     strcpy(m_strLoginMode , "alert_and_exit");
     strcpy(m_strRouteCheck, "yes"           );
+    strcpy(m_strTestSpkMic, "yes"           );
     strcpy(m_strLogFile   , "DEBUGER"       );
     strcpy(m_strDeviceIP  , ""              );
-    int ret = load_config_from_file(m_strUserName, m_strPassWord, m_strResource, m_strTnpVer, m_strLoginMode, m_strRouteCheck, m_strThroughPut, m_strLogFile);
+    int ret = load_config_from_file(m_strUserName, m_strPassWord, m_strResource, m_strTnpVer, m_strLoginMode, m_strRouteCheck, m_strThroughPut, m_strTestSpkMic, m_strLogFile);
     if (ret != 0) {
         AfxMessageBox(TEXT("无法打开测试配置文件！"), MB_OK);
     }
