@@ -170,10 +170,10 @@ BOOL CFactoryTestI8FocusDlg::OnInitDialog()
 #if ENABLE_MES_SYSTEM
     CString strJigCode;
     CString strErrMsg;
-    m_bMesLoginOK = MesDLL::GetInstance().CheckUserAndResourcePassed (CString(m_strUserName), CString(m_strResource), CString(m_strPassWord), strJigCode, strErrMsg);
+    m_bMesLoginOK = MesDLL::GetInstance().CheckUserAndResourcePassed(CString(m_strUserName), CString(m_strResource), CString(m_strPassWord), strJigCode, strErrMsg);
     if (strcmp(m_strLoginMode, "alert_and_exit") == 0) {
         if (!m_bMesLoginOK) {
-            AfxMessageBox(TEXT("\n登录 MES 系统失败！\n\n请检查网络配置和 MES 系统，然后重试。\n\n谢谢！"), MB_OK);
+            AfxMessageBox(CString("\n登录 MES 系统失败！\n\n请检查网络配置和 MES 系统，然后重试。\n\n") + strErrMsg, MB_OK);
             EndDialog(IDCANCEL); return FALSE;
         }
     }
