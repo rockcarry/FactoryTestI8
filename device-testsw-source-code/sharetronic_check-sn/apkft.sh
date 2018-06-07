@@ -15,7 +15,9 @@ if [ "$stage" == "camera" ]; then
     cd /etc/apkft
 
     ifconfig wlan0 up
+    sleep 1
     wpa_supplicant -D wext -i wlan0 -c  /etc/conf/wpa.conf -B > /dev/null 2>&1 &
+    sleep 1
     udhcpc -i wlan0 -p /var/run/udhcpc.pid &
 
     echo "turn wifi on..."
@@ -34,14 +36,13 @@ if [ "$stage" == "iperf" ]; then
     cd /etc/apkft
 
     ifconfig wlan0 up
-    sleep 2
+    sleep 1
     wpa_supplicant -D wext -i wlan0 -c  /etc/conf/wpa.conf -B > /dev/null 2>&1 &
     sleep 1
     udhcpc -i wlan0 -p /var/run/udhcpc.pid &
 
     echo "turn wifi on..."
     /opt/network/wifi_cmd.sh connect I8Iperf "I8Iperf888" WPA2 &
-    echo "wifi on!"
 
     iperf3 -s &
     /etc/apkft/appApkft iperf &
@@ -52,14 +53,14 @@ if [ "$stage" == "all" ]; then
     cd /etc/apkft
 
     ifconfig wlan0 up
-    sleep 2
+    sleep 1
     wpa_supplicant -D wext -i wlan0 -c  /etc/conf/wpa.conf -B > /dev/null 2>&1 &
     sleep 1
     udhcpc -i wlan0 -p /var/run/udhcpc.pid &
 
     echo "turn wifi on..."
     /opt/network/wifi_cmd.sh connect I8Test "I8Test888" WPA2 &
-    echo "wifi on!"
+
     if [ -f /etc/apkft/carrier-server ]; then
         /etc/apkft/carrier-server --st=jxh62 &
     else

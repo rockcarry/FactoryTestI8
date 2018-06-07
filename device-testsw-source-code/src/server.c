@@ -773,7 +773,7 @@ int main(int argc, char *argv[]) {
     lisnum = 5;
     if (argv[1]) {
         if (strcmp(argv[1], "aging") == 0) {
-            TEST_PLAY_MUSIC(1, 20);
+            TEST_PLAY_MUSIC(1, 16);
             StartAgainTest();
             return 0;
         } else if (strcmp(argv[1], "all") == 0) {
@@ -889,13 +889,6 @@ int main(int argc, char *argv[]) {
                 ChechVersion(&lFtD);
             }
 
-            printf("\r\nserver:sending...mic:%d, key=%d, exitTest=%d\n\r\n", lFtD.rtMic, lFtD.rtKey, lFtD.exitTest);
-            if (send(new_fd, &lFtD, sizeof(lFtD), 0) <= 0) {
-                printf("\r\nserver:send connect losed.\n\r\n");
-                close(new_fd);
-                break;
-            }
-
             if (lFtD.exitTest == 'f') {
                 // 下一步进入功能测试
                 system("echo all > /etc/apkft/stage");
@@ -904,6 +897,13 @@ int main(int argc, char *argv[]) {
                 // 下一步进入老化测试
                 system("echo aging > /etc/apkft/stage");
                 system("sync");
+            }
+
+            printf("\r\nserver:sending...mic:%d, key=%d, exitTest=%d\n\r\n", lFtD.rtMic, lFtD.rtKey, lFtD.exitTest);
+            if (send(new_fd, &lFtD, sizeof(lFtD), 0) <= 0) {
+                printf("\r\nserver:send connect losed.\n\r\n");
+                close(new_fd);
+                break;
             }
         }
         close(new_fd);
