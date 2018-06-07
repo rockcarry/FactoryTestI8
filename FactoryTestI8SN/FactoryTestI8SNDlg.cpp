@@ -185,7 +185,8 @@ void CFactoryTestI8SNDlg::DoDeviceTest()
         PostMessage(WM_TNP_UPDATE_UI);
     }
 
-    if (!m_bTestCancel && stricmp(m_strTestSpkMic, "yes") == 0) {
+    BOOL bSkipSpkMicTest = (stricmp(m_strTestSpkMic, "yes") != 0);
+    if (!m_bTestCancel && !bSkipSpkMicTest) {
         m_strTestInfo  += "’˝‘⁄≤‚ ‘¿Æ∞»ﬂ‰Õ∑ ...\r\n\r\n";
         m_strTestResult = "’˝‘⁄≤‚ ‘";
         PostMessage(WM_TNP_UPDATE_UI);
@@ -198,7 +199,7 @@ void CFactoryTestI8SNDlg::DoDeviceTest()
     }
 
     if (!m_bTestCancel) {
-        if (m_bResultBurnSN && m_bResultBurnMac && m_bResultTestSpkMic && m_bResultTestNet) {
+        if (m_bResultBurnSN && m_bResultBurnMac && (bSkipSpkMicTest || m_bResultTestSpkMic) && m_bResultTestNet) {
             m_strTestResult = "OK";
         } else {
             m_strTestResult = "NG";
@@ -206,8 +207,10 @@ void CFactoryTestI8SNDlg::DoDeviceTest()
 
         m_strTestInfo += m_bResultBurnSN    ? "–¥∫≈     -  OK\r\n" : "–¥∫≈     -  NG\r\n";
         m_strTestInfo += m_bResultBurnMac   ? "MAC      -  OK\r\n" : "MAC      -  NG\r\n";
-        m_strTestInfo += m_bResultTestSpkMic? "¿Æ∞»ﬂ‰Õ∑ -  OK\r\n" : "¿Æ∞»ﬂ‰Õ∑ -  NG\r\n";
         m_strTestInfo += m_bResultTestNet   ? "ÕÃÕ¬¡ø   -  OK\r\n" : "ÕÃÕ¬¡ø   -  NG\r\n";
+        if (!bSkipSpkMicTest) {
+            m_strTestInfo += m_bResultTestSpkMic? "¿Æ∞»ﬂ‰Õ∑ -  OK\r\n" : "¿Æ∞»ﬂ‰Õ∑ -  NG\r\n";
+        }
 
         m_bResultDone = TRUE;
         PostMessage(WM_TNP_UPDATE_UI);
@@ -221,7 +224,7 @@ void CFactoryTestI8SNDlg::DoDeviceTest()
         if (!m_bResultBurnMac) {
             strErrCode += "L012,";
         }
-        if (!m_bResultTestSpkMic) {
+        if (!bSkipSpkMicTest && !m_bResultTestSpkMic) {
             strErrCode += "L014,";
         }
         if (!m_bResultTestNet) {
