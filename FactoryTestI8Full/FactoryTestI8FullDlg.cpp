@@ -648,8 +648,10 @@ void CFactoryTestI8FullDlg::OnBnClickedBtnUploadReport()
             if (tnp_test_done(m_pTnpContext) == 0) {
                 AfxMessageBox(m_strTestInfo + "\r\n" + strErrMsg);
             } else {
-                AfxMessageBox(m_strTestInfo + "\r\n进入老化模式失败！");
+                AfxMessageBox(m_strTestInfo + "\r\n进入老化模式失败！\r\n" + strErrMsg);
             }
+        } else {
+            AfxMessageBox(m_strTestInfo + "\r\n" + strErrMsg);
         }
     }
     SetTimer(TIMER_ID_NEXT_TEST, 100, NULL);
