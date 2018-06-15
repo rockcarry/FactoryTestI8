@@ -203,7 +203,6 @@ void CFactoryTestI8FocusDlg::OnDestroy()
     CDialog::OnDestroy();
 
     player_close(m_pFanPlayer);
-    player_close(m_pFanPlayer);
     log_done();
 
 #if ENABLE_MES_SYSTEM
@@ -369,9 +368,11 @@ BOOL CFactoryTestI8FocusDlg::PreTranslateMessage(MSG *pMsg)
             player_play(m_pFanPlayer);
             RECT rect = {0};
             int  mode = VIDEO_MODE_STRETCHED;
+            int  diff =-100;
             GetClientRect(&rect);
             player_setrect (m_pFanPlayer, 0, 218, 0, rect.right - 218, rect.bottom);
             player_setparam(m_pFanPlayer, PARAM_VIDEO_MODE, &mode);
+            player_setparam(m_pFanPlayer, PARAM_AVSYNC_TIME_DIFF, &diff);
         } else if (pMsg->wParam == MSG_OPEN_FAILED) {
             log_printf("MSG_OPEN_FAILED\n");
             m_nPlayerOpenOK = 0;

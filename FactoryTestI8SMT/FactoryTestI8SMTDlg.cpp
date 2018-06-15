@@ -401,9 +401,11 @@ BOOL CFactoryTestI8SMTDlg::PreTranslateMessage(MSG *pMsg)
             player_play(m_pFanPlayer);
             RECT rect = {0};
             int  mode = VIDEO_MODE_STRETCHED;
+            int  diff =-100;
             GetClientRect(&rect);
             player_setrect (m_pFanPlayer, 0, 218, 0, rect.right - 218, rect.bottom);
             player_setparam(m_pFanPlayer, PARAM_VIDEO_MODE, &mode);
+            player_setparam(m_pFanPlayer, PARAM_AVSYNC_TIME_DIFF, &diff);
         } else if (pMsg->wParam == MSG_OPEN_FAILED) {
             log_printf("MSG_OPEN_FAILED\n");
             m_nPlayerOpenOK = 0;
@@ -469,8 +471,8 @@ void CFactoryTestI8SMTDlg::OnTimer(UINT_PTR nIDEvent)
         } else if (m_nPlayerOpenOK == 0) { // reopen
             PLAYER_INIT_PARAMS params = {0};
             params.init_timeout     = 5000;
-            params.video_vwidth     = 640;
-            params.video_vheight    = 480;
+            params.video_vwidth     = 1280;
+            params.video_vheight    = 720;
             params.video_frame_rate = 30;
             char  url_gb2312 [MAX_PATH];
             WCHAR url_unicode[MAX_PATH];

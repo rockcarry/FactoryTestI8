@@ -521,9 +521,11 @@ BOOL CFactoryTestI8FullDlg::PreTranslateMessage(MSG *pMsg)
             player_play(m_pFanPlayer);
             RECT rect = {0};
             int  mode = VIDEO_MODE_STRETCHED;
+            int  diff =-500;
             GetClientRect(&rect);
             player_setrect (m_pFanPlayer, 0, 218, 0, rect.right - 218, rect.bottom);
             player_setparam(m_pFanPlayer, PARAM_VIDEO_MODE, &mode);
+            player_setparam(m_pFanPlayer, PARAM_AVSYNC_TIME_DIFF, &diff);
         } else if (pMsg->wParam == MSG_OPEN_FAILED) {
             log_printf("MSG_OPEN_FAILED\n");
             m_nPlayerOpenOK = 0;
