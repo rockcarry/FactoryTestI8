@@ -507,11 +507,11 @@ BOOL CFactoryTestI8FullDlg::PreTranslateMessage(MSG *pMsg)
 {
     if (pMsg->message == WM_KEYDOWN || pMsg->message == WM_KEYUP) {
         switch (pMsg->wParam) {
-        case 'Z'     : if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnLedResult  (); return TRUE;
-        case 'X'     : if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnSpkResult  (); return TRUE;
-        case 'C'     : if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnMicResult  (); return TRUE;
+        case 'Z'     : if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnLedResult   (); return TRUE;
+        case 'X'     : if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnSpkResult   (); return TRUE;
+        case 'C'     : if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnMicResult   (); return TRUE;
         case 'V'     : if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnCameraResult(); return TRUE;
-        case 'B'     : if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnIrResult   (); return TRUE;
+        case 'B'     : if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnIrResult    (); return TRUE;
         case VK_SPACE: if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnUploadReport(); return TRUE;
         }
     } else if (pMsg->message == MSG_FFPLAYER) {
@@ -705,13 +705,14 @@ void CFactoryTestI8FullDlg::OnTimer(UINT_PTR nIDEvent)
             if (pos == -1) m_nPlayerOpenOK = 0;
         } else if (m_nPlayerOpenOK == 0) { // reopen
             PLAYER_INIT_PARAMS params = {0};
-            params.init_timeout = 5000;
-            params.video_vwidth = 1280;
-            params.video_vheight= 720;
+            params.init_timeout     = 5000;
+            params.video_vwidth     = 1280;
+            params.video_vheight    = 720;
+            params.video_frame_rate = 30;
             char  url_gb2312 [MAX_PATH];
             WCHAR url_unicode[MAX_PATH];
             char  url_utf8   [MAX_PATH];
-            sprintf(url_gb2312, "dshow://video=%s", m_strUVCDev);
+            sprintf(url_gb2312, "dshow://video=%s:audio=%s", m_strUVCDev, m_strUACDev);
             MultiByteToWideChar(CP_ACP , 0, url_gb2312 , -1, url_unicode, MAX_PATH);
             WideCharToMultiByte(CP_UTF8, 0, url_unicode, -1, url_utf8, MAX_PATH, NULL, NULL);
             player_close(m_pFanPlayer);

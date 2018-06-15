@@ -493,9 +493,10 @@ void CFactoryTestI8FocusDlg::OnTimer(UINT_PTR nIDEvent)
             if (pos == -1) m_nPlayerOpenOK = 0;
         } else if (m_nPlayerOpenOK == 0) { // reopen
             PLAYER_INIT_PARAMS params = {0};
-            params.init_timeout = 5000;
-            params.video_vwidth = 1280;
-            params.video_vheight= 720;
+            params.init_timeout     = 5000;
+            params.video_vwidth     = 1280;
+            params.video_vheight    = 720;
+            params.video_frame_rate = 30;
             char  url_gb2312 [MAX_PATH];
             WCHAR url_unicode[MAX_PATH];
             char  url_utf8   [MAX_PATH];
