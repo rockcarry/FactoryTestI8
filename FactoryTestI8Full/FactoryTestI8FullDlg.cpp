@@ -51,7 +51,7 @@ static void parse_params(const char *str, const char *key, char *val)
     }
 }
 
-static int load_config_from_file(char *user, char *passwd, char *res, char *ver, char *login, char *route, char *log, char *uvc, char *uac)
+static int load_config_from_file(char *user, char *passwd, char *res, char *ver, char *login, char *route, char *log, char *uvc, char *uac, char *cam)
 {
     char  file[MAX_PATH];
     FILE *fp = NULL;
@@ -79,6 +79,7 @@ static int load_config_from_file(char *user, char *passwd, char *res, char *ver,
             parse_params(buf, "logfile"   , log   );
             parse_params(buf, "uvcdev"    , uvc   );
             parse_params(buf, "uacdev"    , uac   );
+            parse_params(buf, "camtype"   , cam   );
             free(buf);
         }
         fclose(fp);
@@ -169,8 +170,9 @@ BOOL CFactoryTestI8FullDlg::OnInitDialog()
     strcpy(m_strLogFile   , "DEBUGER"       );
     strcpy(m_strUVCDev    , ""              );
     strcpy(m_strUACDev    , ""              );
+    strcpy(m_strCamType   , "uvc"           );
     strcpy(m_strDeviceIP  , ""              );
-    int ret = load_config_from_file(m_strUserName, m_strPassWord, m_strResource, m_strTnpVer, m_strLoginMode, m_strRouteCheck, m_strLogFile, m_strUVCDev, m_strUACDev);
+    int ret = load_config_from_file(m_strUserName, m_strPassWord, m_strResource, m_strTnpVer, m_strLoginMode, m_strRouteCheck, m_strLogFile, m_strUVCDev, m_strUACDev, m_strCamType);
     if (ret != 0) {
         AfxMessageBox(TEXT("无法打开测试配置文件！"), MB_OK);
     }
@@ -216,7 +218,7 @@ BOOL CFactoryTestI8FullDlg::OnInitDialog()
     m_pTnpContext = tnp_init(GetSafeHwnd());
 
     SetTimer(TIMER_ID_SET_FOCUS  , 1000, NULL);
-    if (strcmp(m_strUVCDev, "") != 0) {
+    if (strcmp(m_strUVCDev, "") != 0 || strcmp(m_strCamType, "rtsp") == 0) {
         MoveWindow(0, 0, 1200, 780, FALSE);
         SetTimer(TIMER_ID_OPEN_PLAYER, 100, NULL);
     }
@@ -227,6 +229,7 @@ void CFactoryTestI8FullDlg::OnDestroy()
 {
     CDialog::OnDestroy();
 
+    KillTimer(TIMER_ID_OPEN_PLAYER);
     player_close(m_pFanPlayer);
     tnp_test_cancel(m_pTnpContext, TRUE);
     tnp_disconnect (m_pTnpContext);
@@ -706,18 +709,23 @@ void CFactoryTestI8FullDlg::OnTimer(UINT_PTR nIDEvent)
             player_getparam(m_pFanPlayer, PARAM_MEDIA_POSITION, &pos);
             if (pos == -1) m_nPlayerOpenOK = 0;
         } else if (m_nPlayerOpenOK == 0) { // reopen
+            player_close(m_pFanPlayer);
             PLAYER_INIT_PARAMS params = {0};
-            params.init_timeout     = 5000;
-            params.video_vwidth     = 1280;
-            params.video_vheight    = 720;
-            params.video_frame_rate = 30;
             char  url_gb2312 [MAX_PATH];
             WCHAR url_unicode[MAX_PATH];
             char  url_utf8   [MAX_PATH];
-            sprintf(url_gb2312, "dshow://video=%s:audio=%s", m_strUVCDev, m_strUACDev);
-            MultiByteToWideChar(CP_ACP , 0, url_gb2312 , -1, url_unicode, MAX_PATH);
-            WideCharToMultiByte(CP_UTF8, 0, url_unicode, -1, url_utf8, MAX_PATH, NULL, NULL);
-            player_close(m_pFanPlayer);
+            if (strcmp(m_strCamType, "uvc") == 0) {
+                params.init_timeout     = 5000;
+                params.video_vwidth     = 1280;
+                params.video_vheight    = 720;
+                params.video_frame_rate = 30;
+                sprintf(url_gb2312, "dshow://video=%s:audio=%s", m_strUVCDev, m_strUACDev);
+                MultiByteToWideChar(CP_ACP , 0, url_gb2312 , -1, url_unicode, MAX_PATH);
+                WideCharToMultiByte(CP_UTF8, 0, url_unicode, -1, url_utf8, MAX_PATH, NULL, NULL);
+            } else {
+                params.init_timeout = 5000;
+                sprintf(url_utf8, "rtsp://%s:8554//main", "192.168.1.111");
+            }
             m_pFanPlayer = player_open(url_utf8, GetSafeHwnd(), &params);
             m_nPlayerOpenOK = -1;
         } else if (m_nPlayerOpenOK == -1) {
