@@ -59,6 +59,7 @@ private:
     char    m_strLogFile   [32];
     char    m_strUVCDev    [MAX_PATH];
     char    m_strUACDev    [MAX_PATH];
+    char    m_strCamType   [32];
     BOOL    m_bMesLoginOK;
     BOOL    m_bSnScaned;
     int     m_nPlayerOpenOK;
