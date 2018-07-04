@@ -68,8 +68,8 @@ typedef struct {
 #pragma pack(4)
 typedef struct {
     char MAG[4];
-    char IP[32];
-    char Port[12];
+    char SN[32];
+    char TYPE[12];
 } NOTIFY_MSG;
 #pragma pack()
 
@@ -80,9 +80,11 @@ extern int TEST_PLAY_MUSIC(int onoff, int vol);
 FACTORYTEST_DATA lFtD;
 static int KeyL = 0;
 static int KeyH = 0;
-static int g_IrTestAuto    = 1;
-static int g_LedTestAuto   = 1;
-static int g_StopHeartBeat = 0;
+static int g_IrTestAuto      = 1;
+static int g_LedTestAuto     = 1;
+static int g_StopHeartBeat   = 0;
+static int g_UsbNetConnected = 0;
+static int g_WiFiConnected   = 0;
 
 int DrvSaveToFile(char *cName, char *pData, int len)
 {
@@ -501,7 +503,7 @@ int GetLightSensor()
     }
 }
 
-int getBroadcastIP(char *ip)
+int getBroadcastIPWiFi(char *ip)
 {
     int inet_sock;
     struct ifreq ifr = {};
@@ -513,7 +515,23 @@ int getBroadcastIP(char *ip)
     broadcastip = ((struct sockaddr_in*)&ifr.ifr_addr)->sin_addr;
     broadcastip.s_addr |= (255 << 24);
     strcpy(ip , inet_ntoa(broadcastip));
-//  printf("BroadcastIP: %s\r\n", ip);
+//  printf("BroadcastIPWiFi: %s\r\n", ip);
+    return ip[0] == '1' ? 0 : -1;
+}
+
+int getBroadcastIPUsbNet(char *ip)
+{
+    int inet_sock;
+    struct ifreq ifr = {};
+    struct in_addr broadcastip = {};
+
+    inet_sock = socket(AF_INET, SOCK_DGRAM, 0);
+    strcpy(ifr.ifr_name, "usb0");
+    ioctl(inet_sock, SIOCGIFADDR, &ifr);
+    broadcastip = ((struct sockaddr_in*)&ifr.ifr_addr)->sin_addr;
+    broadcastip.s_addr |= (255 << 24);
+    strcpy(ip , inet_ntoa(broadcastip));
+//  printf("BroadcastIPUsbNet: %s\r\n", ip);
     return ip[0] == '1' ? 0 : -1;
 }
 
@@ -524,6 +542,8 @@ static void *heart_beat_thread(void *argv)
     NOTIFY_MSG msg  = {};
     char pData [64] = {};
     char SN    [16] = {};
+    char wifiip[16] = {};
+    char usbnip[16] = {};
     char servip[16] = {};
     struct timeval t;
     int    led = 0;
@@ -537,7 +557,7 @@ static void *heart_beat_thread(void *argv)
     // init for msg, set magic code, and set SN
     // note !!, the msg.IP is used for store SN
     memcpy(msg.MAG, "NMSG", 4);
-    strcpy(msg.IP , SN);
+    strcpy(msg.SN , SN);
 
     // open socket
     sockfd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -561,18 +581,28 @@ static void *heart_beat_thread(void *argv)
     servaddr.sin_port   = htons(8989);
 
     while (!g_StopHeartBeat) {
-        if (servaddr.sin_addr.s_addr == 0) {
-            if (getBroadcastIP(servip) == 0) {
-                if (argv != NULL) {
-                    strcpy(servip, argv);
-                }
+        if (!g_UsbNetConnected) {
+            if (getBroadcastIPUsbNet(usbnip) == 0) {
+                msg.TYPE[0] = g_UsbNetConnected = 1;
+                strcpy(servip, argv ? argv : usbnip);
                 inet_pton(AF_INET, servip, &servaddr.sin_addr);
+            }
+        }
+
+        if (!g_WiFiConnected) {
+            if (getBroadcastIPWiFi(wifiip) == 0) {
+                msg.TYPE[1] = g_WiFiConnected = 1;
+                if (!g_UsbNetConnected) {
+                    strcpy(servip, argv ? argv : wifiip);
+                    inet_pton(AF_INET, servip, &servaddr.sin_addr);
+                }
                 system("echo 1 > /sys/class/gpio/gpio49/value"); // turn on blue led
             }
         }
+
         if (servaddr.sin_addr.s_addr != 0) {
             if (sendto(sockfd, &msg, sizeof(msg), 0, (struct sockaddr*)&servaddr, sizeof(servaddr)) == -1) {
-                printf("sendto failed !\n");
+                printf("sendto failed ! %s, %s, %s\n", wifiip, usbnip, servip);
             } else {
                 printf("heartbeat: %s\r\n", servip);
             }
@@ -580,7 +610,7 @@ static void *heart_beat_thread(void *argv)
 
         // auto led
         if (g_LedTestAuto) {
-            if (servaddr.sin_addr.s_addr) {
+            if (g_WiFiConnected) {
                 led++; led %= 3;
             } else {
                 led++; led %= 2;

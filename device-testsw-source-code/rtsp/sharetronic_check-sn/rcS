@@ -1,0 +1,139 @@
+#!/bin/sh
+
+# Set mdev
+echo /sbin/mdev > /proc/sys/kernel/hotplug
+/sbin/mdev -s && echo "mdev is ok......"
+
+# create console and null node for nfsroot
+#mknod -m 600 /dev/console c 5 1
+#mknod -m 666 /dev/null c 1 3
+
+# Set Global Environment
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin
+export PATH=/system/bin:$PATH
+export LD_LIBRARY_PATH=/system/lib
+
+# for wifi factory test
+CHECKSHELL=/opt/network/check_reset_button.sh
+if [ -f $CHECKSHELL ]; then
+    echo "start to check reset button..."
+    $CHECKSHELL
+fi
+
+SINFO_KO_PATH=/lib/modules
+SENSOR_DRV_PATH=/lib/modules
+ISP_DRV_PATH=/lib/modules
+
+check_return()
+{
+    if [ $? -ne 0 ] ;then
+        echo err: $1
+        echo exit
+        exit
+    fi
+}
+
+SENSOR=jxh62
+prob_sensor=
+
+if [ x"$prob_sensor" = x"y" ]; then
+    lsmod | grep "sinfo" > /dev/null
+    if [ $? -ne 0 ] ;then
+    insmod ${SINFO_KO_PATH/%\//}/sinfo.ko
+    check_return "insmod sinfo"
+    fi
+
+    echo 1 >/proc/jz/sinfo/info
+    check_return "start sinfo"
+
+    SENSOR_INFO=`cat /proc/jz/sinfo/info`
+    check_return "get sensor type"
+    echo ${SENSOR_INFO}
+
+    SENSOR=${SENSOR_INFO#*:}
+fi
+
+lsmod | grep "tx_isp" > /dev/null
+if [ $? -ne 0 ] ;then
+    insmod ${ISP_DRV_PATH/%\//}/tx-isp.ko
+    check_return "insmod isp drv"
+fi
+
+lsmod | grep "audio" > /dev/null
+if [ $? -ne 0 ] ;then
+    insmod ${ISP_DRV_PATH/%\//}/audio.ko spk_gpio=-1
+    check_return "insmod audio.ko"
+fi
+
+lsmod | grep "aw8733" > /dev/null
+if [ $? -ne 0 ] ;then
+    insmod ${ISP_DRV_PATH/%\//}/aw8733.ko mode_gpio=63
+    check_return "insmod aw8733.ko"
+fi
+
+echo 0 > /proc/jz/aw8733a/mode
+echo 4 > /proc/jz/aw8733a/mode
+
+lsmod | grep "8189fs" > /dev/null
+if [ $? -ne 0 ] ;then
+    insmod ${ISP_DRV_PATH/%\//}/8189fs.ko
+    check_return "insmod 8189fs.ko"
+fi
+
+lsmod | grep ${SENSOR} > /dev/null
+if [ $? -ne 0 ] ;then
+    insmod ${SENSOR_DRV_PATH/%\//}/sensor_${SENSOR}.ko
+    check_return "insmod sensor drv"
+fi
+
+lsmod | grep "exfat" > /dev/null
+if [ $? -ne 0 ] ;then
+    insmod ${ISP_DRV_PATH/%\//}/exfat.ko
+    check_return "insmod exfat.ko"
+fi
+
+echo 4 >  /proc/sys/kernel/printk
+
+# mxtest
+xcheck
+[ $? -eq 0 ] && exit 0
+
+# cxtest
+ccheck
+[ $? -eq 0 ] && exit 0
+
+# aptest
+acheck
+[ $? -eq 0 ] && exit 0
+
+# networking
+ifconfig lo up
+#ifconfig eth0 192.168.1.80
+
+# Start telnet daemon
+# telnetd &
+
+# Set the system time from the hardware clock
+#hwclock -s
+
+echo 4 > /proc/sys/kernel/printk
+
+# avoiding failed to popen/fork (Cannot allocate memory)
+echo 1 > /proc/sys/vm/overcommit_memory
+
+syslogd -m 256
+klogd
+
+echo "check factorytest..."
+if [ -d /mnt/sdcard/sharetronic_check ]; then
+    echo "start sd factorytest..."
+    cd /mnt/sdcard/sharetronic_check
+    /opt/sh/safe_exec.sh ./auth.ini ./wpa_supplicant.sh
+    exit 0
+else
+    echo "start etc factorytest..."
+    if [ -f /etc/apkft/stage ]; then
+        /etc/apkft/apkft.sh
+    fi
+fi
+
