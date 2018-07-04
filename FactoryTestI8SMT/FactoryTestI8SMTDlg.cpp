@@ -165,13 +165,9 @@ BOOL CFactoryTestI8SMTDlg::OnInitDialog()
     UpdateData(FALSE);
 
     m_pTnpContext = tnp_init(GetSafeHwnd());
-    if (strcmp(m_strCamType, "uvc") == 0) {
-        if (strcmp(m_strUVCDev, "") != 0) {
-            MoveWindow(0, 0, 900, 600, FALSE);
-            SetTimer(TIMER_ID_OPEN_PLAYER, 100, NULL);
-        }
-    } else {
+    if (strcmp(m_strUVCDev, "") != 0 || strcmp(m_strCamType, "rtsp") == 0) {
         MoveWindow(0, 0, 900, 600, FALSE);
+        SetTimer(TIMER_ID_OPEN_PLAYER, 100, NULL);
     }
     return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -180,10 +176,7 @@ void CFactoryTestI8SMTDlg::OnDestroy()
 {
     CDialog::OnDestroy();
 
-    if (strcmp(m_strCamType, "uvc") == 0) {
-        KillTimer(TIMER_ID_OPEN_PLAYER);
-    }
-
+    KillTimer(TIMER_ID_OPEN_PLAYER);
     player_close(m_pFanPlayer);
     tnp_test_cancel(m_pTnpContext, TRUE);
     tnp_disconnect (m_pTnpContext);
@@ -349,13 +342,6 @@ LRESULT CFactoryTestI8SMTDlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
         StartDeviceTest();
     }
     UpdateData(FALSE);
-
-    if (strcmp(m_strCamType, "rtsp") == 0) {
-        char url[MAX_PATH];
-        player_close(m_pFanPlayer);
-        sprintf(url, "rtsp://%s:8554//main", m_strDeviceIP);
-        m_pFanPlayer = player_open(url, GetSafeHwnd(), NULL);
-    }
     return 0;
 }
 
@@ -388,11 +374,6 @@ LRESULT CFactoryTestI8SMTDlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
     GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText("NG");
     GetDlgItem(IDC_BTN_SPKMIC_RESULT )->SetWindowText("NG");
     GetDlgItem(IDC_BTN_VERSION_RESULT)->SetWindowText("NG");
-
-    if (strcmp(m_strCamType, "rtsp") == 0) {
-        player_close(m_pFanPlayer);
-        m_pFanPlayer = NULL;
-    }
     return 0;
 }
 
@@ -490,18 +471,23 @@ void CFactoryTestI8SMTDlg::OnTimer(UINT_PTR nIDEvent)
             player_getparam(m_pFanPlayer, PARAM_MEDIA_POSITION, &pos);
             if (pos == -1) m_nPlayerOpenOK = 0;
         } else if (m_nPlayerOpenOK == 0) { // reopen
+            player_close(m_pFanPlayer);
             PLAYER_INIT_PARAMS params = {0};
-            params.init_timeout     = 5000;
-            params.video_vwidth     = 1280;
-            params.video_vheight    = 720;
-            params.video_frame_rate = 30;
             char  url_gb2312 [MAX_PATH];
             WCHAR url_unicode[MAX_PATH];
             char  url_utf8   [MAX_PATH];
-            sprintf(url_gb2312, "dshow://video=%s", m_strUVCDev);
-            MultiByteToWideChar(CP_ACP , 0, url_gb2312 , -1, url_unicode, MAX_PATH);
-            WideCharToMultiByte(CP_UTF8, 0, url_unicode, -1, url_utf8, MAX_PATH, NULL, NULL);
-            player_close(m_pFanPlayer);
+            if (strcmp(m_strCamType, "uvc") == 0) {
+                params.init_timeout     = 5000;
+                params.video_vwidth     = 1280;
+                params.video_vheight    = 720;
+                params.video_frame_rate = 30;
+                sprintf(url_gb2312, "dshow://video=%s", m_strUVCDev);
+                MultiByteToWideChar(CP_ACP , 0, url_gb2312 , -1, url_unicode, MAX_PATH);
+                WideCharToMultiByte(CP_UTF8, 0, url_unicode, -1, url_utf8, MAX_PATH, NULL, NULL);
+            } else {
+                params.init_timeout = 5000;
+                sprintf(url_utf8, "rtsp://%s:8554//main", "192.168.1.111");
+            }
             m_pFanPlayer = player_open(url_utf8, GetSafeHwnd(), &params);
             m_nPlayerOpenOK = -1;
         } else if (m_nPlayerOpenOK == -1) {
