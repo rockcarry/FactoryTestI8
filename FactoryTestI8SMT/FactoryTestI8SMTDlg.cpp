@@ -47,7 +47,7 @@ static void parse_params(const char *str, const char *key, char *val)
     }
 }
 
-static int load_config_from_file(char *ver, char *log, char *uvc, char *uac)
+static int load_config_from_file(char *ver, char *log, char *uvc, char *uac, char *cam)
 {
     char  file[MAX_PATH];
     FILE *fp = NULL;
@@ -66,10 +66,11 @@ static int load_config_from_file(char *ver, char *log, char *uvc, char *uac)
         if (buf) {
             fseek(fp, 0, SEEK_SET);
             fread(buf, len, 1, fp);
-            parse_params(buf, "version", ver);
-            parse_params(buf, "logfile", log);
-            parse_params(buf, "uvcdev" , uvc);
-            parse_params(buf, "uacdev" , uac);
+            parse_params(buf, "version" , ver);
+            parse_params(buf, "logfile" , log);
+            parse_params(buf, "uvcdev"  , uvc);
+            parse_params(buf, "uacdev"  , uac);
+            parse_params(buf, "camtype" , cam);
             free(buf);
         }
         fclose(fp);
@@ -140,8 +141,9 @@ BOOL CFactoryTestI8SMTDlg::OnInitDialog()
     strcpy(m_strLogFile   , "DEBUGER");
     strcpy(m_strUVCDev    , ""       );
     strcpy(m_strUACDev    , ""       );
+    strcpy(m_strCamType   , "uvc"    );
     strcpy(m_strDeviceIP  , ""       );
-    int ret = load_config_from_file(m_strTnpVer, m_strLogFile, m_strUVCDev, m_strUACDev);
+    int ret = load_config_from_file(m_strTnpVer, m_strLogFile, m_strUVCDev, m_strUACDev, m_strCamType);
     if (ret != 0) {
         AfxMessageBox(TEXT("无法打开测试配置文件！"), MB_OK);
     }
@@ -163,17 +165,24 @@ BOOL CFactoryTestI8SMTDlg::OnInitDialog()
     UpdateData(FALSE);
 
     m_pTnpContext = tnp_init(GetSafeHwnd());
-    if (strcmp(m_strUVCDev, "") != 0) {
+    if (strcmp(m_strCamType, "uvc") == 0) {
+        if (strcmp(m_strUVCDev, "") != 0) {
+            MoveWindow(0, 0, 900, 600, FALSE);
+            SetTimer(TIMER_ID_OPEN_PLAYER, 100, NULL);
+        }
+    } else {
         MoveWindow(0, 0, 900, 600, FALSE);
-        SetTimer(TIMER_ID_OPEN_PLAYER, 100, NULL);
     }
-
     return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
 void CFactoryTestI8SMTDlg::OnDestroy()
 {
     CDialog::OnDestroy();
+
+    if (strcmp(m_strCamType, "uvc") == 0) {
+        KillTimer(TIMER_ID_OPEN_PLAYER);
+    }
 
     player_close(m_pFanPlayer);
     tnp_test_cancel(m_pTnpContext, TRUE);
@@ -340,6 +349,13 @@ LRESULT CFactoryTestI8SMTDlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
         StartDeviceTest();
     }
     UpdateData(FALSE);
+
+    if (strcmp(m_strCamType, "rtsp") == 0) {
+        char url[MAX_PATH];
+        player_close(m_pFanPlayer);
+        sprintf(url, "rtsp://%s:8554//main", m_strDeviceIP);
+        m_pFanPlayer = player_open(url, GetSafeHwnd(), NULL);
+    }
     return 0;
 }
 
@@ -372,6 +388,11 @@ LRESULT CFactoryTestI8SMTDlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
     GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText("NG");
     GetDlgItem(IDC_BTN_SPKMIC_RESULT )->SetWindowText("NG");
     GetDlgItem(IDC_BTN_VERSION_RESULT)->SetWindowText("NG");
+
+    if (strcmp(m_strCamType, "rtsp") == 0) {
+        player_close(m_pFanPlayer);
+        m_pFanPlayer = NULL;
+    }
     return 0;
 }
 

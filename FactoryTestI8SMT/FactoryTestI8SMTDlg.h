@@ -50,6 +50,7 @@ private:
     char    m_strLogFile [32];
     char    m_strUVCDev  [MAX_PATH];
     char    m_strUACDev  [MAX_PATH];
+    char    m_strCamType [32];
     char    m_strDeviceIP[32];
     int     m_nPlayerOpenOK;
     int     m_nLedTestResult;
