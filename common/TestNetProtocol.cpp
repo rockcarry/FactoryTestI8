@@ -8,6 +8,7 @@ typedef struct {
     struct in_addr addr;
     DWORD  tick;
     char   sn[32];
+    int    type;
 } DEVICE;
 
 typedef struct {
@@ -28,7 +29,7 @@ typedef struct
 {
     char mag [4 ];
     char sn  [32];
-    char port[12];
+    char type[12];
 } NOTIFY_MSG;
 #pragma pack()
 
