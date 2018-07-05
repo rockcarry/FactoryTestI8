@@ -4,6 +4,7 @@ sleep 1
 ifconfig wlan0 up
 sleep 1
 wpa_supplicant -D wext -i wlan0 -c  /etc/conf/wpa.conf -B > /dev/null 2>&1 &
+sleep 1
 WLANNAME=`cat /etc/wlanname`
 if [ "$WLANNAME" == "wlan0" ]; then
     echo "wifi ok"

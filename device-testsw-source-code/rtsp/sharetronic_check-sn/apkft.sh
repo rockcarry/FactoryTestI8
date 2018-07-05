@@ -18,6 +18,7 @@ if [ "$stage" == "iperf" ]; then
     ifconfig wlan0 up
     sleep 1
     wpa_supplicant -D wext -i wlan0 -c  /etc/conf/wpa.conf -B > /dev/null 2>&1 &
+    sleep 1
     udhcpc -i wlan0 -p /var/run/udhcpc.pid &
 
     echo "turn on wifi..."
@@ -35,6 +36,7 @@ if [ "$stage" == "all" ]; then
     ifconfig wlan0 up
     sleep 1
     wpa_supplicant -D wext -i wlan0 -c  /etc/conf/wpa.conf -B > /dev/null 2>&1 &
+    sleep 1
     udhcpc -i wlan0 -p /var/run/udhcpc.pid &
 
     echo "turn on wifi..."
