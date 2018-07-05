@@ -55,7 +55,7 @@ if [ "$stage" == "all" ]; then
 
     /etc/apkft/carrier-server --st=jxh62 &
     
-    /etc/apkft/appApkft all &
+    /etc/apkft/appApkft all 192.168.1.100 &
 fi
 
 if [ "$stage" == "aging" ]; then

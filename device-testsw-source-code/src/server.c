@@ -809,7 +809,7 @@ int main(int argc, char *argv[]) {
         } else if (strcmp(argv[1], "all") == 0) {
             TEST_PLAY_MUSIC(1, 0);
             pthread_create(&tid_heart_beat , NULL, heart_beat_thread    , NULL);
-            pthread_create(&tid_btn_monitor, NULL, button_monitor_thread, NULL);
+            pthread_create(&tid_btn_monitor, NULL, button_monitor_thread, argc >= 3 ? argv[2] : NULL);
         } else if (strstr(argv[1], "192.168.") == argv[1]) {
             pthread_create(&tid_heart_beat , NULL, heart_beat_thread    , argv[1]);
             pthread_create(&tid_btn_monitor, NULL, button_monitor_thread, NULL);
