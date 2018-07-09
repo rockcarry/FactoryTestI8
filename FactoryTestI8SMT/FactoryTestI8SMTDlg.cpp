@@ -115,10 +115,10 @@ BEGIN_MESSAGE_MAP(CFactoryTestI8SMTDlg, CDialog)
     ON_MESSAGE(WM_TNP_UPDATE_UI   , &CFactoryTestI8SMTDlg::OnTnpUpdateUI   )
     ON_MESSAGE(WM_TNP_DEVICE_FOUND, &CFactoryTestI8SMTDlg::OnTnpDeviceFound)
     ON_MESSAGE(WM_TNP_DEVICE_LOST , &CFactoryTestI8SMTDlg::OnTnpDeviceLost )
+    ON_MESSAGE(WM_TNP_TYPE_CHANGED, &CFactoryTestI8SMTDlg::OnTnpDevTypeChanged)
     ON_BN_CLICKED(IDC_BTN_LED_RESULT, &CFactoryTestI8SMTDlg::OnBnClickedBtnLedResult)
     ON_BN_CLICKED(IDC_BTN_CAMERA_RESULT, &CFactoryTestI8SMTDlg::OnBnClickedBtnCameraResult)
     ON_BN_CLICKED(IDC_BTN_IR_RESULT, &CFactoryTestI8SMTDlg::OnBnClickedBtnIrResult)
-    ON_BN_CLICKED(IDC_BTN_KEY_RESULT, &CFactoryTestI8SMTDlg::OnBnClickedBtnKeyResult)
 END_MESSAGE_MAP()
 
 
@@ -158,6 +158,7 @@ BOOL CFactoryTestI8SMTDlg::OnInitDialog()
     m_nLedTestResult    = -1;
     m_nCameraTestResult = -1;
     m_nIRTestResult     = -1;
+    m_nWiFiTestResult   = -1;
     m_nKeyTestResult    = -1;
     m_nLSensorTestResult= -1;
     m_nSpkMicTestResult = -1;
@@ -210,7 +211,7 @@ void CFactoryTestI8SMTDlg::OnPaint()
         int cyIcon = GetSystemMetrics(SM_CYICON);
         CRect rect;
         GetClientRect(&rect);
-        int x = (rect.Width() - cxIcon + 1) / 2;
+        int x = (rect.Width () - cxIcon + 1) / 2;
         int y = (rect.Height() - cyIcon + 1) / 2;
 
         // »æÖÆÍ¼±ê
@@ -227,6 +228,7 @@ int CFactoryTestI8SMTDlg::GetBackColorByCtrlId(int id)
     case IDC_BTN_LED_RESULT:    result = m_nLedTestResult;    break;
     case IDC_BTN_CAMERA_RESULT: result = m_nCameraTestResult; break;
     case IDC_BTN_IR_RESULT:     result = m_nIRTestResult;     break;
+    case IDC_BTN_WIFI_RESULT:   result = m_nWiFiTestResult;   break;
     case IDC_BTN_KEY_RESULT:    result = m_nKeyTestResult;    break;
     case IDC_BTN_LSENSOR_RESULT:result = m_nLSensorTestResult;break;
     case IDC_BTN_SPKMIC_RESULT: result = m_nSpkMicTestResult; break;
@@ -246,6 +248,7 @@ void CFactoryTestI8SMTDlg::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStr
     case IDC_BTN_LED_RESULT:
     case IDC_BTN_CAMERA_RESULT:
     case IDC_BTN_IR_RESULT:
+    case IDC_BTN_WIFI_RESULT:
     case IDC_BTN_KEY_RESULT:
     case IDC_BTN_LSENSOR_RESULT:
     case IDC_BTN_SPKMIC_RESULT:
@@ -360,6 +363,7 @@ LRESULT CFactoryTestI8SMTDlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
     m_nLedTestResult     = -1;
     m_nCameraTestResult  = -1;
     m_nIRTestResult      = -1;
+    m_nWiFiTestResult    = -1;
     m_nKeyTestResult     = -1;
     m_nLSensorTestResult = -1;
     m_nSpkMicTestResult  = -1;
@@ -370,10 +374,30 @@ LRESULT CFactoryTestI8SMTDlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
     GetDlgItem(IDC_BTN_LED_RESULT    )->SetWindowText("NG");
     GetDlgItem(IDC_BTN_CAMERA_RESULT )->SetWindowText("NG");
     GetDlgItem(IDC_BTN_IR_RESULT     )->SetWindowText("NG");
+    GetDlgItem(IDC_BTN_WIFI_RESULT   )->SetWindowText("NG");
     GetDlgItem(IDC_BTN_KEY_RESULT    )->SetWindowText("NG");
     GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText("NG");
     GetDlgItem(IDC_BTN_SPKMIC_RESULT )->SetWindowText("NG");
     GetDlgItem(IDC_BTN_VERSION_RESULT)->SetWindowText("NG");
+    return 0;
+}
+
+LRESULT CFactoryTestI8SMTDlg::OnTnpDevTypeChanged(WPARAM wParam, LPARAM lParam)
+{
+    struct in_addr addr;
+    addr.S_un.S_addr = (u_long)lParam;
+    if (strcmp(m_strDeviceIP, inet_ntoa(addr)) != 0) {
+        log_printf("this is not current connected device network type changed !\n");
+        return 0;
+    }
+    if (wParam & (1 << 1)) {
+        m_nWiFiTestResult = 1;
+        GetDlgItem(IDC_BTN_WIFI_RESULT)->SetWindowText(m_nWiFiTestResult ? "PASS" : "NG");
+    }
+    if (((wParam >> 2) & 0x3) == 0x3) {
+        m_nKeyTestResult = 1;
+        GetDlgItem(IDC_BTN_KEY_RESULT)->SetWindowText(m_nKeyTestResult ? "PASS" : "NG");
+    }
     return 0;
 }
 
@@ -393,7 +417,6 @@ BOOL CFactoryTestI8SMTDlg::PreTranslateMessage(MSG *pMsg)
         case 'Z': if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnLedResult   (); return TRUE;
         case 'X': if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnCameraResult(); return TRUE;
         case 'C': if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnIrResult    (); return TRUE;
-        case 'V': if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnKeyResult   (); return TRUE;
         case VK_SPACE: return TRUE;
         }
     } else if (pMsg->message == MSG_FFPLAYER) {
@@ -446,18 +469,6 @@ void CFactoryTestI8SMTDlg::OnBnClickedBtnIrResult()
     } else {
         m_nIRTestResult = 0;
         GetDlgItem(IDC_BTN_IR_RESULT)->SetWindowText("NG");
-    }
-    UpdateData(FALSE);
-}
-
-void CFactoryTestI8SMTDlg::OnBnClickedBtnKeyResult()
-{
-    if (m_nKeyTestResult != 1) {
-        m_nKeyTestResult = 1;
-        GetDlgItem(IDC_BTN_KEY_RESULT)->SetWindowText("PASS");
-    } else {
-        m_nKeyTestResult = 0;
-        GetDlgItem(IDC_BTN_KEY_RESULT)->SetWindowText("NG");
     }
     UpdateData(FALSE);
 }
