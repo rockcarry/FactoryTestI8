@@ -6,6 +6,7 @@ enum {
     WM_TNP_UPDATE_UI = WM_APP + 100,
     WM_TNP_DEVICE_FOUND,
     WM_TNP_DEVICE_LOST,
+    WM_TNP_TYPE_CHANGED,
 };
 
 void* tnp_init(HWND hwnd);

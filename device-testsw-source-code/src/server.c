@@ -27,39 +27,22 @@ typedef struct {
     char VERSION[32];
 
     char testSN;  // pos 0x34
-    char testMAC;
-    char testSD;
-    char testSPK;
     char testMic;
-    char testWifi;
 
-    char testCamera;
     char testIR;
     char testIRCut;
     char testLightSensor;
 
-    char testLED;
     char testKey;
     char testVersion;
-    char UpdateSW;
 
     //-----------------------
     char rtSN;
     char rtMAC;
-    char rtSD;  //0x44
-    char rtSPK;
     char rtMic;
-    char rtWifi;
-
-    char rtCamera;
-    char rtIR;
-    char rtIRCut;
     char rtLightSensor;
-
-    char rtLED;
     char rtKey;
     char rtVersion;
-    char rtUpdateSW;
 
     char exitTest;
 } FACTORYTEST_DATA;
@@ -68,8 +51,8 @@ typedef struct {
 #pragma pack(4)
 typedef struct {
     char MAG[4];
-    char SN[32];
-    char TYPE[12];
+    char SN[16];
+    char TYPE[8];
 } NOTIFY_MSG;
 #pragma pack()
 
@@ -78,13 +61,13 @@ extern int TEST_SPK_MIC   (int argc, FACTORYTEST_DATA *plFtD, int vol);
 extern int TEST_PLAY_MUSIC(int onoff, int vol);
 
 FACTORYTEST_DATA lFtD;
-static int KeyL = 0;
-static int KeyH = 0;
 static int g_IrTestAuto      = 1;
 static int g_LedTestAuto     = 1;
 static int g_StopHeartBeat   = 0;
 static int g_UsbNetConnected = 0;
 static int g_WiFiConnected   = 0;
+static int g_button_test     = 0;
+static int g_stop_button_monitor = 0;
 
 int DrvSaveToFile(char *cName, char *pData, int len)
 {
@@ -206,29 +189,17 @@ int dumpChar(char *name, char *src, int cnt)
     return 0;
 }
 
-int CheckSD(FACTORYTEST_DATA *plFtD)
-{
-    // because this APP run from sdcard, so sd is ok here
-    plFtD->rtSD = 1;
-    return 0;
-}
-
 int CheckSNAndMAC(FACTORYTEST_DATA *plFtD)
 {
-    char pData[1566];
-    char SN [32];
+    char pData[1566] = {0};
+    char SN [32]     = {0};
     char MAC[32];
-    int  iLen = 0;
+    int  iLen = 32;
     int  res  = 0;
     int  i    = 0;
 
     printf("\r\n\r\nstart CheckSNAndMAC: \r\n");
-    CheckSD(plFtD);
-
-    memset(pData, 0 ,sizeof(pData));
-    iLen = 32;
     DrvReadFileEx("/dev/mtd5", pData, &iLen, 0);
-    memset(SN,0,sizeof(SN));
     memcpy(SN, &pData[13], 15);
     printf("read SN:%s ?= %s \r\n", SN, plFtD->SN);
     if (memcmp(SN, plFtD->SN, 15)) {
@@ -270,12 +241,10 @@ int WriteAndCheckSN(FACTORYTEST_DATA *plFtD)
 {
     char pData[1566];
     char SN[32];
-    int iLen=0;
-    int res=0;
+    int  iLen = 0;
+    int  res  = 0;
 
     printf("\r\n\r\nstart WriteAndCheckSN: \r\n");
-    CheckSD(plFtD);
-
     // 1 write SN
     if (plFtD->rtSN == 0) {
         memset(SN, 0, sizeof(SN));
@@ -304,7 +273,7 @@ int WriteAndCheckSN(FACTORYTEST_DATA *plFtD)
 
     // 2 write MAC
     if (plFtD->rtMAC == 0) {
-        if (plFtD->rtSD) {
+        if (1) {
             printf("Write MAC (SD):%s \r\n", plFtD->MAC);
             iLen = 0; // all file bytes
             DrvReadFileEx("./wifi_efuse_8189fs.map", MacBuffer, &iLen, 0);
@@ -417,36 +386,6 @@ int TestLightSensor(FACTORYTEST_DATA *plFtD)
     }
     if (val > 0x350 && val < 0x550) {
         plFtD->rtLightSensor = 1;
-    }
-
-    close(fd);
-    return 0;
-}
-
-int TestKey(FACTORYTEST_DATA *plFtD)
-{
-    int val = 0;
-    int fd  = 0;
-    const char *cName = "/sys/class/gpio/gpio60/value";
-
-    ///printf("\r\n\r\nstart TestKey: \r\n");
-    plFtD->rtKey = 0;
-
-    fd = open(cName, O_RDONLY, 0644);
-    if (fd < 0) {
-//      printf("TestKey:open %s error\n", cName);
-        return -1;
-    }
-    if (1 != read(fd, &val, 1)) {
-//      printf("TestKey read %s failed!\n", cName);
-    }
-    printf("TestKey %s: read ok :%x!\n", cName, val);
-    if (val == '0') KeyL = 1;
-    if (val == '1') KeyH = 1;
-
-    if (KeyL == 1 && KeyH == 1) {
-        printf("TestKey OK! [%x, %x]\n", KeyL, KeyH);
-        plFtD->rtKey = 1;
     }
 
     close(fd);
@@ -600,6 +539,9 @@ static void *heart_beat_thread(void *argv)
             }
         }
 
+        // button test
+        msg.TYPE[2] = g_button_test;
+
         if (servaddr.sin_addr.s_addr != 0) {
             if (sendto(sockfd, &msg, sizeof(msg), 0, (struct sockaddr*)&servaddr, sizeof(servaddr)) == -1) {
                 printf("sendto failed ! %s, %s, %s\n", wifiip, usbnip, servip);
@@ -652,8 +594,6 @@ static void *heart_beat_thread(void *argv)
     return NULL;
 }
 
-static int g_button_test = 0;
-static int g_stop_button_monitor = 0;
 static void* button_monitor_thread(void *argv)
 {
     int fd    = 0;
@@ -814,7 +754,7 @@ int main(int argc, char *argv[]) {
             pthread_create(&tid_heart_beat , NULL, heart_beat_thread    , argv[1]);
             pthread_create(&tid_btn_monitor, NULL, button_monitor_thread, NULL);
         } else {
-            pthread_create(&tid_heart_beat , NULL, heart_beat_thread    , NULL);
+            pthread_create(&tid_heart_beat , NULL, heart_beat_thread    , argc >= 3 ? argv[2] : NULL);
         }
     }
 
@@ -858,11 +798,6 @@ int main(int argc, char *argv[]) {
 
             memset(buf, 0, sizeof(buf));
             memcpy(buf, &lFtD.MAGIC, 4);
-
-            // iperf
-            if (lFtD.testWifi) {
-                lFtD.rtWifi = 1;
-            }
 
             // SN & MAC
             if (lFtD.testSN=='1') {

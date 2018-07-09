@@ -583,10 +583,8 @@ int TEST_SPK_MIC(int argc, FACTORYTEST_DATA* plFtD, int vol)
 
     if (g_TestOK) {
         plFtD->rtMic = 1;
-        plFtD->rtSPK = 1;
     } else {
         plFtD->rtMic = 0;
-        plFtD->rtSPK = 0;
     }
 
 #if 1
@@ -594,13 +592,11 @@ int TEST_SPK_MIC(int argc, FACTORYTEST_DATA* plFtD, int vol)
         g_need_sleep = 1;
         if (g_TestOK) {
             plFtD->rtMic = 1;
-            plFtD->rtSPK = 1;
             if (argc >= 2) {
                 ret = pthread_create(&tid_play, NULL, IMP_Audio_Play_Thread, "./testOK.pcm");
             }
         } else {
             plFtD->rtMic = 0;
-            plFtD->rtSPK = 0;
             if (argc >= 2) {
                 ret = pthread_create(&tid_play, NULL, IMP_Audio_Play_Thread, "./testFail.pcm");
             }

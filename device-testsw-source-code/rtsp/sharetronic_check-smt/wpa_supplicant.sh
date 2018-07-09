@@ -38,4 +38,4 @@ ifconfig usb0 192.168.1.111 up
 cd -
 
 ./carrier-server --st=jxh62 &
-./appMicSn 192.168.29.156 &
+./appMicSn 192.168.1.100 &

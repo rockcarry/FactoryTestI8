@@ -19,6 +19,7 @@ typedef struct {
     DEVICE  device_list[256];
     int     devlost_timeout;
 
+    struct in_addr tcp_conn_addr;
     SOCKET  sock;
     #define TNP_TEST_CANCEL (1 << 0)
     int     test_status;
@@ -28,8 +29,8 @@ typedef struct {
 typedef struct
 {
     char mag [4 ];
-    char sn  [32];
-    char type[12];
+    char sn  [16];
+    char type[8 ];
 } NOTIFY_MSG;
 #pragma pack()
 
@@ -82,6 +83,10 @@ static DWORD WINAPI DeviceDetectThreadProc(LPVOID pParam)
                 PostMessage(ctxt->hwnd, WM_TNP_DEVICE_FOUND, 0, from.sin_addr.S_un.S_addr);
             }
             ctxt->device_list[b4].tick = GetTickCount();
+            ctxt->device_list[b4].type = (msg.type[0] << 0) | (msg.type[1] << 1) | (msg.type[2] << 2);
+            if (ctxt->tcp_conn_addr.S_un.S_addr == from.sin_addr.S_un.S_addr) {
+                PostMessage(ctxt->hwnd, WM_TNP_TYPE_CHANGED, ctxt->device_list[b4].type, ctxt->device_list[b4].addr.S_un.S_addr);
+            }
             strncpy(ctxt->device_list[b4].sn, msg.sn, 32);
         } else {
 //          log_printf("receive datagram error or timeout !\n");
@@ -94,7 +99,7 @@ static DWORD WINAPI DeviceDetectThreadProc(LPVOID pParam)
                 log_printf("device %s lost !\n", inet_ntoa(ctxt->device_list[i].addr));
                 log_printf("remove it from device list !\n");
                 PostMessage(ctxt->hwnd, WM_TNP_DEVICE_LOST, 0, ctxt->device_list[i].addr.S_un.S_addr);
-                ctxt->device_list[i].addr.S_un.S_addr = 0;
+                memset(&(ctxt->device_list[i]), 0, sizeof(DEVICE));
                 strncpy(ctxt->device_list[i].sn, "", 32);
             }
         }
@@ -125,39 +130,21 @@ typedef struct {
     char VER[32];
 
     char testSN;
-    char testMAC;
-    char testSD;
-    char testSPK;
     char testMic;
-    char testWifi;
 
-    char testCamera;
     char testIR;
     char testIRCut;
     char testLightSensor;
 
-    char testLED;
     char testKey;
     char testVersion;
-    char UpdateSW;
 
-    //-----------------------
     char rtSN;
     char rtMAC;
-    char rtSD;
-    char rtSPK;
     char rtMic;
-    char rtWifi;
-
-    char rtCamera;
-    char rtIR;
-    char rtIRCut;
     char rtLightSensor;
-
-    char rtLED;
     char rtKey;
     char rtVersion;
-    char rtUpdateSW;
 
     char exitTest;
 } FACTORYTEST_DATA;
@@ -226,11 +213,10 @@ int tnp_connect(void *ctxt, struct in_addr addr)
     sockaddr.sin_port   = htons(TNP_TCP_PORT);;
     sockaddr.sin_addr   = addr;
     if (connect(context->sock, (struct sockaddr*)&sockaddr, sizeof(sockaddr)) == -1) {
-        context->device_list[addr.S_un.S_un_b.s_b4].addr.S_un.S_addr = 0;
-        context->device_list[addr.S_un.S_un_b.s_b4].sn[0]            = '\0';
-        context->device_list[addr.S_un.S_un_b.s_b4].tick             = 0;
+        memset(&(context->device_list[addr.S_un.S_un_b.s_b4]), 0, sizeof(DEVICE));
         return -1;
     } else {
+        context->tcp_conn_addr = addr;
         return  0;
     }
 }
@@ -242,6 +228,7 @@ void tnp_disconnect(void *ctxt)
 
     if (context->sock) {
         closesocket(context->sock);
+        context->tcp_conn_addr.S_un.S_addr = 0;
         context->sock = NULL;
     }
 }
@@ -307,7 +294,7 @@ int tnp_burn_snmac(void *ctxt, char *sn, char *mac, int *snrslt, int *macrslt)
     memcpy(data.MAC, mac, strlen(mac));
     data.SN [15] = '\0';
     data.MAC[12] = '\0';
-    data.testSN = data.testMAC = '1';
+    data.testSN  = '1';
 
     if (send(context->sock, (const char*)&data, sizeof(data), 0) == -1) {
         log_printf("tnp_burn_snmac send tcp data failed !\n");
@@ -340,8 +327,7 @@ int tnp_test_spkmic(void *ctxt)
     }
 
     FACTORYTEST_DATA data = {0};
-    data.MAGIC = SIG_MAGIC;
-    data.testSPK = '1';
+    data.MAGIC   = SIG_MAGIC;
     data.testMic = '1';
 
     if (send(context->sock, (const char*)&data, sizeof(data), 0) == -1) {
@@ -360,9 +346,8 @@ int tnp_test_spkmic(void *ctxt)
     }
 
     log_printf("tnp_test_spkmic data received:\n");
-    log_printf("rtSPK    = %d\n", data.rtSPK   );
-    log_printf("rtMic    = %d\n", data.rtMic   );
-    return (data.rtSPK == 1 && data.rtMic == 1) ? 0 : -1;
+    log_printf("rtMic = %d\n", data.rtMic);
+    return data.rtMic == 1 ? 0 : -1;
 }
 
 int tnp_test_button(void *ctxt, int *btn)
@@ -434,7 +419,7 @@ int tnp_test_spkonly_manual(void *ctxt, int onoff)
 
     FACTORYTEST_DATA data = {0};
     data.MAGIC   = SIG_MAGIC;
-    data.testSPK = data.testMic = onoff ? '2' : '3';
+    data.testMic = onoff ? '2' : '3';
 
     if (send(context->sock, (const char*)&data, sizeof(data), 0) == -1) {
         log_printf("tnp_test_spkmic_manual send tcp data failed !\n");
@@ -470,7 +455,6 @@ int tnp_test_sensor_snmac_version(void *ctxt, char *sn, char *mac, char *version
     data.testLightSensor = '1';
     data.testVersion     = '1';
     data.testSN          = '2';
-    data.testMAC         = '2';
     data.testKey         = '1';
     memset(data.SN , '0', sizeof(data.SN ));
     memset(data.MAC, '0', sizeof(data.MAC));
@@ -520,7 +504,6 @@ int tnp_test_smt(void *ctxt, char *version, int *rsltsensor, int *rslspkmic, int
 	FACTORYTEST_DATA data = {0};
 	data.MAGIC		      = SIG_MAGIC;
 	data.testLightSensor  = '1';
-	data.testSPK		  = '1';
 	data.testMic		  = '1';
 	data.testVersion      = '1';
     strcpy(data.VER, version);
@@ -543,11 +526,10 @@ int tnp_test_smt(void *ctxt, char *version, int *rsltsensor, int *rslspkmic, int
 
 	log_printf("tnp_test_smt data received:\n");
 	log_printf("rtLightSensor = %d\n", data.rtLightSensor);
-	log_printf("rtSPK         = %d\n", data.rtSPK        );
 	log_printf("rtMic         = %d\n", data.rtMic        );
 	log_printf("rtVersion     = %d\n", data.rtVersion    );
 	*rsltsensor = data.rtLightSensor;
-	*rslspkmic  = data.rtSPK && data.rtMic;
+	*rslspkmic  = data.rtMic;
 	*rsltver    = data.rtVersion;
 	strcpy(version, data.VER);
 	return i == 10 ? -1 : 0;
