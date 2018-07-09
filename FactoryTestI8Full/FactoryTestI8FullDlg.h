@@ -37,6 +37,7 @@ protected:
     afx_msg LRESULT OnTnpUpdateUI   (WPARAM wParam, LPARAM lParam);
     afx_msg LRESULT OnTnpDeviceFound(WPARAM wParam, LPARAM lParam);
     afx_msg LRESULT OnTnpDeviceLost (WPARAM wParam, LPARAM lParam);
+    afx_msg LRESULT OnTnpDevTypeChanged(WPARAM wParam, LPARAM lParam);
     afx_msg void OnEnChangeEdtScanSn();
     afx_msg void OnBnClickedBtnLedResult();
     afx_msg void OnBnClickedBtnSpkResult();
@@ -76,6 +77,7 @@ private:
     int     m_nMicTestResult;
     int     m_nCameraTestResult;
     int     m_nIRTestResult;
+    int     m_nWiFiTestResult;
     int     m_nKeyTestResult;
     int     m_nLSensorTestResult;
     int     m_nSnTestResult;

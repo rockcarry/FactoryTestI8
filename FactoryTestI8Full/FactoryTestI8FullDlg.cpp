@@ -134,6 +134,7 @@ BEGIN_MESSAGE_MAP(CFactoryTestI8FullDlg, CDialog)
     ON_MESSAGE(WM_TNP_UPDATE_UI   , &CFactoryTestI8FullDlg::OnTnpUpdateUI   )
     ON_MESSAGE(WM_TNP_DEVICE_FOUND, &CFactoryTestI8FullDlg::OnTnpDeviceFound)
     ON_MESSAGE(WM_TNP_DEVICE_LOST , &CFactoryTestI8FullDlg::OnTnpDeviceLost )
+    ON_MESSAGE(WM_TNP_TYPE_CHANGED, &CFactoryTestI8FullDlg::OnTnpDevTypeChanged)
     ON_BN_CLICKED(IDC_BTN_LED_RESULT, &CFactoryTestI8FullDlg::OnBnClickedBtnLedResult)
     ON_BN_CLICKED(IDC_BTN_SPK_RESULT, &CFactoryTestI8FullDlg::OnBnClickedBtnSpkResult)
     ON_BN_CLICKED(IDC_BTN_MIC_RESULT, &CFactoryTestI8FullDlg::OnBnClickedBtnMicResult)
@@ -208,6 +209,7 @@ BOOL CFactoryTestI8FullDlg::OnInitDialog()
     m_nIRTestResult     = -1;
     m_nSpkTestResult    = -1;
     m_nMicTestResult    = -1;
+    m_nWiFiTestResult   = -1;
     m_nKeyTestResult    = -1;
     m_nLSensorTestResult= -1;
     m_nSnTestResult     = -1;
@@ -219,7 +221,7 @@ BOOL CFactoryTestI8FullDlg::OnInitDialog()
 
     SetTimer(TIMER_ID_SET_FOCUS  , 1000, NULL);
     if (strcmp(m_strUVCDev, "") != 0 || strcmp(m_strCamType, "rtsp") == 0) {
-        MoveWindow(0, 0, 1200, 780, FALSE);
+        MoveWindow(0, 0, 1200, 820, FALSE);
         SetTimer(TIMER_ID_OPEN_PLAYER, 100, NULL);
     }
     return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
@@ -301,6 +303,7 @@ int CFactoryTestI8FullDlg::GetBackColorByCtrlId(int id)
     case IDC_BTN_CAMERA_RESULT: result = m_nCameraTestResult; break;
     case IDC_BTN_SPK_RESULT:    result = m_nSpkTestResult;    break;
     case IDC_BTN_MIC_RESULT:    result = m_nMicTestResult;    break;
+    case IDC_BTN_WIFI_RESULT:   result = m_nWiFiTestResult;   break;
     case IDC_BTN_KEY_RESULT:    result = m_nKeyTestResult;    break;
     case IDC_BTN_LSENSOR_RESULT:result = m_nLSensorTestResult;break;
     case IDC_BTN_SN_RESULT:     result = m_nSnTestResult;     break;
@@ -323,6 +326,7 @@ void CFactoryTestI8FullDlg::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemSt
     case IDC_BTN_CAMERA_RESULT:
     case IDC_BTN_SPK_RESULT:
     case IDC_BTN_MIC_RESULT:
+    case IDC_BTN_WIFI_RESULT:
     case IDC_BTN_KEY_RESULT:
     case IDC_BTN_LSENSOR_RESULT:
     case IDC_BTN_SN_RESULT:
@@ -497,6 +501,25 @@ LRESULT CFactoryTestI8FullDlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
+LRESULT CFactoryTestI8FullDlg::OnTnpDevTypeChanged(WPARAM wParam, LPARAM lParam)
+{
+    struct in_addr addr;
+    addr.S_un.S_addr = (u_long)lParam;
+    if (strcmp(m_strDeviceIP, inet_ntoa(addr)) != 0) {
+        log_printf("this is not current connected device network type changed !\n");
+        return 0;
+    }
+    if (wParam & (1 << 1)) {
+        m_nWiFiTestResult = 1;
+        GetDlgItem(IDC_BTN_WIFI_RESULT)->SetWindowText(m_nWiFiTestResult ? "PASS" : "NG");
+    }
+    if (((wParam >> 2) & 0x3) == 0x3) {
+        m_nKeyTestResult = 1;
+        GetDlgItem(IDC_BTN_KEY_RESULT)->SetWindowText(m_nKeyTestResult ? "PASS" : "NG");
+    }
+    return 0;
+}
+
 void CFactoryTestI8FullDlg::OnCancel() {}
 void CFactoryTestI8FullDlg::OnOK()     {}
 
@@ -617,6 +640,9 @@ void CFactoryTestI8FullDlg::OnBnClickedBtnUploadReport()
     if (m_nMicTestResult != 1) {
         strErrCode += "L005,";
     }
+    if (m_nWiFiTestResult != 1) {
+        strErrCode += "L018,";
+    }
     if (m_nKeyTestResult != 1) {
         strErrCode += "L006,";
     }
@@ -633,7 +659,7 @@ void CFactoryTestI8FullDlg::OnBnClickedBtnUploadReport()
         strErrCode += "L010,";
     }
     if (  m_nLedTestResult == 1 && m_nCameraTestResult == 1 && m_nIRTestResult == 1 && m_nSpkTestResult == 1 && m_nMicTestResult == 1
-       && m_nKeyTestResult == 1 && m_nLSensorTestResult == 1 && m_nSnTestResult == 1 && m_nMacTestResult == 1 && m_nVersionTestResult == 1) {
+       && m_nWiFiTestResult == 1 && m_nKeyTestResult == 1 && m_nLSensorTestResult == 1 && m_nSnTestResult == 1 && m_nMacTestResult == 1 && m_nVersionTestResult == 1) {
         strTestResult = "OK";
     } else {
         strTestResult = "NG";
@@ -682,6 +708,7 @@ void CFactoryTestI8FullDlg::OnTimer(UINT_PTR nIDEvent)
         m_nIRTestResult     = -1;
         m_nSpkTestResult    = -1;
         m_nMicTestResult    = -1;
+        m_nWiFiTestResult   = -1;
         m_nKeyTestResult    = -1;
         m_nLSensorTestResult= -1;
         m_nSnTestResult     = -1;
@@ -694,6 +721,7 @@ void CFactoryTestI8FullDlg::OnTimer(UINT_PTR nIDEvent)
         GetDlgItem(IDC_BTN_MIC_RESULT    )->SetWindowText("NG");
         GetDlgItem(IDC_BTN_CAMERA_RESULT )->SetWindowText("NG");
         GetDlgItem(IDC_BTN_IR_RESULT     )->SetWindowText("NG");
+        GetDlgItem(IDC_BTN_WIFI_RESULT   )->SetWindowText("NG");
         GetDlgItem(IDC_BTN_KEY_RESULT    )->SetWindowText("NG");
         GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText("NG");
         GetDlgItem(IDC_BTN_SN_RESULT     )->SetWindowText("NG");

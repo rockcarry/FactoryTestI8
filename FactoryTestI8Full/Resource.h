@@ -24,10 +24,10 @@
 #define IDC_BTN_MAC_RESULT              1016
 #define IDC_BTN_VERSION_RESULT          1017
 #define IDC_BTN_UPLOAD_REPORT           1018
-
+#define IDC_BTN_WIFI_RESULT             1019
 
 // Next default values for new objects
-//
+// 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        129
