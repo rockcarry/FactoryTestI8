@@ -13,7 +13,7 @@ public:
 // 对话框数据
     enum { IDD = IDD_FACTORYTESTI8SMT_DIALOG };
 
-    protected:
+protected:
     virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
     virtual BOOL PreTranslateMessage(MSG* pMsg);
     virtual void OnCancel();
