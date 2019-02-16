@@ -13,8 +13,9 @@
 #define new DEBUG_NEW
 #endif
 
-#define ENABLE_MES_SYSTEM  TRUE
-#define TIMER_ID_SET_FOCUS 2
+#define ENABLE_MES_SYSTEM    TRUE
+#define TIMER_ID_SET_FOCUS   2
+#define TIMER_ID_CHECK_ALIVE 3
 
 static void get_app_dir(char *path, int size)
 {
@@ -135,17 +136,19 @@ void CFactoryTestI8SNDlg::DoDeviceTest()
 {
     m_bResultDone = FALSE;
 
-    // set timeout to 10s
-    tnp_set_timeout(m_pTnpContext, 10000);
-
     if (!m_bTestCancel) {
         m_strTestInfo   = "正在写号 ...\r\n";
         m_strTestResult = "正在写号";
 
-        tnp_burn_snmac(m_pTnpContext, m_strCurSN.GetBuffer(), m_strCurMac.GetBuffer(), &m_bResultBurnSN, &m_bResultBurnMac);
+        tnp_set_snmac(m_pTnpContext, m_strCurSN.GetBuffer(), m_strCurMac.GetBuffer());
         m_strCurSN .ReleaseBuffer();
         m_strCurMac.ReleaseBuffer();
         PostMessage(WM_TNP_UPDATE_UI);
+
+        char sn[65], mac[13];
+        tnp_get_snmac(m_pTnpContext, sn, sizeof(sn), mac, sizeof(mac));
+        m_bResultBurnSN  = strcmp(sn , m_strCurSN ) == 0 ? 1 : 0;
+        m_bResultBurnMac = strcmp(mac, m_strCurMac) == 0 ? 1 : 0;
     }
 
     if (!m_bTestCancel) {
@@ -245,9 +248,7 @@ void CFactoryTestI8SNDlg::DoDeviceTest()
 #endif
     }
 
-    // set timeout to 5s
-    tnp_set_timeout(m_pTnpContext, 5000);
-
+    SetTimer(TIMER_ID_CHECK_ALIVE, 1000, NULL);
     CloseHandle(m_hTestThread);
     m_hTestThread = NULL;
 }
@@ -260,14 +261,12 @@ void CFactoryTestI8SNDlg::StartDeviceTest()
     }
 
     m_bTestCancel = FALSE;
-    tnp_test_cancel(m_pTnpContext, FALSE);
     m_hTestThread = CreateThread(NULL, 0, DeviceTestThreadProc, this, 0, NULL);
 }
 
 void CFactoryTestI8SNDlg::StopDeviceTest()
 {
     m_bTestCancel = TRUE;
-    tnp_test_cancel(m_pTnpContext, TRUE);
     if (m_hTestThread) {
         WaitForSingleObject(m_hTestThread, -1);
     }
@@ -392,8 +391,7 @@ void CFactoryTestI8SNDlg::OnDestroy()
 {
     CDialog::OnDestroy();
 
-    tnp_test_cancel(m_pTnpContext, TRUE);
-    tnp_disconnect (m_pTnpContext);
+    tnp_disconnect(m_pTnpContext);
     tnp_free(m_pTnpContext);
     log_done();
 
@@ -530,8 +528,7 @@ LRESULT CFactoryTestI8SNDlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
     }
 
     struct in_addr addr;
-    addr.S_un.S_addr = (u_long)lParam;
-    int ret = tnp_connect(m_pTnpContext, addr);
+    int ret = tnp_connect(m_pTnpContext, NULL, &addr);
     if (ret == 0) {
         strcpy(m_strDeviceIP, inet_ntoa(addr));
         m_strConnectState.Format(TEXT("设备连接成功！（%s）"), CString(m_strDeviceIP));
@@ -554,13 +551,6 @@ LRESULT CFactoryTestI8SNDlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
 
 LRESULT CFactoryTestI8SNDlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
 {
-    struct in_addr addr;
-    addr.S_un.S_addr = (u_long)lParam;
-    if (strcmp(m_strDeviceIP, inet_ntoa(addr)) != 0) {
-        log_printf("this is not current connected device lost !\n");
-        return 0;
-    }
-
     StopDeviceTest(); // stop test
     m_strConnectState   = "等待设备连接...";
     m_strTestResult     = "请连接设备";
@@ -592,6 +582,12 @@ void CFactoryTestI8SNDlg::OnTimer(UINT_PTR nIDEvent)
     switch (nIDEvent) {
     case TIMER_ID_SET_FOCUS:
         GetDlgItem(IDC_EDT_SCAN_SN)->SetFocus();
+        break;
+    case TIMER_ID_CHECK_ALIVE:
+        if (!tnp_dev_alive(m_pTnpContext)) {
+            KillTimer(TIMER_ID_CHECK_ALIVE);
+            PostMessage(WM_TNP_DEVICE_LOST);
+        }
         break;
     }
     CDialog::OnTimer(nIDEvent);

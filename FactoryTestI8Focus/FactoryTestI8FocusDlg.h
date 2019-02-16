@@ -62,7 +62,6 @@ private:
     char    m_strCamType   [32];
     BOOL    m_bMesLoginOK;
     BOOL    m_bSnScaned;
-    int     m_nPlayerOpenOK;
     int     m_nFocusTestResult1;
     int     m_nFocusTestResult2;
     int     m_nFocusTestResult3;

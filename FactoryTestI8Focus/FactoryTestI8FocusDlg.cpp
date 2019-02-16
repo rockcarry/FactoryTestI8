@@ -13,8 +13,7 @@
 #endif
 
 #define ENABLE_MES_SYSTEM     TRUE
-#define TIMER_ID_SET_FOCUS    2
-#define TIMER_ID_OPEN_PLAYER  3
+#define TIMER_ID_SET_FOCUS    1
 
 static void get_app_dir(char *path, int size)
 {
@@ -186,7 +185,6 @@ BOOL CFactoryTestI8FocusDlg::OnInitDialog()
     m_strMesGongDan     = CString(m_strGongDan );
     m_strTestInfo       = TEXT("请扫描条码..." );
     m_bSnScaned         = FALSE;
-    m_nPlayerOpenOK     =  0;
     m_nFocusTestResult1 = -1;
     m_nFocusTestResult2 = -1;
     m_nFocusTestResult3 = -1;
@@ -194,7 +192,26 @@ BOOL CFactoryTestI8FocusDlg::OnInitDialog()
 
     if (strcmp(m_strUVCDev, "") != 0 || strcmp(m_strCamType, "rtsp") == 0) {
         MoveWindow(0, 0, 1200, 780, FALSE);
-        SetTimer(TIMER_ID_OPEN_PLAYER, 100, NULL);
+        
+        PLAYER_INIT_PARAMS params = {0};
+        char  url_gb2312 [MAX_PATH];
+        WCHAR url_unicode[MAX_PATH];
+        char  url_utf8   [MAX_PATH];
+        if (strcmp(m_strCamType, "uvc") == 0) {
+            params.init_timeout     = 1000;
+            params.auto_reconnect   = 1000;
+            params.video_vwidth     = 1280;
+            params.video_vheight    = 720;
+            params.video_frame_rate = 30;
+            sprintf(url_gb2312, "dshow://video=%s", m_strUVCDev);
+            MultiByteToWideChar(CP_ACP , 0, url_gb2312 , -1, url_unicode, MAX_PATH);
+            WideCharToMultiByte(CP_UTF8, 0, url_unicode, -1, url_utf8, MAX_PATH, NULL, NULL);
+        } else {
+            params.init_timeout     = 1000;
+            params.auto_reconnect   = 1000;
+            sprintf(url_utf8, "rtsp://%s:8554//main", "192.168.1.111");
+        }
+        m_pFanPlayer = player_open(url_utf8, GetSafeHwnd(), &params);
     }
     return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -203,7 +220,6 @@ void CFactoryTestI8FocusDlg::OnDestroy()
 {
     CDialog::OnDestroy();
 
-    KillTimer(TIMER_ID_OPEN_PLAYER);
     player_close(m_pFanPlayer);
     log_done();
 
@@ -363,21 +379,20 @@ BOOL CFactoryTestI8FocusDlg::PreTranslateMessage(MSG *pMsg)
         case 'C'     : if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnTestResult3(); return TRUE;
         case VK_SPACE: if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnUpload     (); return TRUE;
         }
-    } else if (pMsg->message == MSG_FFPLAYER) {
+    } else if (pMsg->message == MSG_FANPLAYER) {
         if (pMsg->wParam == MSG_OPEN_DONE) {
             log_printf("MSG_OPEN_DONE\n");
-            m_nPlayerOpenOK = 1;
             player_play(m_pFanPlayer);
             RECT rect = {0};
             int  mode = VIDEO_MODE_STRETCHED;
-            int  diff =-100;
             GetClientRect(&rect);
             player_setrect (m_pFanPlayer, 0, 218, 0, rect.right - 218, rect.bottom);
             player_setparam(m_pFanPlayer, PARAM_VIDEO_MODE, &mode);
-            player_setparam(m_pFanPlayer, PARAM_AVSYNC_TIME_DIFF, &diff);
-        } else if (pMsg->wParam == MSG_OPEN_FAILED) {
-            log_printf("MSG_OPEN_FAILED\n");
-            m_nPlayerOpenOK = 0;
+        }
+        if (pMsg->wParam == MSG_STREAM_DISCONNECT) {
+            RECT rect = {0};
+            GetClientRect(&rect);
+            InvalidateRect(&rect, 1);
         }
     }
     return CDialog::PreTranslateMessage(pMsg);
@@ -488,38 +503,6 @@ void CFactoryTestI8FocusDlg::OnTimer(UINT_PTR nIDEvent)
     switch (nIDEvent) {
     case TIMER_ID_SET_FOCUS:
         GetDlgItem(IDC_EDT_SCAN_SN)->SetFocus();
-        break;
-    case TIMER_ID_OPEN_PLAYER:
-        if (m_nPlayerOpenOK == 1) {
-            LONGLONG pos = 0;
-            player_getparam(m_pFanPlayer, PARAM_MEDIA_POSITION, &pos);
-            if (pos == -1) m_nPlayerOpenOK = 0;
-        } else if (m_nPlayerOpenOK == 0) { // reopen
-            player_close(m_pFanPlayer);
-            PLAYER_INIT_PARAMS params = {0};
-            char  url_gb2312 [MAX_PATH];
-            WCHAR url_unicode[MAX_PATH];
-            char  url_utf8   [MAX_PATH];
-            if (strcmp(m_strCamType, "uvc") == 0) {
-                params.init_timeout     = 5000;
-                params.video_vwidth     = 1280;
-                params.video_vheight    = 720;
-                params.video_frame_rate = 30;
-                sprintf(url_gb2312, "dshow://video=%s", m_strUVCDev);
-                MultiByteToWideChar(CP_ACP , 0, url_gb2312 , -1, url_unicode, MAX_PATH);
-                WideCharToMultiByte(CP_UTF8, 0, url_unicode, -1, url_utf8, MAX_PATH, NULL, NULL);
-            } else {
-                params.init_timeout = 5000;
-                sprintf(url_utf8, "rtsp://%s:8554//main", "192.168.1.111");
-            }
-            m_pFanPlayer = player_open(url_utf8, GetSafeHwnd(), &params);
-            m_nPlayerOpenOK = -1;
-        } else if (m_nPlayerOpenOK == -1) {
-            // wait open result
-            log_printf("m_nPlayerOpenOK = %d\n", m_nPlayerOpenOK);
-            RECT rect = {0}; GetClientRect(&rect); rect.left = 218;
-            InvalidateRect(&rect, TRUE);
-        }
         break;
     }
     CDialog::OnTimer(nIDEvent);

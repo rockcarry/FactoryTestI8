@@ -37,7 +37,6 @@ protected:
     afx_msg LRESULT OnTnpUpdateUI   (WPARAM wParam, LPARAM lParam);
     afx_msg LRESULT OnTnpDeviceFound(WPARAM wParam, LPARAM lParam);
     afx_msg LRESULT OnTnpDeviceLost (WPARAM wParam, LPARAM lParam);
-    afx_msg LRESULT OnTnpDevTypeChanged(WPARAM wParam, LPARAM lParam);
     afx_msg void OnEnChangeEdtScanSn();
     afx_msg void OnBnClickedBtnLedResult();
     afx_msg void OnBnClickedBtnSpkResult();
@@ -71,7 +70,6 @@ private:
     char    m_strDeviceIP  [32];
     BOOL    m_bMesLoginOK;
     BOOL    m_bSnScaned;
-    int     m_nPlayerOpenOK;
     int     m_nLedTestResult;
     int     m_nSpkTestResult;
     int     m_nMicTestResult;

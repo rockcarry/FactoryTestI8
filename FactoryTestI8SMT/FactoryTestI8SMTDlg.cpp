@@ -12,7 +12,7 @@
 #define new DEBUG_NEW
 #endif
 
-#define TIMER_ID_OPEN_PLAYER  3
+#define TIMER_ID_CHECK_BTNRESULT  3
 
 static void get_app_dir(char *path, int size)
 {
@@ -115,7 +115,6 @@ BEGIN_MESSAGE_MAP(CFactoryTestI8SMTDlg, CDialog)
     ON_MESSAGE(WM_TNP_UPDATE_UI   , &CFactoryTestI8SMTDlg::OnTnpUpdateUI   )
     ON_MESSAGE(WM_TNP_DEVICE_FOUND, &CFactoryTestI8SMTDlg::OnTnpDeviceFound)
     ON_MESSAGE(WM_TNP_DEVICE_LOST , &CFactoryTestI8SMTDlg::OnTnpDeviceLost )
-    ON_MESSAGE(WM_TNP_TYPE_CHANGED, &CFactoryTestI8SMTDlg::OnTnpDevTypeChanged)
     ON_BN_CLICKED(IDC_BTN_LED_RESULT, &CFactoryTestI8SMTDlg::OnBnClickedBtnLedResult)
     ON_BN_CLICKED(IDC_BTN_CAMERA_RESULT, &CFactoryTestI8SMTDlg::OnBnClickedBtnCameraResult)
     ON_BN_CLICKED(IDC_BTN_IR_RESULT, &CFactoryTestI8SMTDlg::OnBnClickedBtnIrResult)
@@ -154,7 +153,6 @@ BOOL CFactoryTestI8SMTDlg::OnInitDialog()
     log_printf("uacdev   = %s\n", m_strUACDev  );
 
     m_strConnectState   = "等待设备连接...";
-    m_nPlayerOpenOK     =  0;
     m_nLedTestResult    = -1;
     m_nCameraTestResult = -1;
     m_nIRTestResult     = -1;
@@ -168,7 +166,26 @@ BOOL CFactoryTestI8SMTDlg::OnInitDialog()
     m_pTnpContext = tnp_init(GetSafeHwnd());
     if (strcmp(m_strUVCDev, "") != 0 || strcmp(m_strCamType, "rtsp") == 0) {
         MoveWindow(0, 0, 900, 600, FALSE);
-        SetTimer(TIMER_ID_OPEN_PLAYER, 100, NULL);
+
+        PLAYER_INIT_PARAMS params = {0};
+        char  url_gb2312 [MAX_PATH];
+        WCHAR url_unicode[MAX_PATH];
+        char  url_utf8   [MAX_PATH];
+        if (strcmp(m_strCamType, "uvc") == 0) {
+            params.init_timeout     = 1000;
+            params.auto_reconnect   = 1000;
+            params.video_vwidth     = 1280;
+            params.video_vheight    = 720;
+            params.video_frame_rate = 30;
+            sprintf(url_gb2312, "dshow://video=%s", m_strUVCDev);
+            MultiByteToWideChar(CP_ACP , 0, url_gb2312 , -1, url_unicode, MAX_PATH);
+            WideCharToMultiByte(CP_UTF8, 0, url_unicode, -1, url_utf8, MAX_PATH, NULL, NULL);
+        } else {
+            params.init_timeout     = 1000;
+            params.auto_reconnect   = 1000;
+            sprintf(url_utf8, "rtsp://%s:8554//main", "192.168.1.111");
+        }
+        m_pFanPlayer = player_open(url_utf8, GetSafeHwnd(), &params);
     }
     return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -177,10 +194,8 @@ void CFactoryTestI8SMTDlg::OnDestroy()
 {
     CDialog::OnDestroy();
 
-    KillTimer(TIMER_ID_OPEN_PLAYER);
     player_close(m_pFanPlayer);
-    tnp_test_cancel(m_pTnpContext, TRUE);
-    tnp_disconnect (m_pTnpContext);
+    tnp_disconnect(m_pTnpContext);
     tnp_free(m_pTnpContext);
     log_done();
 
@@ -281,22 +296,19 @@ static DWORD WINAPI DeviceTestThreadProc(LPVOID pParam)
 
 void CFactoryTestI8SMTDlg::DoDeviceTest()
 {
-    // set timeout to 10s
-    tnp_set_timeout(m_pTnpContext, 10000);
+    char strVer[128];
+    tnp_get_fwver(m_pTnpContext, strVer, sizeof(strVer));
+    m_nVersionTestResult = strcmp(strVer, m_strTnpVer) == 0 ? 1 : 0;
 
-    char strVer[32];
-    strcpy(strVer, m_strTnpVer);
-    if (tnp_test_smt(m_pTnpContext, strVer, &m_nLSensorTestResult, &m_nSpkMicTestResult, &m_nVersionTestResult) == 0) {
-        GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText(m_nLSensorTestResult ? "PASS" : "NG");
-        GetDlgItem(IDC_BTN_SPKMIC_RESULT )->SetWindowText(m_nSpkMicTestResult  ? "PASS" : "NG");
-        GetDlgItem(IDC_BTN_VERSION_RESULT)->SetWindowText(m_nVersionTestResult ? "PASS" : "NG");
-        m_strCurVer = CString(strVer).Trim();
-        PostMessage(WM_TNP_UPDATE_UI);
-    }
+    tnp_test_auto(m_pTnpContext, NULL, &m_nLSensorTestResult, &m_nSpkMicTestResult, NULL);
+    GetDlgItem(IDC_BTN_WIFI_RESULT   )->SetWindowText(m_nWiFiTestResult    ? "PASS" : "NG");
+    GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText(m_nLSensorTestResult ? "PASS" : "NG");
+    GetDlgItem(IDC_BTN_SPKMIC_RESULT )->SetWindowText(m_nSpkMicTestResult  ? "PASS" : "NG");
+    GetDlgItem(IDC_BTN_VERSION_RESULT)->SetWindowText(m_nVersionTestResult ? "PASS" : "NG");
+    m_strCurVer = CString(strVer).Trim();
+    PostMessage(WM_TNP_UPDATE_UI);
 
-    // set timeout to 5s
-    tnp_set_timeout(m_pTnpContext, 5000);
-
+    SetTimer(TIMER_ID_CHECK_BTNRESULT, 1000, NULL);
     CloseHandle(m_hTestThread);
     m_hTestThread = NULL;
 }
@@ -308,15 +320,14 @@ void CFactoryTestI8SMTDlg::StartDeviceTest()
         return;
     }
 
+    m_nWiFiTestResult = 1;
     m_bTestCancel = FALSE;
-    tnp_test_cancel(m_pTnpContext, FALSE);
     m_hTestThread = CreateThread(NULL, 0, DeviceTestThreadProc, this, 0, NULL);
 }
 
 void CFactoryTestI8SMTDlg::StopDeviceTest()
 {
     m_bTestCancel = TRUE;
-    tnp_test_cancel(m_pTnpContext, TRUE);
     if (m_hTestThread) {
         WaitForSingleObject(m_hTestThread, -1);
     }
@@ -336,9 +347,7 @@ LRESULT CFactoryTestI8SMTDlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
     }
 
     struct in_addr addr;
-    addr.S_un.S_addr = (u_long)lParam;
-
-    int ret = tnp_connect(m_pTnpContext, addr);
+    int ret = tnp_connect(m_pTnpContext, NULL, &addr);
     if (ret == 0) {
         strcpy(m_strDeviceIP, inet_ntoa(addr));
         m_strConnectState.Format(TEXT("已连接 %s"), CString(m_strDeviceIP));
@@ -382,25 +391,6 @@ LRESULT CFactoryTestI8SMTDlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-LRESULT CFactoryTestI8SMTDlg::OnTnpDevTypeChanged(WPARAM wParam, LPARAM lParam)
-{
-    struct in_addr addr;
-    addr.S_un.S_addr = (u_long)lParam;
-    if (strcmp(m_strDeviceIP, inet_ntoa(addr)) != 0) {
-        log_printf("this is not current connected device network type changed !\n");
-        return 0;
-    }
-    if (wParam & (1 << 1)) {
-        m_nWiFiTestResult = 1;
-        GetDlgItem(IDC_BTN_WIFI_RESULT)->SetWindowText(m_nWiFiTestResult ? "PASS" : "NG");
-    }
-    if (((wParam >> 2) & 0x3) == 0x3) {
-        m_nKeyTestResult = 1;
-        GetDlgItem(IDC_BTN_KEY_RESULT)->SetWindowText(m_nKeyTestResult ? "PASS" : "NG");
-    }
-    return 0;
-}
-
 void CFactoryTestI8SMTDlg::OnCancel() {}
 void CFactoryTestI8SMTDlg::OnOK()     {}
 
@@ -419,21 +409,20 @@ BOOL CFactoryTestI8SMTDlg::PreTranslateMessage(MSG *pMsg)
         case 'C': if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnIrResult    (); return TRUE;
         case VK_SPACE: return TRUE;
         }
-    } else if (pMsg->message == MSG_FFPLAYER) {
+    } else if (pMsg->message == MSG_FANPLAYER) {
         if (pMsg->wParam == MSG_OPEN_DONE) {
             log_printf("MSG_OPEN_DONE\n");
-            m_nPlayerOpenOK = 1;
             player_play(m_pFanPlayer);
             RECT rect = {0};
             int  mode = VIDEO_MODE_STRETCHED;
-            int  diff =-100;
             GetClientRect(&rect);
             player_setrect (m_pFanPlayer, 0, 218, 0, rect.right - 218, rect.bottom);
             player_setparam(m_pFanPlayer, PARAM_VIDEO_MODE, &mode);
-            player_setparam(m_pFanPlayer, PARAM_AVSYNC_TIME_DIFF, &diff);
-        } else if (pMsg->wParam == MSG_OPEN_FAILED) {
-            log_printf("MSG_OPEN_FAILED\n");
-            m_nPlayerOpenOK = 0;
+        }
+        if (pMsg->wParam == MSG_STREAM_DISCONNECT) {
+            RECT rect = {0};
+            GetClientRect(&rect);
+            InvalidateRect(&rect, 1);
         }
     }
     return CDialog::PreTranslateMessage(pMsg);
@@ -476,36 +465,12 @@ void CFactoryTestI8SMTDlg::OnBnClickedBtnIrResult()
 void CFactoryTestI8SMTDlg::OnTimer(UINT_PTR nIDEvent)
 {
     switch (nIDEvent) {
-    case TIMER_ID_OPEN_PLAYER:
-        if (m_nPlayerOpenOK == 1) {
-            LONGLONG pos = 0;
-            player_getparam(m_pFanPlayer, PARAM_MEDIA_POSITION, &pos);
-            if (pos == -1) m_nPlayerOpenOK = 0;
-        } else if (m_nPlayerOpenOK == 0) { // reopen
-            player_close(m_pFanPlayer);
-            PLAYER_INIT_PARAMS params = {0};
-            char  url_gb2312 [MAX_PATH];
-            WCHAR url_unicode[MAX_PATH];
-            char  url_utf8   [MAX_PATH];
-            if (strcmp(m_strCamType, "uvc") == 0) {
-                params.init_timeout     = 5000;
-                params.video_vwidth     = 1280;
-                params.video_vheight    = 720;
-                params.video_frame_rate = 30;
-                sprintf(url_gb2312, "dshow://video=%s", m_strUVCDev);
-                MultiByteToWideChar(CP_ACP , 0, url_gb2312 , -1, url_unicode, MAX_PATH);
-                WideCharToMultiByte(CP_UTF8, 0, url_unicode, -1, url_utf8, MAX_PATH, NULL, NULL);
-            } else {
-                params.init_timeout = 5000;
-                sprintf(url_utf8, "rtsp://%s:8554//main", "192.168.1.111");
-            }
-            m_pFanPlayer = player_open(url_utf8, GetSafeHwnd(), &params);
-            m_nPlayerOpenOK = -1;
-        } else if (m_nPlayerOpenOK == -1) {
-            // wait open result
-            log_printf("m_nPlayerOpenOK = %d\n", m_nPlayerOpenOK);
-            RECT rect = {0}; GetClientRect(&rect); rect.left = 218;
-            InvalidateRect(&rect, TRUE);
+    case TIMER_ID_CHECK_BTNRESULT:
+        if (tnp_test_auto(m_pTnpContext, &m_nKeyTestResult, NULL, NULL, NULL) < 0) {
+            KillTimer(TIMER_ID_CHECK_BTNRESULT);
+            PostMessage(WM_TNP_DEVICE_LOST);
+        } else {
+            GetDlgItem(IDC_BTN_KEY_RESULT)->SetWindowText(m_nKeyTestResult ? "PASS" : "NG");
         }
         break;
     }

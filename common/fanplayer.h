@@ -10,11 +10,14 @@ extern "C" {
 
 // 常量定义
 // message
-#define MSG_FFPLAYER        (WM_APP + 1)
-#define MSG_OPEN_DONE       (('O' << 24) | ('P' << 16) | ('E' << 8) | ('N' << 0))
-#define MSG_OPEN_FAILED     (('F' << 24) | ('A' << 16) | ('I' << 8) | ('L' << 0))
-#define MSG_PLAY_COMPLETED  (('E' << 24) | ('N' << 16) | ('D' << 8) | (' ' << 0))
-#define MSG_TAKE_SNAPSHOT   (('S' << 24) | ('N' << 16) | ('A' << 8) | ('P' << 0))
+#define MSG_FANPLAYER         (WM_APP + 1)
+#define MSG_OPEN_DONE         (('O' << 24) | ('P' << 16) | ('E' << 8) | ('N' << 0))
+#define MSG_OPEN_FAILED       (('F' << 24) | ('A' << 16) | ('I' << 8) | ('L' << 0))
+#define MSG_PLAY_COMPLETED    (('E' << 24) | ('N' << 16) | ('D' << 8) | (' ' << 0))
+#define MSG_TAKE_SNAPSHOT     (('S' << 24) | ('N' << 16) | ('A' << 8) | ('P' << 0))
+#define MSG_STREAM_CONNECTED  (('C' << 24) | ('N' << 16) | ('C' << 8) | ('T' << 0))
+#define MSG_STREAM_DISCONNECT (('D' << 24) | ('I' << 16) | ('S' << 8) | ('C' << 0))
+#define MSG_VIDEO_RESIZED     (('S' << 24) | ('I' << 16) | ('Z' << 8) | ('E' << 0))
 
 // adev render type
 enum {
@@ -46,9 +49,8 @@ enum {
 
 // seek flags
 enum {
-    SEEK_FAST,
-    SEEK_PRECISELY,
-    SEEK_STEP,
+    SEEK_STEP_FORWARD = 1,
+    SEEK_STEP_BACKWARD,
 };
 
 // param
@@ -90,12 +92,22 @@ enum {
     PARAM_VDEV_GET_CONTEXT = 0x3000,
     PARAM_VDEV_POST_SURFACE,
     PARAM_VDEV_GET_D3DDEV,
+    PARAM_VDEV_D3D_ROTATE,
     //-- for vdev
 
     //++ for render
     PARAM_RENDER_GET_CONTEXT = 0x4000,
-    PARAM_RENDER_SEEK_STEP,
+    PARAM_RENDER_STEPFORWARD,
+    PARAM_RENDER_REINIT_A,
+    PARAM_RENDER_REINIT_V,
+    PARAM_RENDER_VDEV_WIN,
     //-- for render
+};
+
+enum {
+    AVSYNC_MODE_AUTO,
+    AVSYNC_MODE_NORMAL,
+    AVSYNC_MODE_LIVE,
 };
 
 // 初始化参数说明
@@ -127,16 +139,33 @@ typedef struct {
     int subtitle_stream_total;    // r  字幕流总数
     int subtitle_stream_cur;      // wr 当前字幕流
 
-    int vdev_render_type;         // w  vdev 类型
-    int adev_render_type;         // w  adev 类型
+    int  vdev_render_type;         // w  vdev 类型
+    int  adev_render_type;         // w  adev 类型
 
-    int init_timeout;             // w  播放器初始化超时，单位 ms，打开网络流媒体时设置用来防止卡死
-    int open_syncmode;            // w  播放器以同步方式打开，调用 player_open 将等待播放器初始化成功
+    int  init_timeout;             // w  播放器初始化超时，单位 ms，打开网络流媒体时设置用来防止卡死
+    int  open_syncmode;            // w  播放器以同步方式打开，调用 player_open 将等待播放器初始化成功
+    int  auto_reconnect;           // w  播放流媒体时自动重连的超时时间，毫秒为单位
+    int  rtsp_transport;           // w  rtsp 传输模式，0 - 自动，1 - udp，2 - tcp
+    int  avts_syncmode;            // wr 音视频时间戳同步模式，0 - 自动，1 - 常规模式，2 - 直播模式，3 - 同步音视频到外部时钟
+    char filter_string[256];       // w  自定义的 video filter string
 } PLAYER_INIT_PARAMS;
 // video_stream_cur 和 audio_stream_cur 这两个参数，如果设置为 -1 可以禁止对应的解码动作
 // 应用场景：播放视频时，窗口退到后台，或者我只想听声音，可以将 video_stream_cur 设置为 -1
 //           这样播放器将只解码音频而不解码视频，可减少 cpu 的使用率
 
+//++ player common variables
+typedef struct { // for internal use only
+    PLAYER_INIT_PARAMS *init_params;
+    LONGLONG start_time;
+    LONGLONG start_tick;
+    LONGLONG start_pts ;
+    LONGLONG apts;  // current apts
+    LONGLONG vpts;  // current vpts
+    int      asemv; // available audio packet number in pktqueue
+    int      vsemv; // available video packet number in pktqueue
+    void    *winmsg;
+} CMNVARS;
+//-- player common variables
 
 // 函数声明
 void* player_open    (char *file, void *appdata, PLAYER_INIT_PARAMS *params);
@@ -147,9 +176,13 @@ void  player_seek    (void *hplayer, LONGLONG ms, int type);
 void  player_setrect (void *hplayer, int type, int x, int y, int w, int h); // type: 0 - video rect, 1 - visual effect rect
 int   player_snapshot(void *hplayer, char *file, int w, int h, int waitt);
 int   player_record  (void *hplayer, char *file);
-void  player_textout (void *hplayer, int x, int y, int color, char *text);
 void  player_setparam(void *hplayer, int id, void *param);
 void  player_getparam(void *hplayer, int id, void *param);
+
+#ifdef WIN32
+void  player_textout (void *hplayer, int x, int y, int color, TCHAR *text);
+void  player_textcfg (void *hplayer, TCHAR *fontname, int fontsize);
+#endif
 
 // internal helper function
 void  player_send_message(void *extra, int msg, LONGLONG param);
