@@ -12,8 +12,6 @@
 #define new DEBUG_NEW
 #endif
 
-#define TIMER_ID_CHECK_BTNRESULT  3
-
 static void get_app_dir(char *path, int size)
 {
     HMODULE handle = GetModuleHandle(NULL);
@@ -194,6 +192,7 @@ void CFactoryTestI8SMTDlg::OnDestroy()
 {
     CDialog::OnDestroy();
 
+    StopDeviceTest();
     player_close(m_pFanPlayer);
     tnp_disconnect(m_pTnpContext);
     tnp_free(m_pTnpContext);
@@ -308,7 +307,16 @@ void CFactoryTestI8SMTDlg::DoDeviceTest()
     m_strCurVer = CString(strVer).Trim();
     PostMessage(WM_TNP_UPDATE_UI);
 
-    SetTimer(TIMER_ID_CHECK_BTNRESULT, 1000, NULL);
+    while (!m_bTestCancel) {
+        if (tnp_test_auto(m_pTnpContext, &m_nKeyTestResult, NULL, NULL, NULL) < 0) {
+            PostMessage(WM_TNP_DEVICE_LOST);
+            m_bTestCancel = TRUE;
+        } else {
+            GetDlgItem(IDC_BTN_KEY_RESULT)->SetWindowText(m_nKeyTestResult ? "PASS" : "NG");
+            Sleep(1000);
+        }
+    }
+
     CloseHandle(m_hTestThread);
     m_hTestThread = NULL;
 }
@@ -464,16 +472,6 @@ void CFactoryTestI8SMTDlg::OnBnClickedBtnIrResult()
 
 void CFactoryTestI8SMTDlg::OnTimer(UINT_PTR nIDEvent)
 {
-    switch (nIDEvent) {
-    case TIMER_ID_CHECK_BTNRESULT:
-        if (tnp_test_auto(m_pTnpContext, &m_nKeyTestResult, NULL, NULL, NULL) < 0) {
-            KillTimer(TIMER_ID_CHECK_BTNRESULT);
-            PostMessage(WM_TNP_DEVICE_LOST);
-        } else {
-            GetDlgItem(IDC_BTN_KEY_RESULT)->SetWindowText(m_nKeyTestResult ? "PASS" : "NG");
-        }
-        break;
-    }
     CDialog::OnTimer(nIDEvent);
 }
 

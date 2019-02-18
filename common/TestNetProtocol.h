@@ -15,7 +15,7 @@ typedef struct {
     char uid[128]; // UID [ÔÝÎÞ]
     char sn [64];   // SN
     char mac[12];  // mac
-} udpcmd_hd_t;
+} msg_hd_t;
 
 typedef struct {
     unsigned short magic;  // magic (0x8D5C)
@@ -37,9 +37,8 @@ void  tnp_free(void *ctxt);
 
 int   tnp_connect    (void *ctxt, char *sn, struct in_addr *addr);
 void  tnp_disconnect (void *ctxt);
-int   tnp_send_cmd   (void *ctxt, cmd_hd_t *cmd, rsp_hd_t *rsp);
+int   tnp_send_cmd   (void *ctxt, cmd_hd_t *cmd, rsp_hd_t *rsp, int rlen);
 
-int   tnp_dev_alive  (void *ctxt);
 int   tnp_get_fwver  (void *ctxt, char *ver, int vlen);
 int   tnp_set_snmac  (void *ctxt, char *sn, char *mac);
 int   tnp_get_snmac  (void *ctxt, char *sn, int slen, char *mac, int mlen);
