@@ -9,6 +9,7 @@ enum {
     WM_TNP_DEVICE_LOST ,
 };
 
+#pragma pack(1)
 typedef struct {
     unsigned short magic; // magic (0x8d50)
     char fw_version[128]; // FW Version
@@ -31,6 +32,7 @@ typedef struct {
     int  result_value;     // 返回状态
     char result_msg[256];  // 返回消息 为字符串 log
 } rsp_hd_t;
+#pragma pack()
 
 void* tnp_init(HWND hwnd);
 void  tnp_free(void *ctxt);
@@ -46,6 +48,7 @@ int   tnp_get_snmac  (void *ctxt, char *sn, int slen, char *mac, int mlen);
 int   tnp_test_spkmic(void *ctxt);
 int   tnp_test_irc   (void *ctxt, int onoff);
 int   tnp_test_auto  (void *ctxt, int *btn, int *lsensor, int *spkmic, int *bat);
+int   tnp_test_iperf (void *ctxt);
 
 int   tnp_enter_aging(void *ctxt);
 

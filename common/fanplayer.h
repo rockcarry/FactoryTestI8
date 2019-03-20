@@ -82,6 +82,9 @@ enum {
 
     // get player init params
     PARAM_PLAYER_INIT_PARAMS,
+
+    // definition evaluation
+    PARAM_DEFINITION_VALUE,
     //-- public
 
     //++ for adev
@@ -119,25 +122,25 @@ enum {
 // 的（比如 video_vwidth, video_vheight），需要等到接收到 MSG_OPEN_DONE 消息后才能获取有效的参数。同步打
 // 开方式则不会有这个问题，因为 player_open 完成后已经做完了全部的初始化工作。
 typedef struct {
-    int video_vwidth;             // r  video actual width
-    int video_vheight;            // r  video actual height
-    int video_owidth;             // r  video output width  (after rotate)
-    int video_oheight;            // r  video output height (after rotate)
-    int video_frame_rate;         // r  视频帧率
-    int video_stream_total;       // r  视频流总数
-    int video_stream_cur;         // wr 当前视频流
-    int video_thread_count;       // wr 视频解码线程数
-    int video_hwaccel;            // wr 视频硬解码使能
-    int video_deinterlace;        // wr 视频反交错使能
-    int video_rotate;             // wr 视频旋转角度
+    int  video_vwidth;             // wr video actual width
+    int  video_vheight;            // wr video actual height
+    int  video_owidth;             // r  video output width  (after rotate)
+    int  video_oheight;            // r  video output height (after rotate)
+    int  video_frame_rate;         // wr 视频帧率
+    int  video_stream_total;       // r  视频流总数
+    int  video_stream_cur;         // wr 当前视频流
+    int  video_thread_count;       // wr 视频解码线程数
+    int  video_hwaccel;            // wr 视频硬解码使能
+    int  video_deinterlace;        // wr 视频反交错使能
+    int  video_rotate;             // wr 视频旋转角度
 
-    int audio_channels;           // r  音频通道数
-    int audio_sample_rate;        // r  音频采样率
-    int audio_stream_total;       // r  音频流总数
-    int audio_stream_cur;         // wr 当前音频流
+    int  audio_channels;           // r  音频通道数
+    int  audio_sample_rate;        // r  音频采样率
+    int  audio_stream_total;       // r  音频流总数
+    int  audio_stream_cur;         // wr 当前音频流
 
-    int subtitle_stream_total;    // r  字幕流总数
-    int subtitle_stream_cur;      // wr 当前字幕流
+    int  subtitle_stream_total;    // r  字幕流总数
+    int  subtitle_stream_cur;      // wr 当前字幕流
 
     int  vdev_render_type;         // w  vdev 类型
     int  adev_render_type;         // w  adev 类型
@@ -180,8 +183,8 @@ void  player_setparam(void *hplayer, int id, void *param);
 void  player_getparam(void *hplayer, int id, void *param);
 
 #ifdef WIN32
-void  player_textout (void *hplayer, int x, int y, int color, TCHAR *text);
-void  player_textcfg (void *hplayer, TCHAR *fontname, int fontsize);
+void  player_textout (void *hplayer, int x, int y, int color, WCHAR *text);
+void  player_textcfg (void *hplayer, WCHAR *fontname, int fontsize);
 #endif
 
 // internal helper function
@@ -208,7 +211,13 @@ player_pause    暂停播放
 player_seek     跳转到指定位置
     hplayer     - 指向 player_open 返回的 player 对象
     ms          - 指定位置，以毫秒为单位
-    type        - 指定类型，SEEK_FAST / SEEK_PRECISELY
+    type        - 指定类型，0 / SEEK_STEP_FORWARD / SEEK_STEP_BACKWARD
+    如果 type 为 0 则是正常的 seek 操作，ms 指定的是 seek 到的位置，毫秒为单位
+    如果 type 为 SEEK_STEP_FORWARD，则会单步向前播放一帧然后暂停
+    如果 type 为 SEEK_STEP_BACKWARD，则会单步回退播放一帧然后暂停
+    使用 SEEK_STEP_BACKWARD 的 seek 方式时，需要传入 ms 参数，这个函数的含义是
+    往回搜索的时间范围，通常情况下传入 -1 即可。但是对于一些特殊视频，传入 -1
+    可能没法正确执行会退操作，可以尝试修改为 -500 或则更大
 
 player_setrect  设置显示区域，有两种显示区域，视频显示区和视觉效果显示区
     hplayer     - 指向 player_open 返回的 player 对象
@@ -230,6 +239,11 @@ player_textout  在视频显示上叠加文字输出
     x, y        - 文字输出坐标
     color       - 文字颜色
     text        - 文字字符串
+
+player_textcfg  叠加文字输出的字体设置
+    hplayer     - 指向 player_open 返回的 player 对象
+    fontname    - 字体名
+    fontsize    - 字体大小
 
 player_setparam 设置参数
     hplayer     - 指向 player_open 返回的 player 对象

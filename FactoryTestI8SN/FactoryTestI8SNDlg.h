@@ -16,6 +16,7 @@ public:
 
 protected:
     virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV Ö§³Ö
+    virtual BOOL PreTranslateMessage(MSG* pMsg);
     virtual void OnCancel();
     virtual void OnOK();
 
@@ -64,7 +65,6 @@ private:
     BOOL    m_bConnectState;
     BOOL    m_bSnScaned;
     BOOL    m_bResultBurnSN;
-    BOOL    m_bResultBurnMac;
     BOOL    m_bResultTestSpkMic;
     BOOL    m_bResultTestNet;
     BOOL    m_bResultDone;

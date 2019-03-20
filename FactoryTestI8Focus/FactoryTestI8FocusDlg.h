@@ -34,6 +34,8 @@ protected:
     afx_msg void OnSize(UINT nType, int cx, int cy);
     afx_msg HBRUSH  OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
     afx_msg HCURSOR OnQueryDragIcon();
+    afx_msg LRESULT OnTnpDeviceFound(WPARAM wParam, LPARAM lParam);
+    afx_msg LRESULT OnTnpDeviceLost (WPARAM wParam, LPARAM lParam);
     afx_msg void OnEnChangeEdtScanSn();
     afx_msg void OnBnClickedBtnTestResult1();
     afx_msg void OnBnClickedBtnTestResult2();
@@ -50,6 +52,9 @@ private:
     CString m_strCurSN;
 
     void   *m_pFanPlayer;
+    void   *m_pTnpContext;
+    WCHAR   m_strDefinition[MAX_PATH];
+    char    m_strDeviceIP  [32];
     char    m_strUserName  [32];
     char    m_strPassWord  [32];
     char    m_strResource  [32];

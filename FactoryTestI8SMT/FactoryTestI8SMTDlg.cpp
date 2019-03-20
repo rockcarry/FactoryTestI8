@@ -45,7 +45,7 @@ static void parse_params(const char *str, const char *key, char *val)
     }
 }
 
-static int load_config_from_file(char *ver, char *log, char *uvc, char *uac, char *cam)
+static int load_config_from_file(char *fwver, char *appver, char *log, char *uvc, char *uac, char *cam)
 {
     char  file[MAX_PATH];
     FILE *fp = NULL;
@@ -64,7 +64,8 @@ static int load_config_from_file(char *ver, char *log, char *uvc, char *uac, cha
         if (buf) {
             fseek(fp, 0, SEEK_SET);
             fread(buf, len, 1, fp);
-            parse_params(buf, "version" , ver);
+            parse_params(buf, "fw_ver"  , fwver );
+            parse_params(buf, "app_ver" , appver);
             parse_params(buf, "logfile" , log);
             parse_params(buf, "uvcdev"  , uvc);
             parse_params(buf, "uacdev"  , uac);
@@ -116,6 +117,11 @@ BEGIN_MESSAGE_MAP(CFactoryTestI8SMTDlg, CDialog)
     ON_BN_CLICKED(IDC_BTN_LED_RESULT, &CFactoryTestI8SMTDlg::OnBnClickedBtnLedResult)
     ON_BN_CLICKED(IDC_BTN_CAMERA_RESULT, &CFactoryTestI8SMTDlg::OnBnClickedBtnCameraResult)
     ON_BN_CLICKED(IDC_BTN_IR_RESULT, &CFactoryTestI8SMTDlg::OnBnClickedBtnIrResult)
+    ON_BN_CLICKED(IDC_BTN_KEY_RESULT, &CFactoryTestI8SMTDlg::OnBnClickedBtnKeyResult)
+    ON_BN_CLICKED(IDC_BTN_LSENSOR_RESULT, &CFactoryTestI8SMTDlg::OnBnClickedBtnLsensorResult)
+    ON_BN_CLICKED(IDC_BTN_NEXT_DEVICE, &CFactoryTestI8SMTDlg::OnBnClickedBtnNextDevice)
+    ON_BN_CLICKED(IDC_BTN_SPK_RESULT, &CFactoryTestI8SMTDlg::OnBnClickedBtnSpkResult)
+    ON_BN_CLICKED(IDC_BTN_MIC_RESULT, &CFactoryTestI8SMTDlg::OnBnClickedBtnMicResult)
 END_MESSAGE_MAP()
 
 
@@ -134,18 +140,20 @@ BOOL CFactoryTestI8SMTDlg::OnInitDialog()
     SetIcon(m_hIcon, FALSE);        // 设置小图标
 
     // 在此添加额外的初始化代码
-    strcpy(m_strTnpVer    , "version");
+    strcpy(m_strFwVer     , "fwver"  );
+    strcpy(m_strAppVer    , "appver" );
     strcpy(m_strLogFile   , "DEBUGER");
     strcpy(m_strUVCDev    , ""       );
     strcpy(m_strUACDev    , ""       );
     strcpy(m_strCamType   , "uvc"    );
     strcpy(m_strDeviceIP  , ""       );
-    int ret = load_config_from_file(m_strTnpVer, m_strLogFile, m_strUVCDev, m_strUACDev, m_strCamType);
+    int ret = load_config_from_file(m_strFwVer, m_strAppVer, m_strLogFile, m_strUVCDev, m_strUACDev, m_strCamType);
     if (ret != 0) {
         AfxMessageBox(TEXT("无法打开测试配置文件！"), MB_OK);
     }
     log_init(m_strLogFile);
-    log_printf("version  = %s\n", m_strTnpVer  );
+    log_printf("fwver    = %s\n", m_strFwVer   );
+    log_printf("appver   = %s\n", m_strAppVer  );
     log_printf("logfile  = %s\n", m_strLogFile );
     log_printf("uvcdev   = %s\n", m_strUVCDev  );
     log_printf("uacdev   = %s\n", m_strUACDev  );
@@ -157,7 +165,8 @@ BOOL CFactoryTestI8SMTDlg::OnInitDialog()
     m_nWiFiTestResult   = -1;
     m_nKeyTestResult    = -1;
     m_nLSensorTestResult= -1;
-    m_nSpkMicTestResult = -1;
+    m_nSpkTestResult    = -1;
+    m_nMicTestResult    = -1;
     m_nVersionTestResult= -1;
     UpdateData(FALSE);
 
@@ -178,12 +187,8 @@ BOOL CFactoryTestI8SMTDlg::OnInitDialog()
             sprintf(url_gb2312, "dshow://video=%s", m_strUVCDev);
             MultiByteToWideChar(CP_ACP , 0, url_gb2312 , -1, url_unicode, MAX_PATH);
             WideCharToMultiByte(CP_UTF8, 0, url_unicode, -1, url_utf8, MAX_PATH, NULL, NULL);
-        } else {
-            params.init_timeout     = 1000;
-            params.auto_reconnect   = 1000;
-            sprintf(url_utf8, "rtsp://%s:8554//main", "192.168.1.111");
+            m_pFanPlayer = player_open(url_utf8, GetSafeHwnd(), &params);
         }
-        m_pFanPlayer = player_open(url_utf8, GetSafeHwnd(), &params);
     }
     return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -245,7 +250,8 @@ int CFactoryTestI8SMTDlg::GetBackColorByCtrlId(int id)
     case IDC_BTN_WIFI_RESULT:   result = m_nWiFiTestResult;   break;
     case IDC_BTN_KEY_RESULT:    result = m_nKeyTestResult;    break;
     case IDC_BTN_LSENSOR_RESULT:result = m_nLSensorTestResult;break;
-    case IDC_BTN_SPKMIC_RESULT: result = m_nSpkMicTestResult; break;
+    case IDC_BTN_SPK_RESULT:    result = m_nSpkTestResult;    break;
+    case IDC_BTN_MIC_RESULT:    result = m_nMicTestResult;    break;
     case IDC_BTN_VERSION_RESULT:result = m_nVersionTestResult;break;
     }
 
@@ -265,7 +271,8 @@ void CFactoryTestI8SMTDlg::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStr
     case IDC_BTN_WIFI_RESULT:
     case IDC_BTN_KEY_RESULT:
     case IDC_BTN_LSENSOR_RESULT:
-    case IDC_BTN_SPKMIC_RESULT:
+    case IDC_BTN_SPK_RESULT:
+    case IDC_BTN_MIC_RESULT:
     case IDC_BTN_VERSION_RESULT:
         {
             RECT rect;
@@ -297,25 +304,14 @@ void CFactoryTestI8SMTDlg::DoDeviceTest()
 {
     char strVer[128];
     tnp_get_fwver(m_pTnpContext, strVer, sizeof(strVer));
-    m_nVersionTestResult = strcmp(strVer, m_strTnpVer) == 0 ? 1 : 0;
+    m_nVersionTestResult = strstr(strVer, m_strFwVer) && strstr(strVer, m_strAppVer) ? 1 : 0;
 
-    tnp_test_auto(m_pTnpContext, NULL, &m_nLSensorTestResult, &m_nSpkMicTestResult, NULL);
+//  tnp_test_auto(m_pTnpContext, NULL, NULL, &m_nSpkMicTestResult, NULL);
     GetDlgItem(IDC_BTN_WIFI_RESULT   )->SetWindowText(m_nWiFiTestResult    ? "PASS" : "NG");
-    GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText(m_nLSensorTestResult ? "PASS" : "NG");
-    GetDlgItem(IDC_BTN_SPKMIC_RESULT )->SetWindowText(m_nSpkMicTestResult  ? "PASS" : "NG");
+//  GetDlgItem(IDC_BTN_SPKMIC_RESULT )->SetWindowText(m_nSpkMicTestResult  ? "PASS" : "NG");
     GetDlgItem(IDC_BTN_VERSION_RESULT)->SetWindowText(m_nVersionTestResult ? "PASS" : "NG");
     m_strCurVer = CString(strVer).Trim();
     PostMessage(WM_TNP_UPDATE_UI);
-
-    while (!m_bTestCancel) {
-        if (tnp_test_auto(m_pTnpContext, &m_nKeyTestResult, NULL, NULL, NULL) < 0) {
-            PostMessage(WM_TNP_DEVICE_LOST);
-            m_bTestCancel = TRUE;
-        } else {
-            GetDlgItem(IDC_BTN_KEY_RESULT)->SetWindowText(m_nKeyTestResult ? "PASS" : "NG");
-            Sleep(1000);
-        }
-    }
 
     CloseHandle(m_hTestThread);
     m_hTestThread = NULL;
@@ -362,6 +358,17 @@ LRESULT CFactoryTestI8SMTDlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
         StartDeviceTest();
     }
     UpdateData(FALSE);
+
+
+    if (strcmp(m_strCamType, "rtsp") == 0) {
+        PLAYER_INIT_PARAMS params = {0};
+        char  url[MAX_PATH];
+        params.init_timeout   = 1000;
+        params.auto_reconnect = 1000;
+        sprintf(url, "rtsp://%s:6887//live", m_strDeviceIP);
+        if (m_pFanPlayer) player_close(m_pFanPlayer);
+        m_pFanPlayer = player_open(url, GetSafeHwnd(), &params);
+    }
     return 0;
 }
 
@@ -383,7 +390,8 @@ LRESULT CFactoryTestI8SMTDlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
     m_nWiFiTestResult    = -1;
     m_nKeyTestResult     = -1;
     m_nLSensorTestResult = -1;
-    m_nSpkMicTestResult  = -1;
+    m_nSpkTestResult     = -1;
+    m_nMicTestResult     = -1;
     m_nVersionTestResult = -1;
     tnp_disconnect(m_pTnpContext);
     UpdateData(FALSE);
@@ -394,8 +402,18 @@ LRESULT CFactoryTestI8SMTDlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
     GetDlgItem(IDC_BTN_WIFI_RESULT   )->SetWindowText("NG");
     GetDlgItem(IDC_BTN_KEY_RESULT    )->SetWindowText("NG");
     GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText("NG");
-    GetDlgItem(IDC_BTN_SPKMIC_RESULT )->SetWindowText("NG");
+    GetDlgItem(IDC_BTN_SPK_RESULT    )->SetWindowText("NG");
+    GetDlgItem(IDC_BTN_MIC_RESULT    )->SetWindowText("NG");
     GetDlgItem(IDC_BTN_VERSION_RESULT)->SetWindowText("NG");
+
+    if (m_pFanPlayer) {
+        player_close(m_pFanPlayer);
+        m_pFanPlayer = NULL;
+    }
+    RECT rect;
+    GetClientRect (&rect);
+    rect.left = 218;
+    InvalidateRect(&rect, TRUE);
     return 0;
 }
 
@@ -412,10 +430,14 @@ BOOL CFactoryTestI8SMTDlg::PreTranslateMessage(MSG *pMsg)
 {
     if (pMsg->message == WM_KEYDOWN || pMsg->message == WM_KEYUP) {
         switch (pMsg->wParam) {
-        case 'Z': if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnLedResult   (); return TRUE;
-        case 'X': if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnCameraResult(); return TRUE;
-        case 'C': if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnIrResult    (); return TRUE;
-        case VK_SPACE: return TRUE;
+        case 'Z': if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnLedResult    (); return TRUE;
+        case 'X': if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnCameraResult (); return TRUE;
+        case 'C': if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnIrResult     (); return TRUE;
+        case 'V': if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnKeyResult    (); return TRUE;
+        case 'B': if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnLsensorResult(); return TRUE;
+        case 'N': if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnSpkResult    (); return TRUE;
+        case 'M': if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnMicResult    (); return TRUE;
+        case ' ': if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnNextDevice   (); return TRUE;
         }
     } else if (pMsg->message == MSG_FANPLAYER) {
         if (pMsg->wParam == MSG_OPEN_DONE) {
@@ -470,6 +492,59 @@ void CFactoryTestI8SMTDlg::OnBnClickedBtnIrResult()
     UpdateData(FALSE);
 }
 
+void CFactoryTestI8SMTDlg::OnBnClickedBtnKeyResult()
+{
+    if (m_nKeyTestResult != 1) {
+        m_nKeyTestResult = 1;
+        GetDlgItem(IDC_BTN_KEY_RESULT)->SetWindowText("PASS");
+    } else {
+        m_nKeyTestResult = 0;
+        GetDlgItem(IDC_BTN_KEY_RESULT)->SetWindowText("NG");
+    }
+    UpdateData(FALSE);
+}
+
+void CFactoryTestI8SMTDlg::OnBnClickedBtnLsensorResult()
+{
+    if (m_nLSensorTestResult != 1) {
+        m_nLSensorTestResult = 1;
+        GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText("PASS");
+    } else {
+        m_nLSensorTestResult = 0;
+        GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText("NG");
+    }
+    UpdateData(FALSE);
+}
+
+void CFactoryTestI8SMTDlg::OnBnClickedBtnSpkResult()
+{
+    if (m_nSpkTestResult != 1) {
+        m_nSpkTestResult = 1;
+        GetDlgItem(IDC_BTN_SPK_RESULT)->SetWindowText("PASS");
+    } else {
+        m_nSpkTestResult = 0;
+        GetDlgItem(IDC_BTN_SPK_RESULT)->SetWindowText("NG");
+    }
+    UpdateData(FALSE);
+}
+
+void CFactoryTestI8SMTDlg::OnBnClickedBtnMicResult()
+{
+    if (m_nMicTestResult != 1) {
+        m_nMicTestResult = 1;
+        GetDlgItem(IDC_BTN_MIC_RESULT)->SetWindowText("PASS");
+    } else {
+        m_nMicTestResult = 0;
+        GetDlgItem(IDC_BTN_MIC_RESULT)->SetWindowText("NG");
+    }
+    UpdateData(FALSE);
+}
+
+void CFactoryTestI8SMTDlg::OnBnClickedBtnNextDevice()
+{
+    OnTnpDeviceLost(0, inet_addr(m_strDeviceIP));
+}
+
 void CFactoryTestI8SMTDlg::OnTimer(UINT_PTR nIDEvent)
 {
     CDialog::OnTimer(nIDEvent);
@@ -484,4 +559,7 @@ void CFactoryTestI8SMTDlg::OnSize(UINT nType, int cx, int cy)
         player_setrect(m_pFanPlayer, 0, 218, 0, rect.right - 218, rect.bottom);
     }
 }
+
+
+
 

@@ -15,7 +15,6 @@
 
 #define ENABLE_MES_SYSTEM    TRUE
 #define TIMER_ID_SET_FOCUS   2
-#define TIMER_ID_CHECK_ALIVE 3
 
 static void get_app_dir(char *path, int size)
 {
@@ -140,18 +139,18 @@ void CFactoryTestI8SNDlg::DoDeviceTest()
         m_strTestInfo   = "正在写号 ...\r\n";
         m_strTestResult = "正在写号";
 
-        tnp_set_snmac(m_pTnpContext, m_strCurSN.GetBuffer(), m_strCurMac.GetBuffer());
+        tnp_set_snmac(m_pTnpContext, m_strCurSN.GetBuffer(), NULL);
         m_strCurSN .ReleaseBuffer();
-        m_strCurMac.ReleaseBuffer();
         PostMessage(WM_TNP_UPDATE_UI);
 
         char sn[65], mac[13];
         tnp_get_snmac(m_pTnpContext, sn, sizeof(sn), mac, sizeof(mac));
         m_bResultBurnSN  = strcmp(sn , m_strCurSN ) == 0 ? 1 : 0;
-        m_bResultBurnMac = strcmp(mac, m_strCurMac) == 0 ? 1 : 0;
+        m_strCurMac      = mac;
     }
 
     if (!m_bTestCancel) {
+        tnp_test_iperf(m_pTnpContext);
         m_strTestInfo  += "正在测试吞吐量 ...\r\n";
         m_strTestResult = "正在测试";
         PostMessage(WM_TNP_UPDATE_UI);
@@ -202,15 +201,14 @@ void CFactoryTestI8SNDlg::DoDeviceTest()
     }
 
     if (!m_bTestCancel) {
-        if (m_bResultBurnSN && m_bResultBurnMac && (bSkipSpkMicTest || m_bResultTestSpkMic) && m_bResultTestNet) {
+        if (m_bResultBurnSN && (bSkipSpkMicTest || m_bResultTestSpkMic) && m_bResultTestNet) {
             m_strTestResult = "OK";
         } else {
             m_strTestResult = "NG";
         }
 
-        m_strTestInfo += m_bResultBurnSN    ? "写号     -  OK\r\n" : "写号     -  NG\r\n";
-        m_strTestInfo += m_bResultBurnMac   ? "MAC      -  OK\r\n" : "MAC      -  NG\r\n";
-        m_strTestInfo += m_bResultTestNet   ? "吞吐量   -  OK\r\n" : "吞吐量   -  NG\r\n";
+        m_strTestInfo += m_bResultBurnSN  ? "写号     -  OK\r\n" : "写号     -  NG\r\n";
+        m_strTestInfo += m_bResultTestNet ? "吞吐量   -  OK\r\n" : "吞吐量   -  NG\r\n";
         if (!bSkipSpkMicTest) {
             m_strTestInfo += m_bResultTestSpkMic? "喇叭咪头 -  OK\r\n" : "喇叭咪头 -  NG\r\n";
         }
@@ -223,9 +221,6 @@ void CFactoryTestI8SNDlg::DoDeviceTest()
         CString strErrMsg;
         if (!m_bResultBurnSN) {
             strErrCode += "L011,";
-        }
-        if (!m_bResultBurnMac) {
-            strErrCode += "L012,";
         }
         if (!bSkipSpkMicTest && !m_bResultTestSpkMic) {
             strErrCode += "L014,";
@@ -248,7 +243,6 @@ void CFactoryTestI8SNDlg::DoDeviceTest()
 #endif
     }
 
-    SetTimer(TIMER_ID_CHECK_ALIVE, 1000, NULL);
     CloseHandle(m_hTestThread);
     m_hTestThread = NULL;
 }
@@ -375,7 +369,6 @@ BOOL CFactoryTestI8SNDlg::OnInitDialog()
     m_bConnectState    = FALSE;
     m_bSnScaned        = FALSE;
     m_bResultBurnSN    = FALSE;
-    m_bResultBurnMac   = FALSE;
     m_bResultTestSpkMic= FALSE;
     m_bResultTestNet   = FALSE;
     m_bResultDone      = FALSE;
@@ -444,7 +437,7 @@ HBRUSH CFactoryTestI8SNDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
     case IDC_TXT_TEST_RESULT:
         if (!m_bConnectState || !m_bResultDone) {
             pDC->SetTextColor(RGB(0, 120, 255));
-        } else if (m_bResultBurnSN && m_bResultBurnMac && m_bResultTestSpkMic && m_bResultTestNet) {
+        } else if (m_bResultBurnSN && m_bResultTestSpkMic && m_bResultTestNet) {
             pDC->SetTextColor(RGB(0, 200, 0));
         } else {
             pDC->SetTextColor(RGB(255, 0, 0));
@@ -466,7 +459,7 @@ void CFactoryTestI8SNDlg::OnEnChangeEdtScanSn()
 
     // TODO:  Add your control notification handler code here
     UpdateData(TRUE);
-    if (m_strScanSN.GetLength() >= 16) {
+    if (m_strScanSN.GetLength() >= 22) {
         m_strCurSN  = m_strScanSN.Trim();
         m_strScanSN = "";
         UpdateData(FALSE);
@@ -480,28 +473,7 @@ void CFactoryTestI8SNDlg::OnEnChangeEdtScanSn()
                 return;
             }
         }
-
-        if (m_bMesLoginOK) {
-            CString strErrMsg;
-            CString strMAC;
-            CString strBT ;
-            CString strCode1;
-            CString strCode2;
-            CString strCode3;
-            BOOL ret = MesDLL::GetInstance().GetAddressRangeByMO(m_strCurSN, strMAC, strBT, strCode1, strCode2, strCode3, strErrMsg);
-            if (ret) {
-                m_strCurMac = strMAC;
-            } else {
-                AfxMessageBox(TEXT("无法从 MES 系统获取 MAC 地址！"), MB_OK);
-                m_strCurMac = "xxxxxxxxxxxx";
-                UpdateData(FALSE);
-                return;
-            }
-        } else
 #endif
-        {
-            m_strCurMac = "4637E68F43E5";
-        }
 
         if (m_bConnectState) {
             m_bSnScaned = FALSE;
@@ -583,12 +555,17 @@ void CFactoryTestI8SNDlg::OnTimer(UINT_PTR nIDEvent)
     case TIMER_ID_SET_FOCUS:
         GetDlgItem(IDC_EDT_SCAN_SN)->SetFocus();
         break;
-    case TIMER_ID_CHECK_ALIVE:
-        if (!tnp_dev_alive(m_pTnpContext)) {
-            KillTimer(TIMER_ID_CHECK_ALIVE);
-            PostMessage(WM_TNP_DEVICE_LOST);
-        }
-        break;
     }
     CDialog::OnTimer(nIDEvent);
+}
+
+
+BOOL CFactoryTestI8SNDlg::PreTranslateMessage(MSG *pMsg)
+{
+    if (pMsg->message == WM_KEYDOWN || pMsg->message == WM_KEYUP) {
+        switch (pMsg->wParam) {
+        case ' ': if (pMsg->message == WM_KEYDOWN) OnTnpDeviceLost(0, inet_addr(m_strDeviceIP)); return TRUE;
+        }
+    }
+    return CDialog::PreTranslateMessage(pMsg);
 }

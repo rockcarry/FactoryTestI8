@@ -12,9 +12,11 @@
 #define IDC_BTN_IR_RESULT               1005
 #define IDC_BTN_KEY_RESULT              1006
 #define IDC_BTN_LSENSOR_RESULT          1007
-#define IDC_BTN_SPKMIC_RESULT           1008
-#define IDC_BTN_VERSION_RESULT          1009
-#define IDC_BTN_WIFI_RESULT             1010
+#define IDC_BTN_SPK_RESULT              1008
+#define IDC_BTN_MIC_RESULT              1009
+#define IDC_BTN_VERSION_RESULT          1010
+#define IDC_BTN_WIFI_RESULT             1011
+#define IDC_BTN_NEXT_DEVICE             1028
 
 // Next default values for new objects
 // 
@@ -22,7 +24,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        129
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1028
+#define _APS_NEXT_CONTROL_VALUE         1029
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

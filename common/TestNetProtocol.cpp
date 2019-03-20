@@ -21,12 +21,12 @@ typedef struct {
     SOCKET  sock;
 } TNPCONTEXT;
 
-#define TNP_UDP_PORT      34677
-#define TNP_TCP_PORT      34678
+#define TNP_UDP_PORT      4677
+#define TNP_TCP_PORT      4678
 #define TNP_UDP_SENDTIMEO 1000
 #define TNP_UDP_RECVTIMEO 1000
-#define TNP_TCP_SENDTIMEO 1000
-#define TNP_TCP_RECVTIMEO 1000
+#define TNP_TCP_SENDTIMEO 2000
+#define TNP_TCP_RECVTIMEO 2000
 #define TND_DEVLOST_TIMEO 3000
 
 static DWORD get_localhost_ip(void)
@@ -62,7 +62,7 @@ static DWORD WINAPI DeviceDetectThreadProc(LPVOID pParam)
     // start device detection
     while (!(ctxt->thread_status & (TNP_TS_EXIT))) {
         if (ctxt->sock) {
-            log_printf("tnp protocal tcp connected !\n");
+//          log_printf("tnp protocal tcp connected !\n");
             Sleep(100);
             continue;
         }
@@ -111,6 +111,7 @@ static DWORD WINAPI DeviceDetectThreadProc(LPVOID pParam)
         }
         log_printf("-- dump device list:\n");
 #endif
+        Sleep(1000);
     }
 
     closesocket(sock);
@@ -222,10 +223,10 @@ int tnp_send_cmd(void *ctxt, cmd_hd_t *cmd, rsp_hd_t *rsp, int rlen)
     ret = recv(context->sock, recvbuf, sizeof(recvbuf), 0);
     if (ret > 0) {
         rsp_hd_t *r = (rsp_hd_t*)recvbuf;
-        if (r->magic != 0x8D5D || ret != sizeof(cmd_hd_t) + r->data_len || cmd->cmd_id != rsp->cmd_id) {
+        if (r->magic != 0x8d5d || ret != sizeof(rsp_hd_t) + r->data_len || cmd->cmd_id != r->cmd_id) {
             return -1;
         }
-        memcpy(rsp, recvbuf, sizeof(recvbuf) < rlen ? sizeof(recvbuf) : rlen);
+        memcpy(rsp, recvbuf, ret < rlen ? ret : rlen);
         return 0;
     }
     return -1;
@@ -238,11 +239,16 @@ int tnp_get_fwver(void *ctxt, char *ver, int vlen)
     int   ret;
     cmd_hd_t *cmd = (cmd_hd_t*)cmd_buf;
     rsp_hd_t *rsp = (rsp_hd_t*)rsp_buf;
-    cmd->magic  = 0x8d5d;
-    cmd->cmd_id = 0x64;
+    cmd->magic    = 0x8d5c;
+    cmd->cmd_id   = 0x64;
+    cmd->data_len = 0;
     ret = tnp_send_cmd(ctxt, cmd, rsp, sizeof(rsp_buf));
-    if (ret != 0) return ret;
-    strncmp(ver , rsp_buf + sizeof(rsp_hd_t), vlen < (int)rsp->data_len ? vlen : (int)rsp->data_len);
+    if (ret != 0) {
+        ver[0] = '\0';
+        return ret;
+    }
+    strncpy(ver, rsp_buf + sizeof(rsp_hd_t), vlen);
+    ver[rsp->data_len] = '\0';
     return 0;
 }
 
@@ -255,19 +261,19 @@ int tnp_set_snmac(void *ctxt, char *sn, char *mac)
     int       ret = 0;
 
     if (sn) {
-        cmd->magic    = 0x8d5d;
+        cmd->magic    = 0x8d5c;
         cmd->cmd_id   = 0x60;
         cmd->data_len = (unsigned)strlen(sn);
-        strncmp(cmd_buf + sizeof(cmd_hd_t), sn , sizeof(cmd_buf) - sizeof(cmd_hd_t));
+        strncpy(cmd_buf + sizeof(cmd_hd_t), sn , sizeof(cmd_buf) - sizeof(cmd_hd_t));
         ret = tnp_send_cmd(ctxt, cmd, rsp, sizeof(rsp_buf));
     }
     if (ret != 0) return ret;
 
     if (mac) {
-        cmd->magic    = 0x8d5d;
-        cmd->cmd_id   = 0x64;
+        cmd->magic    = 0x8d5c;
+        cmd->cmd_id   = 0x61;
         cmd->data_len = (unsigned)strlen(mac);
-        strncmp(cmd_buf + sizeof(cmd_hd_t), mac, sizeof(cmd_buf) - sizeof(cmd_hd_t));
+        strncpy(cmd_buf + sizeof(cmd_hd_t), mac, sizeof(cmd_buf) - sizeof(cmd_hd_t));
         ret = tnp_send_cmd(ctxt, cmd, rsp, sizeof(rsp_buf));
     }
     return ret;
@@ -282,19 +288,23 @@ int tnp_get_snmac(void *ctxt, char *sn, int slen, char *mac, int mlen)
     int       ret = 0;
 
     if (sn) {
-        cmd->magic    = 0x8d5d;
+        cmd->magic    = 0x8d5c;
         cmd->cmd_id   = 0x62;
+        cmd->data_len = 22;
         ret = tnp_send_cmd(ctxt, cmd, rsp, sizeof(rsp_buf));
         if (ret != 0) return ret;
-        strncmp(sn , rsp_buf + sizeof(rsp_hd_t), slen < (int)rsp->data_len ? slen : (int)rsp->data_len);
+        strncpy(sn , rsp_buf + sizeof(rsp_hd_t), slen < (int)rsp->data_len ? slen : (int)rsp->data_len);
+        sn[rsp->data_len] = '\0';
     }
 
     if (mac) {
-        cmd->magic    = 0x8d5d;
+        cmd->magic    = 0x8d5c;
         cmd->cmd_id   = 0x63;
+        cmd->data_len = 12;
         ret = tnp_send_cmd(ctxt, cmd, rsp, sizeof(rsp_buf));
         if (ret != 0) return ret;
-        strncmp(mac, rsp_buf + sizeof(rsp_hd_t), mlen < (int)rsp->data_len ? mlen : (int)rsp->data_len);
+        strncpy(mac, rsp_buf + sizeof(rsp_hd_t), mlen < (int)rsp->data_len ? mlen : (int)rsp->data_len);
+        mac[rsp->data_len] = '\0';
     }
     return ret;
 }
@@ -308,8 +318,9 @@ int tnp_test_irc(void *ctxt, int onoff)
 {
     cmd_hd_t cmd = {};
     rsp_hd_t rsp = {};
-    cmd.magic  = 0x8d5d;
-    cmd.cmd_id = onoff ? 0x58 : 0x59;
+    cmd.magic    = 0x8d5c;
+    cmd.cmd_id   = onoff ? 0x58 : 0x59;
+    cmd.data_len = 0;
     return tnp_send_cmd(ctxt, &cmd, &rsp, sizeof(rsp));
 }
 
@@ -318,12 +329,28 @@ int tnp_test_auto(void *ctxt, int *btn, int *lsensor, int *micspk, int *battery)
     return -1;
 }
 
+int tnp_test_iperf(void *ctxt)
+{
+    char  cmd_buf[1024];
+    char  rsp_buf[1024];
+    char *iperf_cmd = "";
+    cmd_hd_t *cmd = (cmd_hd_t*)cmd_buf;
+    rsp_hd_t *rsp = (rsp_hd_t*)rsp_buf;
+    int       ret = 0;
+    cmd->magic    = 0x8d5c;
+    cmd->cmd_id   = 0x75;
+    cmd->data_len = (unsigned)strlen(iperf_cmd);
+    strncpy(cmd_buf + sizeof(cmd_hd_t), iperf_cmd , sizeof(cmd_buf) - sizeof(cmd_hd_t));
+    return tnp_send_cmd(ctxt, cmd, rsp, sizeof(rsp));
+}
+
 int tnp_enter_aging(void *ctxt)
 {
     cmd_hd_t cmd = {};
     rsp_hd_t rsp = {};
-    cmd.magic  = 0x8d5d;
-    cmd.cmd_id = 0x77;
+    cmd.magic    = 0x8d5c;
+    cmd.cmd_id   = 0x77;
+    cmd.data_len = 0;
     return tnp_send_cmd(ctxt, &cmd, &rsp, sizeof(rsp));
 }
 

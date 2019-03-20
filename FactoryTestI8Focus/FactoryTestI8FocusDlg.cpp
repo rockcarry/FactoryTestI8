@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "FactoryTestI8Focus.h"
 #include "FactoryTestI8FocusDlg.h"
+#include "TestNetProtocol.h"
 #include "BenQGuruDll.h"
 #include "fanplayer.h"
 #include "log.h"
@@ -14,6 +15,7 @@
 
 #define ENABLE_MES_SYSTEM     TRUE
 #define TIMER_ID_SET_FOCUS    1
+#define TIMER_ID_DEFINITION   2
 
 static void get_app_dir(char *path, int size)
 {
@@ -121,6 +123,8 @@ BEGIN_MESSAGE_MAP(CFactoryTestI8FocusDlg, CDialog)
     ON_WM_CLOSE()
     ON_WM_TIMER()
     ON_WM_SIZE()
+    ON_MESSAGE(WM_TNP_DEVICE_FOUND, &CFactoryTestI8FocusDlg::OnTnpDeviceFound)
+    ON_MESSAGE(WM_TNP_DEVICE_LOST , &CFactoryTestI8FocusDlg::OnTnpDeviceLost )
     ON_EN_CHANGE(IDC_EDT_SCAN_SN, &CFactoryTestI8FocusDlg::OnEnChangeEdtScanSn)
     ON_BN_CLICKED(IDC_BTN_TEST_RESULT1, &CFactoryTestI8FocusDlg::OnBnClickedBtnTestResult1)
     ON_BN_CLICKED(IDC_BTN_TEST_RESULT2, &CFactoryTestI8FocusDlg::OnBnClickedBtnTestResult2)
@@ -155,6 +159,7 @@ BOOL CFactoryTestI8FocusDlg::OnInitDialog()
     strcpy(m_strUVCDev    , ""              );
     strcpy(m_strUACDev    , ""              );
     strcpy(m_strCamType   , "uvc"           );
+    strcpy(m_strDeviceIP  , ""              );
     int ret = load_config_from_file(m_strUserName, m_strPassWord, m_strResource, m_strGongDan, m_strLoginMode, m_strRouteCheck, m_strLogFile, m_strUVCDev, m_strUACDev, m_strCamType);
     if (ret != 0) {
         AfxMessageBox(TEXT("无法打开测试配置文件！"), MB_OK);
@@ -190,6 +195,7 @@ BOOL CFactoryTestI8FocusDlg::OnInitDialog()
     m_nFocusTestResult3 = -1;
     UpdateData(FALSE);
 
+    m_pTnpContext = tnp_init(GetSafeHwnd());
     if (strcmp(m_strUVCDev, "") != 0 || strcmp(m_strCamType, "rtsp") == 0) {
         MoveWindow(0, 0, 1200, 780, FALSE);
         
@@ -206,12 +212,8 @@ BOOL CFactoryTestI8FocusDlg::OnInitDialog()
             sprintf(url_gb2312, "dshow://video=%s", m_strUVCDev);
             MultiByteToWideChar(CP_ACP , 0, url_gb2312 , -1, url_unicode, MAX_PATH);
             WideCharToMultiByte(CP_UTF8, 0, url_unicode, -1, url_utf8, MAX_PATH, NULL, NULL);
-        } else {
-            params.init_timeout     = 1000;
-            params.auto_reconnect   = 1000;
-            sprintf(url_utf8, "rtsp://%s:8554//main", "192.168.1.111");
+            m_pFanPlayer = player_open(url_utf8, GetSafeHwnd(), &params);
         }
-        m_pFanPlayer = player_open(url_utf8, GetSafeHwnd(), &params);
     }
     return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -221,6 +223,8 @@ void CFactoryTestI8FocusDlg::OnDestroy()
     CDialog::OnDestroy();
 
     player_close(m_pFanPlayer);
+    tnp_disconnect(m_pTnpContext);
+    tnp_free(m_pTnpContext);
     log_done();
 
 #if ENABLE_MES_SYSTEM
@@ -339,7 +343,7 @@ void CFactoryTestI8FocusDlg::OnEnChangeEdtScanSn()
 
     // TODO:  Add your control notification handler code here
     UpdateData(TRUE);
-    if (m_strScanSN.GetLength() >= 16) {
+    if (m_strScanSN.GetLength() >= 22) {
         m_strCurSN  = m_strScanSN.Trim();
         m_strScanSN = "";
         m_bSnScaned = TRUE;
@@ -496,6 +500,8 @@ void CFactoryTestI8FocusDlg::OnBnClickedBtnUpload()
     GetDlgItem(IDC_BTN_TEST_RESULT2)->SetWindowText("NG");
     GetDlgItem(IDC_BTN_TEST_RESULT3)->SetWindowText("NG");
     UpdateData(FALSE);
+
+    OnTnpDeviceLost(0, inet_addr(m_strDeviceIP));
 }
 
 void CFactoryTestI8FocusDlg::OnTimer(UINT_PTR nIDEvent)
@@ -503,6 +509,15 @@ void CFactoryTestI8FocusDlg::OnTimer(UINT_PTR nIDEvent)
     switch (nIDEvent) {
     case TIMER_ID_SET_FOCUS:
         GetDlgItem(IDC_EDT_SCAN_SN)->SetFocus();
+        break;
+    case TIMER_ID_DEFINITION: {
+            char  str[MAX_PATH];
+            float val = 0;
+            player_getparam(m_pFanPlayer, PARAM_DEFINITION_VALUE, &val);
+            sprintf(str, "清晰度 %.2f", val);
+            MultiByteToWideChar(CP_ACP, 0, str, -1, m_strDefinition, MAX_PATH);
+            player_textout(m_pFanPlayer, 20, 20, RGB(0, 255, 0), m_strDefinition);
+        }
         break;
     }
     CDialog::OnTimer(nIDEvent);
@@ -518,3 +533,54 @@ void CFactoryTestI8FocusDlg::OnSize(UINT nType, int cx, int cy)
     }
 }
 
+
+LRESULT CFactoryTestI8FocusDlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
+{
+    if (strcmp(m_strDeviceIP, "") != 0) {
+        log_printf("already have a device connected !\n");
+        return 0;
+    }
+
+    struct in_addr addr;
+    int ret = tnp_connect(m_pTnpContext, NULL, &addr);
+    if (ret == 0) {
+        strcpy(m_strDeviceIP, inet_ntoa(addr));
+    }
+
+    if (strcmp(m_strCamType, "rtsp") == 0) {
+        PLAYER_INIT_PARAMS params = {0};
+        char  url[MAX_PATH];
+        params.init_timeout   = 1000;
+        params.auto_reconnect = 1000;
+        sprintf(url, "rtsp://%s:6887//live", m_strDeviceIP);
+        if (m_pFanPlayer) player_close(m_pFanPlayer);
+        m_pFanPlayer = player_open(url, GetSafeHwnd(), &params);
+        SetTimer(TIMER_ID_DEFINITION, 200, NULL);
+    }
+    return 0;
+}
+
+LRESULT CFactoryTestI8FocusDlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
+{
+    struct in_addr addr;
+    addr.S_un.S_addr = (u_long)lParam;
+    if (strcmp(m_strDeviceIP, inet_ntoa(addr)) != 0) {
+        log_printf("this is not current connected device lost !\n");
+        return 0;
+    }
+
+    m_strDeviceIP[0] = '\0';
+    tnp_disconnect(m_pTnpContext);
+    UpdateData(FALSE);
+
+    KillTimer(TIMER_ID_DEFINITION);
+    if (m_pFanPlayer) {
+        player_close(m_pFanPlayer);
+        m_pFanPlayer = NULL;
+    }
+    RECT rect;
+    GetClientRect (&rect);
+    rect.left = 218;
+    InvalidateRect(&rect, TRUE);
+    return 0;
+}

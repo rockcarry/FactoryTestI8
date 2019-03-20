@@ -233,6 +233,10 @@
 					/>
 				</FileConfiguration>
 			</File>
+			<File
+				RelativePath="..\common\TestNetProtocol.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -257,6 +261,10 @@
 			</File>
 			<File
 				RelativePath=".\stdafx.h"
+				>
+			</File>
+			<File
+				RelativePath="..\common\TestNetProtocol.h"
 				>
 			</File>
 		</Filter>

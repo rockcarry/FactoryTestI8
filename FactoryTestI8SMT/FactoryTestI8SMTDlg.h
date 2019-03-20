@@ -38,6 +38,11 @@ protected:
     afx_msg void OnBnClickedBtnLedResult();
     afx_msg void OnBnClickedBtnCameraResult();
     afx_msg void OnBnClickedBtnIrResult();
+    afx_msg void OnBnClickedBtnKeyResult();
+    afx_msg void OnBnClickedBtnLsensorResult();
+    afx_msg void OnBnClickedBtnSpkResult();
+    afx_msg void OnBnClickedBtnMicResult();
+    afx_msg void OnBnClickedBtnNextDevice();
     DECLARE_MESSAGE_MAP()
 
 private:
@@ -45,7 +50,8 @@ private:
     CString m_strCurVer;
     void   *m_pTnpContext;
     void   *m_pFanPlayer;
-    char    m_strTnpVer  [32];
+    char    m_strFwVer   [32];
+    char    m_strAppVer  [32];
     char    m_strLogFile [32];
     char    m_strUVCDev  [MAX_PATH];
     char    m_strUACDev  [MAX_PATH];
@@ -57,7 +63,8 @@ private:
     int     m_nWiFiTestResult;
     int     m_nKeyTestResult;
     int     m_nLSensorTestResult;
-    int     m_nSpkMicTestResult;
+    int     m_nSpkTestResult;
+    int     m_nMicTestResult;
     int     m_nVersionTestResult;
     BOOL    m_bTestCancel;
     HANDLE  m_hTestThread;
