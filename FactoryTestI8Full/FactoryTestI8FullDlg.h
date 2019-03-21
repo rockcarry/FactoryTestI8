@@ -60,7 +60,8 @@ private:
     char    m_strUserName  [32];
     char    m_strPassWord  [32];
     char    m_strResource  [32];
-    char    m_strTnpVer    [32];
+    char    m_strFwVer     [32];
+    char    m_strAppVer    [32];
     char    m_strLoginMode [32];
     char    m_strRouteCheck[32];
     char    m_strLogFile   [32];

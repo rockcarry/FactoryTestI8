@@ -140,8 +140,8 @@ BOOL CFactoryTestI8SMTDlg::OnInitDialog()
     SetIcon(m_hIcon, FALSE);        // 设置小图标
 
     // 在此添加额外的初始化代码
-    strcpy(m_strFwVer     , "fwver"  );
-    strcpy(m_strAppVer    , "appver" );
+    strcpy(m_strFwVer     , ""       );
+    strcpy(m_strAppVer    , ""       );
     strcpy(m_strLogFile   , "DEBUGER");
     strcpy(m_strUVCDev    , ""       );
     strcpy(m_strUACDev    , ""       );
@@ -359,13 +359,13 @@ LRESULT CFactoryTestI8SMTDlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
     }
     UpdateData(FALSE);
 
-
     if (strcmp(m_strCamType, "rtsp") == 0) {
         PLAYER_INIT_PARAMS params = {0};
         char  url[MAX_PATH];
         params.init_timeout   = 1000;
         params.auto_reconnect = 1000;
-        sprintf(url, "rtsp://%s:6887//live", m_strDeviceIP);
+        params.rtsp_transport = 2;
+        sprintf(url, "rtsp://%s:6887/live", m_strDeviceIP);
         if (m_pFanPlayer) player_close(m_pFanPlayer);
         m_pFanPlayer = player_open(url, GetSafeHwnd(), &params);
     }

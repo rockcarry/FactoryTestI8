@@ -172,6 +172,7 @@ int tnp_connect(void *ctxt, char *sn, struct in_addr *addr)
             if (strlen(context->device_list[i].sn)) break;
         }
     }
+    if (i == 256) return -1;
 
     if (context->sock) {
         log_printf("a connection already created !\n");
@@ -212,7 +213,7 @@ int tnp_send_cmd(void *ctxt, cmd_hd_t *cmd, rsp_hd_t *rsp, int rlen)
     TNPCONTEXT *context = (TNPCONTEXT*)ctxt;
     if (!ctxt) return -1;
 
-    char recvbuf[1024];
+    char recvbuf[1024] = {0};
     int  ret;
 
     if (send(context->sock, (const char*)cmd, sizeof(cmd_hd_t) + cmd->data_len, 0) == -1) {
@@ -234,8 +235,8 @@ int tnp_send_cmd(void *ctxt, cmd_hd_t *cmd, rsp_hd_t *rsp, int rlen)
 
 int tnp_get_fwver(void *ctxt, char *ver, int vlen)
 {
-    char cmd_buf[1024];
-    char rsp_buf[1024];
+    char cmd_buf[1024] = {0};
+    char rsp_buf[1024] = {0};
     int   ret;
     cmd_hd_t *cmd = (cmd_hd_t*)cmd_buf;
     rsp_hd_t *rsp = (rsp_hd_t*)rsp_buf;
@@ -254,8 +255,8 @@ int tnp_get_fwver(void *ctxt, char *ver, int vlen)
 
 int tnp_set_snmac(void *ctxt, char *sn, char *mac)
 {
-    char cmd_buf[1024];
-    char rsp_buf[1024];
+    char cmd_buf[1024] = {0};
+    char rsp_buf[1024] = {0};
     cmd_hd_t *cmd = (cmd_hd_t*)cmd_buf;
     rsp_hd_t *rsp = (rsp_hd_t*)rsp_buf;
     int       ret = 0;
@@ -281,8 +282,8 @@ int tnp_set_snmac(void *ctxt, char *sn, char *mac)
 
 int tnp_get_snmac(void *ctxt, char *sn, int slen, char *mac, int mlen)
 {
-    char cmd_buf[1024];
-    char rsp_buf[1024];
+    char cmd_buf[1024] = {0};
+    char rsp_buf[1024] = {0};
     cmd_hd_t *cmd = (cmd_hd_t*)cmd_buf;
     rsp_hd_t *rsp = (rsp_hd_t*)rsp_buf;
     int       ret = 0;
@@ -331,8 +332,8 @@ int tnp_test_auto(void *ctxt, int *btn, int *lsensor, int *micspk, int *battery)
 
 int tnp_test_iperf(void *ctxt)
 {
-    char  cmd_buf[1024];
-    char  rsp_buf[1024];
+    char cmd_buf[1024] = {0};
+    char rsp_buf[1024] = {0};
     char *iperf_cmd = "";
     cmd_hd_t *cmd = (cmd_hd_t*)cmd_buf;
     rsp_hd_t *rsp = (rsp_hd_t*)rsp_buf;
