@@ -19,6 +19,12 @@ typedef struct {
     int     thread_status;
     DEVICE  device_list[256];
     SOCKET  sock;
+    char    recvbuf[1024];
+    int     recvlen;
+    HANDLE  tcprec_thread;
+    HANDLE  recvevt;
+    int     keypass;
+    int     lsenpass;
 } TNPCONTEXT;
 
 #define TNP_UDP_PORT      4677
@@ -118,6 +124,41 @@ static DWORD WINAPI DeviceDetectThreadProc(LPVOID pParam)
     return 0;
 }
 
+static DWORD WINAPI TcpRecvThreadProc(LPVOID pParam)
+{
+    TNPCONTEXT *ctxt = (TNPCONTEXT*)pParam;
+
+    while (!(ctxt->thread_status & (TNP_TS_EXIT))) {
+        if (ctxt->sock) {
+            int ret = recv(ctxt->sock, ctxt->recvbuf, sizeof(ctxt->recvbuf), 0);
+            if (ret > 0) {
+                rsp_hd_t *r = (rsp_hd_t*)ctxt->recvbuf;
+                if (r->cmd_id == 0x5c) {
+                    char *state = ctxt->recvbuf + sizeof(rsp_hd_t);
+                    if (state[0] == 0) ctxt->keypass |= 1 << 0;
+                    if (state[0] == 1) ctxt->keypass |= 1 << 1;
+                    if (ctxt->keypass == 3) {
+                        PostMessage(ctxt->hwnd, WM_TNP_AUTO_RESULT, AUTO_TEST_KEY_PASS, 0);
+                    }
+                } else if (r->cmd_id == 0x5e) {
+                    char *state = ctxt->recvbuf + sizeof(rsp_hd_t);
+                    if (state[0] == 0) ctxt->lsenpass |= 1 << 0;
+                    if (state[0] == 1) ctxt->lsenpass |= 1 << 1;
+                    if (ctxt->lsenpass == 3) {
+                        PostMessage(ctxt->hwnd, WM_TNP_AUTO_RESULT, AUTO_TEST_LSEN_PASS, 0);
+                    }
+                } else {
+                    ctxt->recvlen = ret;
+                    SetEvent(ctxt->recvevt);
+                }
+            }
+        } else {
+            Sleep(100);
+        }
+    }
+    return 0;
+}
+
 void* tnp_init(HWND hwnd)
 {
     // wsa startup
@@ -135,10 +176,12 @@ void* tnp_init(HWND hwnd)
     }
 
     // init context variables
-    ctxt->hwnd = hwnd;
+    ctxt->hwnd    = hwnd;
+    ctxt->recvevt = CreateEvent(NULL, FALSE, FALSE, NULL);
 
     // create thread for device detection
     ctxt->thread_handle = CreateThread(NULL, 0, DeviceDetectThreadProc, ctxt, 0, NULL);
+    ctxt->tcprec_thread = CreateThread(NULL, 0, TcpRecvThreadProc     , ctxt, 0, NULL);
     return ctxt;
 }
 
@@ -151,6 +194,11 @@ void tnp_free(void *ctxt)
     context->thread_status |= TNP_TS_EXIT;
     WaitForSingleObject(context->thread_handle, -1);
     CloseHandle(context->thread_handle);
+    WaitForSingleObject(context->tcprec_thread, -1);
+    CloseHandle(context->tcprec_thread);
+
+    // close receive event handle
+    CloseHandle(context->recvevt);
 
     // free context
     free(context);
@@ -221,6 +269,7 @@ int tnp_send_cmd(void *ctxt, cmd_hd_t *cmd, rsp_hd_t *rsp, int rlen)
         return -1;
     }
 
+#if 0
     ret = recv(context->sock, recvbuf, sizeof(recvbuf), 0);
     if (ret > 0) {
         rsp_hd_t *r = (rsp_hd_t*)recvbuf;
@@ -230,6 +279,19 @@ int tnp_send_cmd(void *ctxt, cmd_hd_t *cmd, rsp_hd_t *rsp, int rlen)
         memcpy(rsp, recvbuf, ret < rlen ? ret : rlen);
         return 0;
     }
+#else
+    ret = WaitForSingleObject(context->recvevt, TNP_TCP_RECVTIMEO);
+    if (ret == WAIT_OBJECT_0) {
+        rsp_hd_t *r = (rsp_hd_t*)context->recvbuf;
+        if (r->magic != 0x8d5d || context->recvlen != sizeof(rsp_hd_t) + r->data_len || cmd->cmd_id != r->cmd_id) {
+            r->magic = 0;
+            return -1;
+        }
+        r->magic = 0;
+        memcpy(rsp, context->recvbuf, context->recvlen < rlen ? context->recvlen : rlen);
+        return 0;
+    }
+#endif
     return -1;
 }
 

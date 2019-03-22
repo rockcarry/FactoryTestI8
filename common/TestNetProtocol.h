@@ -7,6 +7,12 @@ enum {
     WM_TNP_UPDATE_UI = WM_APP + 100,
     WM_TNP_DEVICE_FOUND,
     WM_TNP_DEVICE_LOST ,
+    WM_TNP_AUTO_RESULT ,
+};
+
+enum {
+    AUTO_TEST_KEY_PASS  = 1,
+    AUTO_TEST_LSEN_PASS = 2,
 };
 
 #pragma pack(1)

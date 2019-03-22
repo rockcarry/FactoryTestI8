@@ -114,6 +114,7 @@ BEGIN_MESSAGE_MAP(CFactoryTestI8SMTDlg, CDialog)
     ON_MESSAGE(WM_TNP_UPDATE_UI   , &CFactoryTestI8SMTDlg::OnTnpUpdateUI   )
     ON_MESSAGE(WM_TNP_DEVICE_FOUND, &CFactoryTestI8SMTDlg::OnTnpDeviceFound)
     ON_MESSAGE(WM_TNP_DEVICE_LOST , &CFactoryTestI8SMTDlg::OnTnpDeviceLost )
+    ON_MESSAGE(WM_TNP_AUTO_RESULT , &CFactoryTestI8SMTDlg::OnTnpAutoResult )
     ON_BN_CLICKED(IDC_BTN_LED_RESULT, &CFactoryTestI8SMTDlg::OnBnClickedBtnLedResult)
     ON_BN_CLICKED(IDC_BTN_CAMERA_RESULT, &CFactoryTestI8SMTDlg::OnBnClickedBtnCameraResult)
     ON_BN_CLICKED(IDC_BTN_IR_RESULT, &CFactoryTestI8SMTDlg::OnBnClickedBtnIrResult)
@@ -414,6 +415,16 @@ LRESULT CFactoryTestI8SMTDlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
     GetClientRect (&rect);
     rect.left = 218;
     InvalidateRect(&rect, TRUE);
+    return 0;
+}
+
+LRESULT CFactoryTestI8SMTDlg::OnTnpAutoResult(WPARAM wParam, LPARAM lParam)
+{
+    if (wParam == AUTO_TEST_KEY_PASS ) m_nKeyTestResult     = 1;
+    if (wParam == AUTO_TEST_LSEN_PASS) m_nLSensorTestResult = 1;
+    GetDlgItem(IDC_BTN_KEY_RESULT    )->SetWindowText(m_nKeyTestResult     ? "PASS" : "NG");
+    GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText(m_nLSensorTestResult ? "PASS" : "NG");
+    UpdateData(FALSE);
     return 0;
 }
 
