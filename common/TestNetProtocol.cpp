@@ -133,7 +133,7 @@ static DWORD WINAPI TcpRecvThreadProc(LPVOID pParam)
             int ret = recv(ctxt->sock, ctxt->recvbuf, sizeof(ctxt->recvbuf), 0);
             if (ret > 0) {
                 rsp_hd_t *r = (rsp_hd_t*)ctxt->recvbuf;
-                if (r->cmd_id == 0x5c) {
+                if (r->cmd_id == 0x5c && r->data_len) {
                     char *state = ctxt->recvbuf + sizeof(rsp_hd_t);
                     if (state[0] == 0) ctxt->keypass |= 1 << 0;
                     if (state[0] == 1) ctxt->keypass |= 1 << 1;
@@ -399,11 +399,21 @@ int tnp_test_iperf(void *ctxt)
     char *iperf_cmd = "";
     cmd_hd_t *cmd = (cmd_hd_t*)cmd_buf;
     rsp_hd_t *rsp = (rsp_hd_t*)rsp_buf;
-    int       ret = 0;
     cmd->magic    = 0x8d5c;
     cmd->cmd_id   = 0x75;
     cmd->data_len = (unsigned)strlen(iperf_cmd);
     strncpy(cmd_buf + sizeof(cmd_hd_t), iperf_cmd , sizeof(cmd_buf) - sizeof(cmd_hd_t));
+    return tnp_send_cmd(ctxt, cmd, rsp, sizeof(rsp));
+}
+
+int tnp_lsen_testen(void *ctxt)
+{
+    char cmd_buf[1024] = {0};
+    char rsp_buf[1024] = {0};
+    cmd_hd_t *cmd = (cmd_hd_t*)cmd_buf;
+    rsp_hd_t *rsp = (rsp_hd_t*)rsp_buf;
+    cmd->magic    = 0x8d5c;
+    cmd->cmd_id   = 0x5E;
     return tnp_send_cmd(ctxt, cmd, rsp, sizeof(rsp));
 }
 

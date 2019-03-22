@@ -422,16 +422,17 @@ void CFactoryTestI8FullDlg::OnEnChangeEdtScanSn()
 
             if (1) {
                 char strSN[65], strMAC[13], strVer[128];
-                tnp_get_snmac(m_pTnpContext, strSN, sizeof(strSN), strMAC, sizeof(strMAC));
-                tnp_get_fwver(m_pTnpContext, strVer, sizeof(strVer));
+                tnp_get_snmac  (m_pTnpContext, strSN, sizeof(strSN), strMAC, sizeof(strMAC));
+                tnp_get_fwver  (m_pTnpContext, strVer, sizeof(strVer));
+                tnp_lsen_testen(m_pTnpContext);
                 m_nSnTestResult      = strcmp(strSN , m_strCurSN ) == 0 ? 1 : 0;
                 m_nMacTestResult     = strcmp(strMAC, m_strCurMac) == 0 ? 1 : 0;
                 m_nVersionTestResult = strstr(strVer, m_strFwVer) && strstr(strVer, m_strAppVer) ? 1 : 0;
 
                 m_strSnMacVer.Format("实际 SN ：%s\r\n实际 MAC：%s\r\n实际 VER：%s", CString(strSN).Trim(), CString(strMAC).Trim(), CString(strVer).Trim());
                 GetDlgItem(IDC_BTN_KEY_RESULT    )->SetWindowText(m_nKeyTestResult     ? "PASS" : "NG");
-                GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText(m_nLSensorTestResult ? "PASS" : "NG");
-                GetDlgItem(IDC_BTN_SN_RESULT     )->SetWindowText(m_nSnTestResult      ? "PASS" : "NG");
+//              GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText(m_nLSensorTestResult ? "PASS" : "NG");
+//              GetDlgItem(IDC_BTN_SN_RESULT     )->SetWindowText(m_nSnTestResult      ? "PASS" : "NG");
                 GetDlgItem(IDC_BTN_MAC_RESULT    )->SetWindowText(m_nMacTestResult     ? "PASS" : "NG");
                 GetDlgItem(IDC_BTN_VERSION_RESULT)->SetWindowText(m_nVersionTestResult ? "PASS" : "NG");
                 m_strTestInfo = "测试完成，请上传...";
@@ -482,16 +483,17 @@ LRESULT CFactoryTestI8FullDlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
 
         if (1) {
             char strSN[65], strMAC[13], strVer[128];
-            tnp_get_snmac(m_pTnpContext, strSN, sizeof(strSN), strMAC, sizeof(strMAC));
-            tnp_get_fwver(m_pTnpContext, strVer, sizeof(strVer));
+            tnp_get_snmac  (m_pTnpContext, strSN, sizeof(strSN), strMAC, sizeof(strMAC));
+            tnp_get_fwver  (m_pTnpContext, strVer, sizeof(strVer));
+            tnp_lsen_testen(m_pTnpContext);
             m_nSnTestResult      = strcmp(strSN , m_strCurSN ) == 0 ? 1 : 0;
             m_nMacTestResult     = strcmp(strMAC, m_strCurMac) == 0 ? 1 : 0;
             m_nVersionTestResult = strstr(strVer, m_strFwVer) && strstr(strVer, m_strAppVer) ? 1 : 0;
 
             m_strSnMacVer.Format("实际 SN ：%s\r\n实际 MAC：%s\r\n实际 VER：%s", CString(strSN).Trim(), CString(strMAC).Trim(), CString(strVer).Trim());
             GetDlgItem(IDC_BTN_KEY_RESULT    )->SetWindowText(m_nKeyTestResult     ? "PASS" : "NG");
-            GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText(m_nLSensorTestResult ? "PASS" : "NG");
-            GetDlgItem(IDC_BTN_SN_RESULT     )->SetWindowText(m_nSnTestResult      ? "PASS" : "NG");
+//          GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText(m_nLSensorTestResult ? "PASS" : "NG");
+//          GetDlgItem(IDC_BTN_SN_RESULT     )->SetWindowText(m_nSnTestResult      ? "PASS" : "NG");
             GetDlgItem(IDC_BTN_MAC_RESULT    )->SetWindowText(m_nMacTestResult     ? "PASS" : "NG");
             GetDlgItem(IDC_BTN_VERSION_RESULT)->SetWindowText(m_nVersionTestResult ? "PASS" : "NG");
             m_strTestInfo = "测试完成，请上传...";
@@ -521,8 +523,8 @@ LRESULT CFactoryTestI8FullDlg::OnTnpAutoResult(WPARAM wParam, LPARAM lParam)
 {
     if (wParam == AUTO_TEST_KEY_PASS ) m_nKeyTestResult     = 1;
     if (wParam == AUTO_TEST_LSEN_PASS) m_nLSensorTestResult = 1;
-    GetDlgItem(IDC_BTN_KEY_RESULT    )->SetWindowText(m_nKeyTestResult     ? "PASS" : "NG");
-    GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText(m_nLSensorTestResult ? "PASS" : "NG");
+    GetDlgItem(IDC_BTN_KEY_RESULT    )->SetWindowText(m_nKeyTestResult     == 1 ? "PASS" : "NG");
+    GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText(m_nLSensorTestResult == 1 ? "PASS" : "NG");
     UpdateData(FALSE);
     return 0;
 }

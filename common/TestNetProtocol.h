@@ -55,7 +55,7 @@ int   tnp_test_spkmic(void *ctxt);
 int   tnp_test_irc   (void *ctxt, int onoff);
 int   tnp_test_auto  (void *ctxt, int *btn, int *lsensor, int *spkmic, int *bat);
 int   tnp_test_iperf (void *ctxt);
-
+int   tnp_lsen_testen(void *ctxt);
 int   tnp_enter_aging(void *ctxt);
 
 

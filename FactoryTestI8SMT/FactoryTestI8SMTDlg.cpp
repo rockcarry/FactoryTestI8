@@ -304,7 +304,8 @@ static DWORD WINAPI DeviceTestThreadProc(LPVOID pParam)
 void CFactoryTestI8SMTDlg::DoDeviceTest()
 {
     char strVer[128];
-    tnp_get_fwver(m_pTnpContext, strVer, sizeof(strVer));
+    tnp_get_fwver  (m_pTnpContext, strVer, sizeof(strVer));
+    tnp_lsen_testen(m_pTnpContext);
     m_nVersionTestResult = strstr(strVer, m_strFwVer) && strstr(strVer, m_strAppVer) ? 1 : 0;
 
 //  tnp_test_auto(m_pTnpContext, NULL, NULL, &m_nSpkMicTestResult, NULL);
@@ -422,8 +423,8 @@ LRESULT CFactoryTestI8SMTDlg::OnTnpAutoResult(WPARAM wParam, LPARAM lParam)
 {
     if (wParam == AUTO_TEST_KEY_PASS ) m_nKeyTestResult     = 1;
     if (wParam == AUTO_TEST_LSEN_PASS) m_nLSensorTestResult = 1;
-    GetDlgItem(IDC_BTN_KEY_RESULT    )->SetWindowText(m_nKeyTestResult     ? "PASS" : "NG");
-    GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText(m_nLSensorTestResult ? "PASS" : "NG");
+    GetDlgItem(IDC_BTN_KEY_RESULT    )->SetWindowText(m_nKeyTestResult     == 1 ? "PASS" : "NG");
+    GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText(m_nLSensorTestResult == 1 ? "PASS" : "NG");
     UpdateData(FALSE);
     return 0;
 }
