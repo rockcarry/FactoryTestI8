@@ -722,6 +722,7 @@ void CFactoryTestI8FullDlg::OnBnClickedBtnUploadReport()
         } else {
             m_strTestInfo = "上传测试结果成功！";
         }
+        /*
         if (m_strTestInfo.Find("失败") == -1 && strTestResult.Compare("OK") == 0) {
             if (tnp_enter_aging(m_pTnpContext) == 0) {
                 AfxMessageBox(m_strTestInfo + "\r\n" + strErrMsg);
@@ -730,7 +731,7 @@ void CFactoryTestI8FullDlg::OnBnClickedBtnUploadReport()
             }
         } else {
             AfxMessageBox(m_strTestInfo + "\r\n" + strErrMsg);
-        }
+        }*/
     }
     m_bSnScaned = FALSE;
 #endif
