@@ -37,7 +37,6 @@ protected:
     afx_msg LRESULT OnTnpUpdateUI   (WPARAM wParam, LPARAM lParam);
     afx_msg LRESULT OnTnpDeviceFound(WPARAM wParam, LPARAM lParam);
     afx_msg LRESULT OnTnpDeviceLost (WPARAM wParam, LPARAM lParam);
-    afx_msg LRESULT OnTnpAutoResult (WPARAM wParam, LPARAM lParam);
     afx_msg void OnEnChangeEdtScanSn();
     afx_msg void OnBnClickedBtnLedResult();
     afx_msg void OnBnClickedBtnSpkResult();
@@ -84,7 +83,14 @@ private:
     int     m_nMacTestResult;
     int     m_nVersionTestResult;
     CFont   m_fntTestInfo;
+    BOOL    m_bTestCancel;
+    HANDLE  m_hTestThread;
 
 private:
     int GetBackColorByCtrlId(int id);
+
+public:
+    void DoDeviceTest();
+    void StartDeviceTest();
+    void StopDeviceTest();
 };

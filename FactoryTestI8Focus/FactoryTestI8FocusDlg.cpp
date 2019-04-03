@@ -553,7 +553,7 @@ LRESULT CFactoryTestI8FocusDlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
         params.init_timeout   = 1000;
         params.auto_reconnect = 1000;
         params.rtsp_transport = 2;
-        sprintf(url, "rtsp://%s:6887/live", m_strDeviceIP);
+        sprintf(url, "rtsp://%s/video0", m_strDeviceIP);
         if (m_pFanPlayer) player_close(m_pFanPlayer);
         m_pFanPlayer = player_open(url, GetSafeHwnd(), &params);
         SetTimer(TIMER_ID_DEFINITION, 200, NULL);

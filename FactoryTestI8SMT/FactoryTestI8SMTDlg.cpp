@@ -114,7 +114,6 @@ BEGIN_MESSAGE_MAP(CFactoryTestI8SMTDlg, CDialog)
     ON_MESSAGE(WM_TNP_UPDATE_UI   , &CFactoryTestI8SMTDlg::OnTnpUpdateUI   )
     ON_MESSAGE(WM_TNP_DEVICE_FOUND, &CFactoryTestI8SMTDlg::OnTnpDeviceFound)
     ON_MESSAGE(WM_TNP_DEVICE_LOST , &CFactoryTestI8SMTDlg::OnTnpDeviceLost )
-    ON_MESSAGE(WM_TNP_AUTO_RESULT , &CFactoryTestI8SMTDlg::OnTnpAutoResult )
     ON_BN_CLICKED(IDC_BTN_LED_RESULT, &CFactoryTestI8SMTDlg::OnBnClickedBtnLedResult)
     ON_BN_CLICKED(IDC_BTN_CAMERA_RESULT, &CFactoryTestI8SMTDlg::OnBnClickedBtnCameraResult)
     ON_BN_CLICKED(IDC_BTN_IR_RESULT, &CFactoryTestI8SMTDlg::OnBnClickedBtnIrResult)
@@ -199,7 +198,6 @@ void CFactoryTestI8SMTDlg::OnDestroy()
     CDialog::OnDestroy();
 
     StopDeviceTest();
-    player_close(m_pFanPlayer);
     tnp_disconnect(m_pTnpContext);
     tnp_free(m_pTnpContext);
     log_done();
@@ -251,8 +249,10 @@ int CFactoryTestI8SMTDlg::GetBackColorByCtrlId(int id)
     case IDC_BTN_WIFI_RESULT:   result = m_nWiFiTestResult;   break;
     case IDC_BTN_KEY_RESULT:    result = m_nKeyTestResult;    break;
     case IDC_BTN_LSENSOR_RESULT:result = m_nLSensorTestResult;break;
-    case IDC_BTN_SPK_RESULT:    result = m_nSpkTestResult;    break;
-    case IDC_BTN_MIC_RESULT:    result = m_nMicTestResult;    break;
+    case IDC_BTN_SPK_RESULT:
+        result = m_nSpkTestResult;    break;
+    case IDC_BTN_MIC_RESULT:
+        result = m_nMicTestResult;    break;
     case IDC_BTN_VERSION_RESULT:result = m_nVersionTestResult;break;
     }
 
@@ -303,17 +303,54 @@ static DWORD WINAPI DeviceTestThreadProc(LPVOID pParam)
 
 void CFactoryTestI8SMTDlg::DoDeviceTest()
 {
-    char strVer[128];
-    tnp_get_fwver  (m_pTnpContext, strVer, sizeof(strVer));
-    tnp_lsen_testen(m_pTnpContext);
-    m_nVersionTestResult = strstr(strVer, m_strFwVer) && strstr(strVer, m_strAppVer) ? 1 : 0;
+    DWORD tick_next = 0;
+    int   tick_sleep= 0;
+    char strVersion[128];
+    char strResult [256];
+    tnp_get_fwver(m_pTnpContext, strVersion, sizeof(strVersion));
+    tnp_test_spkmic(m_pTnpContext);
+    m_nVersionTestResult = strcmp(strVersion, m_strFwVer) == 0 ? 1 : 0;
 
 //  tnp_test_auto(m_pTnpContext, NULL, NULL, &m_nSpkMicTestResult, NULL);
     GetDlgItem(IDC_BTN_WIFI_RESULT   )->SetWindowText(m_nWiFiTestResult    ? "PASS" : "NG");
 //  GetDlgItem(IDC_BTN_SPKMIC_RESULT )->SetWindowText(m_nSpkMicTestResult  ? "PASS" : "NG");
     GetDlgItem(IDC_BTN_VERSION_RESULT)->SetWindowText(m_nVersionTestResult ? "PASS" : "NG");
-    m_strCurVer = CString(strVer).Trim();
+    m_strCurVer = CString(strVersion).Trim();
     PostMessage(WM_TNP_UPDATE_UI);
+
+    if (strcmp(m_strCamType, "rtsp") == 0) {
+        PLAYER_INIT_PARAMS params = {0};
+        char  url[MAX_PATH];
+        params.init_timeout   = 1000;
+        params.auto_reconnect = 1000;
+        params.rtsp_transport = 2;
+        sprintf(url, "rtsp://%s/video0", m_strDeviceIP);
+        if (m_pFanPlayer) player_close(m_pFanPlayer);
+        m_pFanPlayer = player_open(url, GetSafeHwnd(), &params);
+    }
+
+    tick_next = GetTickCount();
+    while (!m_bTestCancel && (m_nSpkTestResult == -1 || m_nMicTestResult == -1 || m_nKeyTestResult == -1 || m_nLSensorTestResult == -1)) {
+        tick_next += 1000;
+        tnp_get_result(m_pTnpContext, strResult, sizeof(strResult));
+        if (strResult[0] == 'y' && (m_nSpkTestResult == -1 || m_nMicTestResult == -1)) {
+            m_nSpkTestResult = 1; GetDlgItem(IDC_BTN_SPK_RESULT)->SetWindowText("PASS");
+            m_nMicTestResult = 1; GetDlgItem(IDC_BTN_MIC_RESULT)->SetWindowText("PASS");
+        }
+        if (strResult[0] == 'n' && (m_nSpkTestResult == -1 || m_nMicTestResult == -1)) {
+            m_nSpkTestResult = 0; GetDlgItem(IDC_BTN_SPK_RESULT)->SetWindowText("NG");
+            m_nMicTestResult = 0; GetDlgItem(IDC_BTN_MIC_RESULT)->SetWindowText("NG");
+        }
+        if (strResult[1] == 'y' && m_nKeyTestResult == -1) {
+            m_nKeyTestResult = 1; GetDlgItem(IDC_BTN_KEY_RESULT)->SetWindowText("PASS");
+        }
+        if (strResult[2] == 'y' && m_nLSensorTestResult == -1) {
+            m_nLSensorTestResult = 1; GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText("PASS");
+        }
+        PostMessage(WM_TNP_UPDATE_UI);
+        tick_sleep = tick_next - GetTickCount();
+        if (tick_sleep > 0) Sleep(tick_sleep);
+    }
 
     CloseHandle(m_hTestThread);
     m_hTestThread = NULL;
@@ -337,6 +374,15 @@ void CFactoryTestI8SMTDlg::StopDeviceTest()
     if (m_hTestThread) {
         WaitForSingleObject(m_hTestThread, -1);
     }
+
+    if (m_pFanPlayer) {
+        player_close(m_pFanPlayer);
+        m_pFanPlayer = NULL;
+    }
+    RECT rect;
+    GetClientRect (&rect);
+    rect.left = 218;
+    InvalidateRect(&rect, TRUE);
 }
 
 LRESULT CFactoryTestI8SMTDlg::OnTnpUpdateUI(WPARAM wParam, LPARAM lParam)
@@ -360,17 +406,6 @@ LRESULT CFactoryTestI8SMTDlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
         StartDeviceTest();
     }
     UpdateData(FALSE);
-
-    if (strcmp(m_strCamType, "rtsp") == 0) {
-        PLAYER_INIT_PARAMS params = {0};
-        char  url[MAX_PATH];
-        params.init_timeout   = 1000;
-        params.auto_reconnect = 1000;
-        params.rtsp_transport = 2;
-        sprintf(url, "rtsp://%s:6887/live", m_strDeviceIP);
-        if (m_pFanPlayer) player_close(m_pFanPlayer);
-        m_pFanPlayer = player_open(url, GetSafeHwnd(), &params);
-    }
     return 0;
 }
 
@@ -383,6 +418,7 @@ LRESULT CFactoryTestI8SMTDlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
         return 0;
     }
 
+    StopDeviceTest();
     m_strConnectState    = "等待设备连接...";
     m_strCurVer          = "";
     m_strDeviceIP[0]     = '\0';
@@ -407,25 +443,6 @@ LRESULT CFactoryTestI8SMTDlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
     GetDlgItem(IDC_BTN_SPK_RESULT    )->SetWindowText("NG");
     GetDlgItem(IDC_BTN_MIC_RESULT    )->SetWindowText("NG");
     GetDlgItem(IDC_BTN_VERSION_RESULT)->SetWindowText("NG");
-
-    if (m_pFanPlayer) {
-        player_close(m_pFanPlayer);
-        m_pFanPlayer = NULL;
-    }
-    RECT rect;
-    GetClientRect (&rect);
-    rect.left = 218;
-    InvalidateRect(&rect, TRUE);
-    return 0;
-}
-
-LRESULT CFactoryTestI8SMTDlg::OnTnpAutoResult(WPARAM wParam, LPARAM lParam)
-{
-    if (wParam == AUTO_TEST_KEY_PASS ) m_nKeyTestResult     = 1;
-    if (wParam == AUTO_TEST_LSEN_PASS) m_nLSensorTestResult = 1;
-    GetDlgItem(IDC_BTN_KEY_RESULT    )->SetWindowText(m_nKeyTestResult     == 1 ? "PASS" : "NG");
-    GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText(m_nLSensorTestResult == 1 ? "PASS" : "NG");
-    UpdateData(FALSE);
     return 0;
 }
 

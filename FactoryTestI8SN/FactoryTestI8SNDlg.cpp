@@ -139,14 +139,16 @@ void CFactoryTestI8SNDlg::DoDeviceTest()
         m_strTestInfo   = "正在写号 ...\r\n";
         m_strTestResult = "正在写号";
 
-        tnp_set_snmac(m_pTnpContext, m_strCurSN.GetBuffer(), NULL);
+        tnp_set_sn(m_pTnpContext, m_strCurSN.GetBuffer());
         m_strCurSN .ReleaseBuffer();
         PostMessage(WM_TNP_UPDATE_UI);
 
-        char sn[65], mac[13];
-        tnp_get_snmac(m_pTnpContext, sn, sizeof(sn), mac, sizeof(mac));
-        m_bResultBurnSN  = strcmp(sn , m_strCurSN ) == 0 ? 1 : 0;
-        m_strCurMac      = mac;
+        char sn [65];
+        char mac[18];
+        tnp_get_sn (m_pTnpContext, sn , sizeof(sn ));
+        tnp_get_mac(m_pTnpContext, mac, sizeof(mac));
+        m_bResultBurnSN = strcmp(sn, m_strCurSN ) == 0 ? 1 : 0;
+        m_strCurMac     = mac;
     }
 
     if (!m_bTestCancel) {
@@ -459,7 +461,7 @@ void CFactoryTestI8SNDlg::OnEnChangeEdtScanSn()
 
     // TODO:  Add your control notification handler code here
     UpdateData(TRUE);
-    if (m_strScanSN.GetLength() >= 22) {
+    if (m_strScanSN.GetLength() >= 20) {
         m_strCurSN  = m_strScanSN.Trim();
         m_strScanSN = "";
         UpdateData(FALSE);

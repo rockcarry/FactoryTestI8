@@ -102,6 +102,7 @@ CFactoryTestI8FullDlg::CFactoryTestI8FullDlg(CWnd* pParent /*=NULL*/)
     , m_strSnMacVer(_T("实际 SN ： \r\n实际 MAC：\r\n实际 VER："))
     , m_pTnpContext(NULL)
     , m_pFanPlayer(NULL)
+    , m_hTestThread(NULL)
 {
     m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -133,7 +134,6 @@ BEGIN_MESSAGE_MAP(CFactoryTestI8FullDlg, CDialog)
     ON_MESSAGE(WM_TNP_UPDATE_UI   , &CFactoryTestI8FullDlg::OnTnpUpdateUI   )
     ON_MESSAGE(WM_TNP_DEVICE_FOUND, &CFactoryTestI8FullDlg::OnTnpDeviceFound)
     ON_MESSAGE(WM_TNP_DEVICE_LOST , &CFactoryTestI8FullDlg::OnTnpDeviceLost )
-    ON_MESSAGE(WM_TNP_AUTO_RESULT , &CFactoryTestI8FullDlg::OnTnpAutoResult )
     ON_BN_CLICKED(IDC_BTN_LED_RESULT, &CFactoryTestI8FullDlg::OnBnClickedBtnLedResult)
     ON_BN_CLICKED(IDC_BTN_SPK_RESULT, &CFactoryTestI8FullDlg::OnBnClickedBtnSpkResult)
     ON_BN_CLICKED(IDC_BTN_MIC_RESULT, &CFactoryTestI8FullDlg::OnBnClickedBtnMicResult)
@@ -246,7 +246,7 @@ void CFactoryTestI8FullDlg::OnDestroy()
 {
     CDialog::OnDestroy();
 
-    player_close(m_pFanPlayer);
+    StopDeviceTest();
     tnp_disconnect(m_pTnpContext);
     tnp_free(m_pTnpContext);
     log_done();
@@ -364,6 +364,98 @@ void CFactoryTestI8FullDlg::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemSt
     CDialog::OnDrawItem(nIDCtl, lpDrawItemStruct);
 }
 
+
+static DWORD WINAPI DeviceTestThreadProc(LPVOID pParam)
+{
+    CFactoryTestI8FullDlg *dlg = (CFactoryTestI8FullDlg*)pParam;
+    dlg->DoDeviceTest();
+    return 0;
+}
+
+void CFactoryTestI8FullDlg::DoDeviceTest()
+{
+    DWORD tick_next = 0;
+    int   tick_sleep= 0;
+    char strVer   [128];
+    char strSN    [65 ];
+    char strMAC   [18 ];
+    char strResult[256];
+
+    tnp_get_sn   (m_pTnpContext, strSN , sizeof(strSN ));
+    tnp_get_mac  (m_pTnpContext, strMAC, sizeof(strMAC));
+    tnp_get_fwver(m_pTnpContext, strVer, sizeof(strVer));
+    m_nSnTestResult      = strcmp(strSN , m_strCurSN ) == 0 ? 1 : 0;
+    m_nMacTestResult     = strcmp(strMAC, m_strCurMac) == 0 ? 1 : 0;
+    m_nVersionTestResult = strcmp(strVer, m_strFwVer ) == 0 ? 1 : 0;
+
+    GetDlgItem(IDC_BTN_WIFI_RESULT   )->SetWindowText(m_nWiFiTestResult    ? "PASS" : "NG");
+    GetDlgItem(IDC_BTN_SN_RESULT     )->SetWindowText(m_nSnTestResult      ? "PASS" : "NG");
+    GetDlgItem(IDC_BTN_MAC_RESULT    )->SetWindowText(m_nMacTestResult     ? "PASS" : "NG");
+    GetDlgItem(IDC_BTN_VERSION_RESULT)->SetWindowText(m_nVersionTestResult ? "PASS" : "NG");
+
+    m_strSnMacVer.Format("实际 SN ：%s\r\n实际 MAC：%s\r\n实际 VER：%s", CString(strSN).Trim(), CString(strMAC).Trim(), CString(strVer).Trim());
+    m_strTestInfo = "测试完成，请上传...";
+    PostMessage(WM_TNP_UPDATE_UI);
+
+    if (strcmp(m_strCamType, "rtsp") == 0) {
+        PLAYER_INIT_PARAMS params = {0};
+        char  url[MAX_PATH];
+        params.init_timeout   = 1000;
+        params.auto_reconnect = 1000;
+        params.rtsp_transport = 2;
+        sprintf(url, "rtsp://%s/video0", m_strDeviceIP);
+        if (m_pFanPlayer) player_close(m_pFanPlayer);
+        m_pFanPlayer = player_open(url, GetSafeHwnd(), &params);
+    }
+
+    tick_next = GetTickCount();
+    while (!m_bTestCancel && (m_nKeyTestResult == -1 || m_nLSensorTestResult == -1)) {
+        tick_next += 1000;
+        tnp_get_result(m_pTnpContext, strResult, sizeof(strResult));
+        if (strResult[1] == 'y' && m_nKeyTestResult == -1) {
+            m_nKeyTestResult = 1; GetDlgItem(IDC_BTN_KEY_RESULT)->SetWindowText("PASS");
+        }
+        if (strResult[2] == 'y' && m_nLSensorTestResult == -1) {
+            m_nLSensorTestResult = 1; GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText("PASS");
+        }
+        PostMessage(WM_TNP_UPDATE_UI);
+        tick_sleep = tick_next - GetTickCount();
+        if (tick_sleep > 0) Sleep(tick_sleep);
+    }
+
+    CloseHandle(m_hTestThread);
+    m_hTestThread = NULL;
+}
+
+void CFactoryTestI8FullDlg::StartDeviceTest()
+{
+    if (m_hTestThread) {
+        log_printf("device test is running, please wait test done !\n");
+        return;
+    }
+
+    m_nWiFiTestResult = 1;
+    m_bTestCancel = FALSE;
+    m_hTestThread = CreateThread(NULL, 0, DeviceTestThreadProc, this, 0, NULL);
+}
+
+void CFactoryTestI8FullDlg::StopDeviceTest()
+{
+    m_bTestCancel = TRUE;
+    if (m_hTestThread) {
+        WaitForSingleObject(m_hTestThread, -1);
+    }
+
+    if (m_pFanPlayer) {
+        player_close(m_pFanPlayer);
+        m_pFanPlayer = NULL;
+    }
+    RECT rect;
+    GetClientRect (&rect);
+    rect.left = 218;
+    InvalidateRect(&rect, TRUE);
+}
+
 void CFactoryTestI8FullDlg::OnEnChangeEdtScanSn()
 {
     // TODO: If this is a RICHEDIT control, the control will not
@@ -373,7 +465,7 @@ void CFactoryTestI8FullDlg::OnEnChangeEdtScanSn()
 
     // TODO: Add your control notification handler code here
     UpdateData(TRUE);
-    if (m_strScanSN.GetLength() >= 22) {
+    if (m_strScanSN.GetLength() >= 20) {
         m_strCurSN  = m_strScanSN.Trim();
         m_strScanSN = "";
         m_bSnScaned = TRUE;
@@ -420,35 +512,8 @@ void CFactoryTestI8FullDlg::OnEnChangeEdtScanSn()
             strcpy(m_strDeviceIP, inet_ntoa(addr));
             m_strConnectState.Format(TEXT("已连接 %s"), CString(m_strDeviceIP));
 
-            if (1) {
-                char strSN[65], strMAC[13], strVer[128];
-                tnp_get_snmac  (m_pTnpContext, strSN, sizeof(strSN), strMAC, sizeof(strMAC));
-                tnp_get_fwver  (m_pTnpContext, strVer, sizeof(strVer));
-                tnp_lsen_testen(m_pTnpContext);
-                m_nSnTestResult      = strcmp(strSN , m_strCurSN ) == 0 ? 1 : 0;
-                m_nMacTestResult     = strcmp(strMAC, m_strCurMac) == 0 ? 1 : 0;
-                m_nVersionTestResult = strstr(strVer, m_strFwVer) && strstr(strVer, m_strAppVer) ? 1 : 0;
-
-                m_strSnMacVer.Format("实际 SN ：%s\r\n实际 MAC：%s\r\n实际 VER：%s", CString(strSN).Trim(), CString(strMAC).Trim(), CString(strVer).Trim());
-//              GetDlgItem(IDC_BTN_KEY_RESULT    )->SetWindowText(m_nKeyTestResult     ? "PASS" : "NG");
-//              GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText(m_nLSensorTestResult ? "PASS" : "NG");
-                GetDlgItem(IDC_BTN_SN_RESULT     )->SetWindowText(m_nSnTestResult      ? "PASS" : "NG");
-                GetDlgItem(IDC_BTN_MAC_RESULT    )->SetWindowText(m_nMacTestResult     ? "PASS" : "NG");
-                GetDlgItem(IDC_BTN_VERSION_RESULT)->SetWindowText(m_nVersionTestResult ? "PASS" : "NG");
-                m_strTestInfo = "测试完成，请上传...";
-                if (strcmp(m_strCamType, "rtsp") == 0) {
-                    PLAYER_INIT_PARAMS params = {0};
-                    char  url[MAX_PATH];
-                    params.init_timeout   = 1000;
-                    params.auto_reconnect = 1000;
-                    params.rtsp_transport = 2;
-                    sprintf(url, "rtsp://%s:6887/live", m_strDeviceIP);
-                    if (m_pFanPlayer) player_close(m_pFanPlayer);
-                    m_pFanPlayer = player_open(url, GetSafeHwnd(), &params);
-                }
-            } else {
-                m_strTestInfo = "请重新扫码...";
-            }
+            // start test
+            StartDeviceTest();
         } else {
             m_strTestInfo = "请打开设备...\r\n";
         }
@@ -480,57 +545,18 @@ LRESULT CFactoryTestI8FullDlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
 
         strcpy(m_strDeviceIP, inet_ntoa(addr));
         m_strConnectState.Format(TEXT("已连接 %s"), CString(m_strDeviceIP));
-
-        if (1) {
-            char strSN[65], strMAC[13], strVer[128];
-            tnp_get_snmac  (m_pTnpContext, strSN, sizeof(strSN), strMAC, sizeof(strMAC));
-            tnp_get_fwver  (m_pTnpContext, strVer, sizeof(strVer));
-            tnp_lsen_testen(m_pTnpContext);
-            m_nSnTestResult      = strcmp(strSN , m_strCurSN ) == 0 ? 1 : 0;
-            m_nMacTestResult     = strcmp(strMAC, m_strCurMac) == 0 ? 1 : 0;
-            m_nVersionTestResult = strstr(strVer, m_strFwVer) && strstr(strVer, m_strAppVer) ? 1 : 0;
-
-            m_strSnMacVer.Format("实际 SN ：%s\r\n实际 MAC：%s\r\n实际 VER：%s", CString(strSN).Trim(), CString(strMAC).Trim(), CString(strVer).Trim());
-            GetDlgItem(IDC_BTN_KEY_RESULT    )->SetWindowText(m_nKeyTestResult     ? "PASS" : "NG");
-//          GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText(m_nLSensorTestResult ? "PASS" : "NG");
-//          GetDlgItem(IDC_BTN_SN_RESULT     )->SetWindowText(m_nSnTestResult      ? "PASS" : "NG");
-            GetDlgItem(IDC_BTN_MAC_RESULT    )->SetWindowText(m_nMacTestResult     ? "PASS" : "NG");
-            GetDlgItem(IDC_BTN_VERSION_RESULT)->SetWindowText(m_nVersionTestResult ? "PASS" : "NG");
-            m_strTestInfo = "测试完成，请上传...";
-
-            if (strcmp(m_strCamType, "rtsp") == 0) {
-                PLAYER_INIT_PARAMS params = {0};
-                char  url[MAX_PATH];
-                params.init_timeout   = 1000;
-                params.auto_reconnect = 1000;
-                params.rtsp_transport = 2;
-                sprintf(url, "rtsp://%s:6887/live", m_strDeviceIP);
-                if (m_pFanPlayer) player_close(m_pFanPlayer);
-                m_pFanPlayer = player_open(url, GetSafeHwnd(), &params);
-            }
-        }
-
-        m_strTestInfo = "测试完成请上传结果！";
-//      m_bSnScaned   = FALSE;
-
         UpdateData(FALSE);
+
+        // start test
+        StartDeviceTest();
     }
 
     return 0;
 }
 
-LRESULT CFactoryTestI8FullDlg::OnTnpAutoResult(WPARAM wParam, LPARAM lParam)
-{
-    if (wParam == AUTO_TEST_KEY_PASS ) m_nKeyTestResult     = 1;
-    if (wParam == AUTO_TEST_LSEN_PASS) m_nLSensorTestResult = 1;
-    GetDlgItem(IDC_BTN_KEY_RESULT    )->SetWindowText(m_nKeyTestResult     == 1 ? "PASS" : "NG");
-    GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText(m_nLSensorTestResult == 1 ? "PASS" : "NG");
-    UpdateData(FALSE);
-    return 0;
-}
-
 LRESULT CFactoryTestI8FullDlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
 {
+    StopDeviceTest();
     tnp_disconnect(m_pTnpContext);
     m_strConnectState   = "等待设备连接...";
     m_strTestInfo       = "请打开设备...\r\n";
@@ -722,16 +748,6 @@ void CFactoryTestI8FullDlg::OnBnClickedBtnUploadReport()
         } else {
             m_strTestInfo = "上传测试结果成功！";
         }
-        /*
-        if (m_strTestInfo.Find("失败") == -1 && strTestResult.Compare("OK") == 0) {
-            if (tnp_enter_aging(m_pTnpContext) == 0) {
-                AfxMessageBox(m_strTestInfo + "\r\n" + strErrMsg);
-            } else {
-                AfxMessageBox(m_strTestInfo + "\r\n进入老化模式失败！\r\n" + strErrMsg);
-            }
-        } else {
-            AfxMessageBox(m_strTestInfo + "\r\n" + strErrMsg);
-        }*/
     }
     m_bSnScaned = FALSE;
 #endif
