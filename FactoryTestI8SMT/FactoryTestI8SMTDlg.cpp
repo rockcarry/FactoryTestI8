@@ -122,6 +122,7 @@ BEGIN_MESSAGE_MAP(CFactoryTestI8SMTDlg, CDialog)
     ON_BN_CLICKED(IDC_BTN_NEXT_DEVICE, &CFactoryTestI8SMTDlg::OnBnClickedBtnNextDevice)
     ON_BN_CLICKED(IDC_BTN_SPK_RESULT, &CFactoryTestI8SMTDlg::OnBnClickedBtnSpkResult)
     ON_BN_CLICKED(IDC_BTN_MIC_RESULT, &CFactoryTestI8SMTDlg::OnBnClickedBtnMicResult)
+    ON_BN_CLICKED(IDC_BTN_WIFI_RESULT, &CFactoryTestI8SMTDlg::OnBnClickedBtnWifiResult)
 END_MESSAGE_MAP()
 
 
@@ -308,7 +309,6 @@ void CFactoryTestI8SMTDlg::DoDeviceTest()
     char strVersion[128];
     char strResult [256];
     tnp_get_fwver(m_pTnpContext, strVersion, sizeof(strVersion));
-    tnp_test_spkmic(m_pTnpContext);
     m_nVersionTestResult = strcmp(strVersion, m_strFwVer) == 0 ? 1 : 0;
 
 //  tnp_test_auto(m_pTnpContext, NULL, NULL, &m_nSpkMicTestResult, NULL);
@@ -329,6 +329,8 @@ void CFactoryTestI8SMTDlg::DoDeviceTest()
         m_pFanPlayer = player_open(url, GetSafeHwnd(), &params);
     }
 
+    for (int i=0; i<30&&!m_bTestCancel; i++) Sleep(100);
+    tnp_test_spkmic(m_pTnpContext);
     tick_next = GetTickCount();
     while (!m_bTestCancel && (m_nSpkTestResult == -1 || m_nMicTestResult == -1 || m_nKeyTestResult == -1 || m_nLSensorTestResult == -1)) {
         tick_next += 1000;
@@ -348,8 +350,7 @@ void CFactoryTestI8SMTDlg::DoDeviceTest()
             m_nLSensorTestResult = 1; GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText("PASS");
         }
         PostMessage(WM_TNP_UPDATE_UI);
-        tick_sleep = tick_next - GetTickCount();
-        if (tick_sleep > 0) Sleep(tick_sleep);
+        while (!m_bTestCancel && tick_next - GetTickCount() > 0) Sleep(10);
     }
 
     CloseHandle(m_hTestThread);
@@ -569,6 +570,18 @@ void CFactoryTestI8SMTDlg::OnBnClickedBtnMicResult()
     UpdateData(FALSE);
 }
 
+void CFactoryTestI8SMTDlg::OnBnClickedBtnWifiResult()
+{
+    if (m_nWiFiTestResult != 1) {
+        m_nWiFiTestResult = 1;
+        GetDlgItem(IDC_BTN_WIFI_RESULT)->SetWindowText("PASS");
+    } else {
+        m_nWiFiTestResult = 0;
+        GetDlgItem(IDC_BTN_WIFI_RESULT)->SetWindowText("NG");
+    }
+    UpdateData(FALSE);
+}
+
 void CFactoryTestI8SMTDlg::OnBnClickedBtnNextDevice()
 {
     OnTnpDeviceLost(0, inet_addr(m_strDeviceIP));
@@ -588,6 +601,7 @@ void CFactoryTestI8SMTDlg::OnSize(UINT nType, int cx, int cy)
         player_setrect(m_pFanPlayer, 0, 218, 0, rect.right - 218, rect.bottom);
     }
 }
+
 
 
 

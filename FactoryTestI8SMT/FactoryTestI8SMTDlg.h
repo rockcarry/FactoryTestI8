@@ -42,6 +42,7 @@ protected:
     afx_msg void OnBnClickedBtnLsensorResult();
     afx_msg void OnBnClickedBtnSpkResult();
     afx_msg void OnBnClickedBtnMicResult();
+    afx_msg void OnBnClickedBtnWifiResult();
     afx_msg void OnBnClickedBtnNextDevice();
     DECLARE_MESSAGE_MAP()
 

@@ -44,7 +44,7 @@ static DWORD WINAPI DeviceDetectThreadProc(LPVOID pParam)
     servaddr.sin_family      = AF_INET;
     servaddr.sin_addr.s_addr = get_localhost_ip();
     servaddr.sin_port        = htons(TNP_UDP_PORT);
-    servaddr.sin_addr.S_un.S_un_b.s_b4 = 88;
+    servaddr.sin_addr.S_un.S_un_b.s_b4 = 255;
 
     // open & config socket
     sock = socket(AF_INET, SOCK_DGRAM, 0);

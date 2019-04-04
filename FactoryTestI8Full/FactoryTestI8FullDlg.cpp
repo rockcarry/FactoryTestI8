@@ -419,8 +419,7 @@ void CFactoryTestI8FullDlg::DoDeviceTest()
             m_nLSensorTestResult = 1; GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText("PASS");
         }
         PostMessage(WM_TNP_UPDATE_UI);
-        tick_sleep = tick_next - GetTickCount();
-        if (tick_sleep > 0) Sleep(tick_sleep);
+        while (!m_bTestCancel && tick_next - GetTickCount() > 0) Sleep(10);
     }
 
     CloseHandle(m_hTestThread);
