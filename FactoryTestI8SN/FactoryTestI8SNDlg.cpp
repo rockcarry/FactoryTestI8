@@ -313,6 +313,7 @@ BEGIN_MESSAGE_MAP(CFactoryTestI8SNDlg, CDialog)
     ON_MESSAGE(WM_TNP_UPDATE_UI   , &CFactoryTestI8SNDlg::OnTnpUpdateUI   )
     ON_MESSAGE(WM_TNP_DEVICE_FOUND, &CFactoryTestI8SNDlg::OnTnpDeviceFound)
     ON_MESSAGE(WM_TNP_DEVICE_LOST , &CFactoryTestI8SNDlg::OnTnpDeviceLost )
+    ON_BN_CLICKED(IDC_BTN_NEXT_DEVICE, &CFactoryTestI8SNDlg::OnBnClickedBtnNextDevice)
 END_MESSAGE_MAP()
 
 
@@ -570,4 +571,9 @@ BOOL CFactoryTestI8SNDlg::PreTranslateMessage(MSG *pMsg)
         }
     }
     return CDialog::PreTranslateMessage(pMsg);
+}
+
+void CFactoryTestI8SNDlg::OnBnClickedBtnNextDevice()
+{
+    OnTnpDeviceLost(0, inet_addr(m_strDeviceIP));
 }

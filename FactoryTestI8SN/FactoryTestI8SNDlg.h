@@ -36,6 +36,7 @@ protected:
     afx_msg LRESULT OnTnpDeviceFound(WPARAM wParam, LPARAM lParam);
     afx_msg LRESULT OnTnpDeviceLost (WPARAM wParam, LPARAM lParam);
     afx_msg void    OnEnChangeEdtScanSn();
+    afx_msg void    OnBnClickedBtnNextDevice();
     DECLARE_MESSAGE_MAP()
 
 private:
