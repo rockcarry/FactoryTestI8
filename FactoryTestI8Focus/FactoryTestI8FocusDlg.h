@@ -41,6 +41,7 @@ protected:
     afx_msg void OnBnClickedBtnTestResult2();
     afx_msg void OnBnClickedBtnTestResult3();
     afx_msg void OnBnClickedBtnUpload();
+    afx_msg void OnBnClickedBtnSwitchFullscreen();
     DECLARE_MESSAGE_MAP()
 
 private:
@@ -71,6 +72,7 @@ private:
     int     m_nFocusTestResult2;
     int     m_nFocusTestResult3;
     CFont   m_fntTestResult;
+    BOOL    m_bFullScreen;
 
 private:
     int GetBackColorByCtrlId(int id);

@@ -16,14 +16,23 @@
 #define IDC_BTN_TEST_RESULT2            1008
 #define IDC_BTN_TEST_RESULT3            1009
 #define IDC_TXT_MES_GONGDAN             1010
+#define IDC_BTN_SWITCH_FULLSCREEN       1011
+#define IDC_STATIC_1                    1012
+#define IDC_STATIC_2                    1013
+#define IDC_STATIC_3                    1014
+#define IDC_STATIC_4                    1015
+#define IDC_STATIC_5                    1016
+#define IDC_STATIC_6                    1017
+#define IDC_STATIC_7                    1018
+#define IDC_STATIC_8                    1019
 
 // Next default values for new objects
-//
+// 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        129
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1005
+#define _APS_NEXT_CONTROL_VALUE         1020
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
