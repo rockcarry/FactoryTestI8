@@ -99,6 +99,7 @@ CFactoryTestI8FocusDlg::CFactoryTestI8FocusDlg(CWnd* pParent /*=NULL*/)
     , m_strCurSN(_T(""))
     , m_strTestInfo(_T(""))
     , m_pFanPlayer(NULL)
+    , m_bFullScreen(FALSE)
 {
     m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -130,6 +131,7 @@ BEGIN_MESSAGE_MAP(CFactoryTestI8FocusDlg, CDialog)
     ON_BN_CLICKED(IDC_BTN_TEST_RESULT2, &CFactoryTestI8FocusDlg::OnBnClickedBtnTestResult2)
     ON_BN_CLICKED(IDC_BTN_TEST_RESULT3, &CFactoryTestI8FocusDlg::OnBnClickedBtnTestResult3)
     ON_BN_CLICKED(IDC_BTN_UPLOAD, &CFactoryTestI8FocusDlg::OnBnClickedBtnUpload)
+    ON_BN_CLICKED(IDC_BTN_SWITCH_FULLSCREEN, &CFactoryTestI8FocusDlg::OnBnClickedBtnSwitchFullscreen)
 END_MESSAGE_MAP()
 
 
@@ -209,10 +211,12 @@ BOOL CFactoryTestI8FocusDlg::OnInitDialog()
             params.video_vwidth     = 1280;
             params.video_vheight    = 720;
             params.video_frame_rate = 30;
+            params.avts_syncmode    = AVSYNC_MODE_LIVE;
             sprintf(url_gb2312, "dshow://video=%s", m_strUVCDev);
             MultiByteToWideChar(CP_ACP , 0, url_gb2312 , -1, url_unicode, MAX_PATH);
             WideCharToMultiByte(CP_UTF8, 0, url_unicode, -1, url_utf8, MAX_PATH, NULL, NULL);
             m_pFanPlayer = player_open(url_utf8, GetSafeHwnd(), &params);
+            SetTimer(TIMER_ID_DEFINITION, 200, NULL);
         }
     }
     return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
@@ -222,6 +226,7 @@ void CFactoryTestI8FocusDlg::OnDestroy()
 {
     CDialog::OnDestroy();
 
+    KillTimer(TIMER_ID_DEFINITION);
     player_close(m_pFanPlayer);
     tnp_disconnect(m_pTnpContext);
     tnp_free(m_pTnpContext);
@@ -378,10 +383,11 @@ BOOL CFactoryTestI8FocusDlg::PreTranslateMessage(MSG *pMsg)
 {
     if (pMsg->message == WM_KEYDOWN || pMsg->message == WM_KEYUP) {
         switch (pMsg->wParam) {
-        case 'Z'     : if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnTestResult1(); return TRUE;
-        case 'X'     : if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnTestResult2(); return TRUE;
-        case 'C'     : if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnTestResult3(); return TRUE;
-        case VK_SPACE: if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnUpload     (); return TRUE;
+        case 'Z'     : if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnTestResult1     (); return TRUE;
+        case 'X'     : if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnTestResult2     (); return TRUE;
+        case 'C'     : if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnTestResult3     (); return TRUE;
+        case 'F'     : if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnSwitchFullscreen(); return TRUE;
+        case VK_SPACE: if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnUpload          (); return TRUE;
         }
     } else if (pMsg->message == MSG_FANPLAYER) {
         if (pMsg->wParam == MSG_OPEN_DONE) {
@@ -390,7 +396,7 @@ BOOL CFactoryTestI8FocusDlg::PreTranslateMessage(MSG *pMsg)
             RECT rect = {0};
             int  mode = VIDEO_MODE_STRETCHED;
             GetClientRect(&rect);
-            player_setrect (m_pFanPlayer, 0, 218, 0, rect.right - 218, rect.bottom);
+            player_setrect (m_pFanPlayer, 0, m_bFullScreen ? 10 : 218, 0, rect.right - (m_bFullScreen ? 10 : 218), rect.bottom);
             player_setparam(m_pFanPlayer, PARAM_VIDEO_MODE, &mode);
         }
         if (pMsg->wParam == MSG_STREAM_DISCONNECT) {
@@ -504,6 +510,40 @@ void CFactoryTestI8FocusDlg::OnBnClickedBtnUpload()
     OnTnpDeviceLost(0, inet_addr(m_strDeviceIP));
 }
 
+void CFactoryTestI8FocusDlg::OnBnClickedBtnSwitchFullscreen()
+{
+    m_bFullScreen = !m_bFullScreen;
+
+    RECT rect = {0};
+    GetClientRect(&rect);
+    player_setrect(m_pFanPlayer, 0, m_bFullScreen ? 10 : 218, 0, rect.right - (m_bFullScreen ? 10 : 218), rect.bottom);
+
+    GetDlgItem(IDC_EDT_SCAN_SN     )->ShowWindow(!m_bFullScreen);
+    GetDlgItem(IDC_EDT_CUR_SN      )->ShowWindow(!m_bFullScreen);
+    GetDlgItem(IDC_TXT_TEST_INFO   )->ShowWindow(!m_bFullScreen);
+    GetDlgItem(IDC_BTN_TEST_RESULT1)->ShowWindow(!m_bFullScreen);
+    GetDlgItem(IDC_BTN_TEST_RESULT2)->ShowWindow(!m_bFullScreen);
+    GetDlgItem(IDC_BTN_TEST_RESULT3)->ShowWindow(!m_bFullScreen);
+    GetDlgItem(IDC_BTN_UPLOAD      )->ShowWindow(!m_bFullScreen);
+    GetDlgItem(IDC_TXT_MES_RESOURCE)->ShowWindow(!m_bFullScreen);
+    GetDlgItem(IDC_TXT_MES_GONGDAN )->ShowWindow(!m_bFullScreen);
+    GetDlgItem(IDC_TXT_MES_LOGIN   )->ShowWindow(!m_bFullScreen);
+    GetDlgItem(IDC_STATIC_1        )->ShowWindow(!m_bFullScreen);
+    GetDlgItem(IDC_STATIC_2        )->ShowWindow(!m_bFullScreen);
+    GetDlgItem(IDC_STATIC_3        )->ShowWindow(!m_bFullScreen);
+    GetDlgItem(IDC_STATIC_4        )->ShowWindow(!m_bFullScreen);
+    GetDlgItem(IDC_STATIC_5        )->ShowWindow(!m_bFullScreen);
+    GetDlgItem(IDC_STATIC_6        )->ShowWindow(!m_bFullScreen);
+    GetDlgItem(IDC_STATIC_7        )->ShowWindow(!m_bFullScreen);
+    GetDlgItem(IDC_STATIC_8        )->ShowWindow(!m_bFullScreen);
+    GetDlgItem(IDC_BTN_SWITCH_FULLSCREEN)->MoveWindow(m_bFullScreen ? 0 : 206, 248, 12, 180);
+    GetDlgItem(IDC_BTN_SWITCH_FULLSCREEN)->SetWindowText(m_bFullScreen ? ">" : "<");
+
+    rect.left  = rect.top = 0;
+    rect.right = 218;
+    if (!m_bFullScreen) InvalidateRect(&rect, TRUE);
+}
+
 void CFactoryTestI8FocusDlg::OnTimer(UINT_PTR nIDEvent)
 {
     switch (nIDEvent) {
@@ -529,7 +569,7 @@ void CFactoryTestI8FocusDlg::OnSize(UINT nType, int cx, int cy)
     if (nType != SIZE_MINIMIZED) {
         RECT rect = {0};
         GetClientRect (&rect);
-        player_setrect(m_pFanPlayer, 0, 218, 0, rect.right - 218, rect.bottom);
+        player_setrect(m_pFanPlayer, 0, m_bFullScreen ? 10 : 218, 0, rect.right - (m_bFullScreen ? 10 : 218), rect.bottom);
     }
 }
 
