@@ -134,11 +134,13 @@ typedef struct {
     int  video_deinterlace;        // wr 视频反交错使能
     int  video_rotate;             // wr 视频旋转角度
     int  video_codecid;            // wr 视频解码器的 codecid
+    int  video_buffer_num;         // w  视频缓冲个数
 
     int  audio_channels;           // r  音频通道数
     int  audio_sample_rate;        // r  音频采样率
     int  audio_stream_total;       // r  音频流总数
     int  audio_stream_cur;         // wr 当前音频流
+    int  audio_buffer_num;         // w  音频缓冲个数
 
     int  subtitle_stream_total;    // r  字幕流总数
     int  subtitle_stream_cur;      // wr 当前字幕流
@@ -165,8 +167,10 @@ typedef struct { // for internal use only
     LONGLONG start_pts ;
     LONGLONG apts;  // current apts
     LONGLONG vpts;  // current vpts
-    int      asemv; // available audio packet number in pktqueue
-    int      vsemv; // available video packet number in pktqueue
+    int      apktn; // available audio packet number in pktqueue
+    int      vpktn; // available video packet number in pktqueue
+    int      abufn;
+    int      vbufn;
     void    *winmsg;
 } CMNVARS;
 //-- player common variables

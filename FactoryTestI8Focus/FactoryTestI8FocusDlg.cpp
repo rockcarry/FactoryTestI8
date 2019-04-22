@@ -349,7 +349,7 @@ void CFactoryTestI8FocusDlg::OnEnChangeEdtScanSn()
 
     // TODO:  Add your control notification handler code here
     UpdateData(TRUE);
-    if (m_strScanSN.GetLength() >= 22) {
+    if (m_strScanSN.GetLength() >= 20) {
         m_strCurSN  = m_strScanSN.Trim();
         m_strScanSN = "";
         m_bSnScaned = TRUE;

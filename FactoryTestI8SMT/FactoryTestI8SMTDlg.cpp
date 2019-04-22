@@ -182,9 +182,9 @@ BOOL CFactoryTestI8SMTDlg::OnInitDialog()
         if (strcmp(m_strCamType, "uvc") == 0) {
             params.init_timeout     = 1000;
             params.auto_reconnect   = 1000;
-            params.video_vwidth     = 1280;
-            params.video_vheight    = 720;
-            params.video_frame_rate = 30;
+            params.video_vwidth     = 1920;
+            params.video_vheight    = 1080;
+            params.video_frame_rate = 25;
             sprintf(url_gb2312, "dshow://video=%s", m_strUVCDev);
             MultiByteToWideChar(CP_ACP , 0, url_gb2312 , -1, url_unicode, MAX_PATH);
             WideCharToMultiByte(CP_UTF8, 0, url_unicode, -1, url_utf8, MAX_PATH, NULL, NULL);
@@ -321,9 +321,10 @@ void CFactoryTestI8SMTDlg::DoDeviceTest()
     if (strcmp(m_strCamType, "rtsp") == 0) {
         PLAYER_INIT_PARAMS params = {0};
         char  url[MAX_PATH];
-        params.init_timeout   = 1000;
-        params.auto_reconnect = 1000;
-        params.rtsp_transport = 2;
+        params.init_timeout     = 5000;
+        params.auto_reconnect   = 5000;
+        params.rtsp_transport   = 2;
+        params.audio_buffer_num = 8;
         sprintf(url, "rtsp://%s/video0", m_strDeviceIP);
         if (m_pFanPlayer) player_close(m_pFanPlayer);
         m_pFanPlayer = player_open(url, GetSafeHwnd(), &params);
