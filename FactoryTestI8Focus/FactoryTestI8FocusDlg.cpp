@@ -583,7 +583,8 @@ LRESULT CFactoryTestI8FocusDlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
     }
 
     struct in_addr addr;
-    int ret = tnp_connect(m_pTnpContext, NULL, &addr);
+    int ret = tnp_connect(m_pTnpContext, m_strCurSN.GetBuffer(), &addr);
+    m_strCurSN.ReleaseBuffer();
     if (ret == 0) {
         strcpy(m_strDeviceIP, inet_ntoa(addr));
     }

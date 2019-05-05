@@ -45,7 +45,7 @@ static void parse_params(const char *str, const char *key, char *val)
     }
 }
 
-static int load_config_from_file(char *fwver, char *appver, char *log, char *uvc, char *uac, char *cam)
+static int load_config_from_file(char *fwver, char *appver, char *log, char *uid, char *uvc, char *uac, char *cam)
 {
     char  file[MAX_PATH];
     FILE *fp = NULL;
@@ -67,6 +67,7 @@ static int load_config_from_file(char *fwver, char *appver, char *log, char *uvc
             parse_params(buf, "fw_ver"  , fwver );
             parse_params(buf, "app_ver" , appver);
             parse_params(buf, "logfile" , log);
+            parse_params(buf, "ft_uid"  , uid);
             parse_params(buf, "uvcdev"  , uvc);
             parse_params(buf, "uacdev"  , uac);
             parse_params(buf, "camtype" , cam);
@@ -148,7 +149,7 @@ BOOL CFactoryTestI8SMTDlg::OnInitDialog()
     strcpy(m_strUACDev    , ""       );
     strcpy(m_strCamType   , "uvc"    );
     strcpy(m_strDeviceIP  , ""       );
-    int ret = load_config_from_file(m_strFwVer, m_strAppVer, m_strLogFile, m_strUVCDev, m_strUACDev, m_strCamType);
+    int ret = load_config_from_file(m_strFwVer, m_strAppVer, m_strLogFile, m_strFtUid, m_strUVCDev, m_strUACDev, m_strCamType);
     if (ret != 0) {
         AfxMessageBox(TEXT("无法打开测试配置文件！"), MB_OK);
     }
@@ -401,7 +402,7 @@ LRESULT CFactoryTestI8SMTDlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
     }
 
     struct in_addr addr;
-    int ret = tnp_connect(m_pTnpContext, NULL, &addr);
+    int ret = tnp_connect(m_pTnpContext, m_strFtUid, &addr);
     if (ret == 0) {
         strcpy(m_strDeviceIP, inet_ntoa(addr));
         m_strConnectState.Format(TEXT("已连接 %s"), CString(m_strDeviceIP));

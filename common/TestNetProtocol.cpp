@@ -160,7 +160,7 @@ int tnp_connect(void *ctxt, char *sn, struct in_addr *addr)
     int i;
     
     for (i=0; i<256; i++) {
-        if (sn) {
+        if (sn && strlen(sn)) {
             if (strcmp(sn, context->device_list[i].sn) == 0) break;
         } else {
             if (strlen(context->device_list[i].sn)) break;

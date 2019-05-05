@@ -54,6 +54,7 @@ private:
     char    m_strFwVer   [32];
     char    m_strAppVer  [32];
     char    m_strLogFile [32];
+    char    m_strFtUid   [32];
     char    m_strUVCDev  [MAX_PATH];
     char    m_strUACDev  [MAX_PATH];
     char    m_strCamType [32];
