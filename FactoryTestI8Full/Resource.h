@@ -25,6 +25,7 @@
 #define IDC_BTN_VERSION_RESULT          1017
 #define IDC_BTN_UPLOAD_REPORT           1018
 #define IDC_BTN_WIFI_RESULT             1019
+#define IDC_BTN_SDCARD_RESULT           1020
 
 // Next default values for new objects
 // 

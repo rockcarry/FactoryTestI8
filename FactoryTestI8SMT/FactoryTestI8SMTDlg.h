@@ -68,6 +68,7 @@ private:
     int     m_nSpkTestResult;
     int     m_nMicTestResult;
     int     m_nVersionTestResult;
+    int     m_nSDCardTestResult;
     BOOL    m_bTestCancel;
     HANDLE  m_hTestThread;
 

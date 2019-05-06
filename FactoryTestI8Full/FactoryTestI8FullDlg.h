@@ -82,6 +82,7 @@ private:
     int     m_nSnTestResult;
     int     m_nMacTestResult;
     int     m_nVersionTestResult;
+    int     m_nSDCardTestResult;
     CFont   m_fntTestInfo;
     BOOL    m_bTestCancel;
     HANDLE  m_hTestThread;

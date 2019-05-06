@@ -215,6 +215,7 @@ BOOL CFactoryTestI8FullDlg::OnInitDialog()
     m_nSnTestResult     = -1;
     m_nMacTestResult    = -1;
     m_nVersionTestResult= -1;
+    m_nSDCardTestResult = -1;
     UpdateData(FALSE);
 
     m_pTnpContext = tnp_init(GetSafeHwnd());
@@ -322,6 +323,7 @@ int CFactoryTestI8FullDlg::GetBackColorByCtrlId(int id)
     case IDC_BTN_SN_RESULT:     result = m_nSnTestResult;     break;
     case IDC_BTN_MAC_RESULT:    result = m_nMacTestResult;    break;
     case IDC_BTN_VERSION_RESULT:result = m_nVersionTestResult;break;
+    case IDC_BTN_SDCARD_RESULT: result = m_nSDCardTestResult; break;
     }
 
     switch (result) {
@@ -345,6 +347,7 @@ void CFactoryTestI8FullDlg::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemSt
     case IDC_BTN_SN_RESULT:
     case IDC_BTN_MAC_RESULT:
     case IDC_BTN_VERSION_RESULT:
+    case IDC_BTN_SDCARD_RESULT:
         {
             RECT rect;
             CDC  dc;
@@ -418,6 +421,9 @@ void CFactoryTestI8FullDlg::DoDeviceTest()
         }
         if (strResult[2] == 'y' && m_nLSensorTestResult == -1) {
             m_nLSensorTestResult = 1; GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText("PASS");
+        }
+        if (strResult[3] != '-' && m_nSDCardTestResult == -1) {
+            m_nSDCardTestResult = (strResult[3] == 'y'); GetDlgItem(IDC_BTN_SDCARD_RESULT)->SetWindowText(m_nSDCardTestResult ? "PASS" : "NG");
         }
         PostMessage(WM_TNP_UPDATE_UI);
         while (!m_bTestCancel && tick_next - GetTickCount() > 0) Sleep(10);
@@ -577,6 +583,7 @@ LRESULT CFactoryTestI8FullDlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
     m_nSnTestResult     = -1;
     m_nMacTestResult    = -1;
     m_nVersionTestResult= -1;
+    m_nSDCardTestResult = -1;
     UpdateData(FALSE);
 
     GetDlgItem(IDC_BTN_LED_RESULT    )->SetWindowText("NG");
@@ -590,6 +597,7 @@ LRESULT CFactoryTestI8FullDlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
     GetDlgItem(IDC_BTN_SN_RESULT     )->SetWindowText("NG");
     GetDlgItem(IDC_BTN_MAC_RESULT    )->SetWindowText("NG");
     GetDlgItem(IDC_BTN_VERSION_RESULT)->SetWindowText("NG");
+    GetDlgItem(IDC_BTN_SDCARD_RESULT )->SetWindowText("NG");
     return 0;
 }
 
@@ -731,8 +739,11 @@ void CFactoryTestI8FullDlg::OnBnClickedBtnUploadReport()
     if (m_nVersionTestResult != 1) {
         strErrCode += "L010,";
     }
-    if (  m_nLedTestResult == 1 && m_nCameraTestResult == 1 && m_nIRTestResult == 1 && m_nSpkTestResult == 1 && m_nMicTestResult == 1
-       && m_nWiFiTestResult == 1 && m_nKeyTestResult == 1 && m_nLSensorTestResult == 1 && m_nSnTestResult == 1 && m_nMacTestResult == 1 && m_nVersionTestResult == 1) {
+    if (m_nSDCardTestResult != 1) {
+        strErrCode += "L011,";
+    }
+    if (  m_nLedTestResult == 1 && m_nCameraTestResult == 1 && m_nIRTestResult == 1 && m_nSpkTestResult == 1 && m_nMicTestResult == 1 && m_nWiFiTestResult == 1
+       && m_nKeyTestResult == 1 && m_nLSensorTestResult == 1 && m_nSnTestResult == 1 && m_nMacTestResult == 1 && m_nVersionTestResult == 1 && m_nSDCardTestResult == 1) {
         strTestResult = "OK";
     } else {
         strTestResult = "NG";

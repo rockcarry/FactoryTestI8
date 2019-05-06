@@ -16,6 +16,7 @@
 #define IDC_BTN_MIC_RESULT              1009
 #define IDC_BTN_VERSION_RESULT          1010
 #define IDC_BTN_WIFI_RESULT             1011
+#define IDC_BTN_SDCARD_RESULT           1012
 #define IDC_BTN_NEXT_DEVICE             1028
 
 // Next default values for new objects

@@ -170,6 +170,7 @@ BOOL CFactoryTestI8SMTDlg::OnInitDialog()
     m_nSpkTestResult    = -1;
     m_nMicTestResult    = -1;
     m_nVersionTestResult= -1;
+    m_nSDCardTestResult = -1;
     UpdateData(FALSE);
 
     m_pTnpContext = tnp_init(GetSafeHwnd());
@@ -251,11 +252,10 @@ int CFactoryTestI8SMTDlg::GetBackColorByCtrlId(int id)
     case IDC_BTN_WIFI_RESULT:   result = m_nWiFiTestResult;   break;
     case IDC_BTN_KEY_RESULT:    result = m_nKeyTestResult;    break;
     case IDC_BTN_LSENSOR_RESULT:result = m_nLSensorTestResult;break;
-    case IDC_BTN_SPK_RESULT:
-        result = m_nSpkTestResult;    break;
-    case IDC_BTN_MIC_RESULT:
-        result = m_nMicTestResult;    break;
+    case IDC_BTN_SPK_RESULT:    result = m_nSpkTestResult;    break;
+    case IDC_BTN_MIC_RESULT:    result = m_nMicTestResult;    break;
     case IDC_BTN_VERSION_RESULT:result = m_nVersionTestResult;break;
+    case IDC_BTN_SDCARD_RESULT: result = m_nSDCardTestResult; break;
     }
 
     switch (result) {
@@ -277,6 +277,7 @@ void CFactoryTestI8SMTDlg::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStr
     case IDC_BTN_SPK_RESULT:
     case IDC_BTN_MIC_RESULT:
     case IDC_BTN_VERSION_RESULT:
+    case IDC_BTN_SDCARD_RESULT:
         {
             RECT rect;
             CDC  dc;
@@ -350,6 +351,9 @@ void CFactoryTestI8SMTDlg::DoDeviceTest()
         }
         if (strResult[2] == 'y' && m_nLSensorTestResult == -1) {
             m_nLSensorTestResult = 1; GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText("PASS");
+        }
+        if (strResult[3] != '-' && m_nSDCardTestResult == -1) {
+            m_nSDCardTestResult = (strResult[3] == 'y'); GetDlgItem(IDC_BTN_SDCARD_RESULT)->SetWindowText(m_nSDCardTestResult ? "PASS" : "NG");
         }
         PostMessage(WM_TNP_UPDATE_UI);
         while (!m_bTestCancel && tick_next - GetTickCount() > 0) Sleep(10);
@@ -434,6 +438,7 @@ LRESULT CFactoryTestI8SMTDlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
     m_nSpkTestResult     = -1;
     m_nMicTestResult     = -1;
     m_nVersionTestResult = -1;
+    m_nSDCardTestResult  = -1;
     tnp_disconnect(m_pTnpContext);
     UpdateData(FALSE);
 
@@ -446,6 +451,7 @@ LRESULT CFactoryTestI8SMTDlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
     GetDlgItem(IDC_BTN_SPK_RESULT    )->SetWindowText("NG");
     GetDlgItem(IDC_BTN_MIC_RESULT    )->SetWindowText("NG");
     GetDlgItem(IDC_BTN_VERSION_RESULT)->SetWindowText("NG");
+    GetDlgItem(IDC_BTN_SDCARD_RESULT )->SetWindowText("NG");
     return 0;
 }
 
@@ -603,8 +609,6 @@ void CFactoryTestI8SMTDlg::OnSize(UINT nType, int cx, int cy)
         player_setrect(m_pFanPlayer, 0, 218, 0, rect.right - 218, rect.bottom);
     }
 }
-
-
 
 
 
