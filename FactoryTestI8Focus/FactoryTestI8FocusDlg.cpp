@@ -397,7 +397,7 @@ BOOL CFactoryTestI8FocusDlg::PreTranslateMessage(MSG *pMsg)
             RECT rect = {0};
             int  mode = VIDEO_MODE_STRETCHED;
             GetClientRect(&rect);
-            player_setrect (m_pFanPlayer, 0, m_bFullScreen ? 10 : 218, 0, rect.right - (m_bFullScreen ? 10 : 218), rect.bottom);
+            player_setrect (m_pFanPlayer, 0, m_bFullScreen ? 10 : 210, 0, rect.right - (m_bFullScreen ? 10 : 210), rect.bottom);
             player_setparam(m_pFanPlayer, PARAM_VIDEO_MODE, &mode);
         }
         if (pMsg->wParam == MSG_STREAM_DISCONNECT) {
@@ -517,7 +517,7 @@ void CFactoryTestI8FocusDlg::OnBnClickedBtnSwitchFullscreen()
 
     RECT rect = {0};
     GetClientRect(&rect);
-    player_setrect(m_pFanPlayer, 0, m_bFullScreen ? 10 : 218, 0, rect.right - (m_bFullScreen ? 10 : 218), rect.bottom);
+    player_setrect(m_pFanPlayer, 0, m_bFullScreen ? 10 : 210, 0, rect.right - (m_bFullScreen ? 10 : 210), rect.bottom);
 
     GetDlgItem(IDC_EDT_SCAN_SN     )->ShowWindow(!m_bFullScreen);
     GetDlgItem(IDC_EDT_CUR_SN      )->ShowWindow(!m_bFullScreen);
@@ -537,11 +537,11 @@ void CFactoryTestI8FocusDlg::OnBnClickedBtnSwitchFullscreen()
     GetDlgItem(IDC_STATIC_6        )->ShowWindow(!m_bFullScreen);
     GetDlgItem(IDC_STATIC_7        )->ShowWindow(!m_bFullScreen);
     GetDlgItem(IDC_STATIC_8        )->ShowWindow(!m_bFullScreen);
-    GetDlgItem(IDC_BTN_SWITCH_FULLSCREEN)->MoveWindow(m_bFullScreen ? 0 : 206, 248, 12, 180);
+    GetDlgItem(IDC_BTN_SWITCH_FULLSCREEN)->MoveWindow(m_bFullScreen ? 0 : 195, 201, 12, 145);
     GetDlgItem(IDC_BTN_SWITCH_FULLSCREEN)->SetWindowText(m_bFullScreen ? ">" : "<");
 
     rect.left  = rect.top = 0;
-    rect.right = 218;
+    rect.right = 210;
     if (!m_bFullScreen) InvalidateRect(&rect, TRUE);
 }
 
@@ -570,7 +570,7 @@ void CFactoryTestI8FocusDlg::OnSize(UINT nType, int cx, int cy)
     if (nType != SIZE_MINIMIZED) {
         RECT rect = {0};
         GetClientRect (&rect);
-        player_setrect(m_pFanPlayer, 0, m_bFullScreen ? 10 : 218, 0, rect.right - (m_bFullScreen ? 10 : 218), rect.bottom);
+        player_setrect(m_pFanPlayer, 0, m_bFullScreen ? 10 : 210, 0, rect.right - (m_bFullScreen ? 10 : 210), rect.bottom);
     }
 }
 
@@ -623,7 +623,7 @@ LRESULT CFactoryTestI8FocusDlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
     }
     RECT rect;
     GetClientRect (&rect);
-    rect.left = 218;
+    rect.left = 210;
     InvalidateRect(&rect, TRUE);
     return 0;
 }
