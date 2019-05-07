@@ -422,11 +422,11 @@ void CFactoryTestI8FullDlg::DoDeviceTest()
         if (strResult[2] == 'y' && m_nLSensorTestResult == -1) {
             m_nLSensorTestResult = 1; GetDlgItem(IDC_BTN_LSENSOR_RESULT)->SetWindowText("PASS");
         }
-        if (strResult[3] != '-' && m_nSDCardTestResult == -1) {
+        if (strResult[3] == 'y' && m_nSDCardTestResult == -1) {
             m_nSDCardTestResult = (strResult[3] == 'y'); GetDlgItem(IDC_BTN_SDCARD_RESULT)->SetWindowText(m_nSDCardTestResult ? "PASS" : "NG");
         }
         PostMessage(WM_TNP_UPDATE_UI);
-        while (!m_bTestCancel && tick_next - GetTickCount() > 0) Sleep(10);
+        while (!m_bTestCancel && (LONGLONG)tick_next - (LONGLONG)GetTickCount() > 0) Sleep(10);
     }
 
     CloseHandle(m_hTestThread);
