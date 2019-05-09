@@ -740,7 +740,7 @@ void CFactoryTestI8FullDlg::OnBnClickedBtnUploadReport()
         strErrCode += "L010,";
     }
     if (m_nSDCardTestResult != 1) {
-        strErrCode += "L011,";
+        strErrCode += "L019,";
     }
     if (  m_nLedTestResult == 1 && m_nCameraTestResult == 1 && m_nIRTestResult == 1 && m_nSpkTestResult == 1 && m_nMicTestResult == 1 && m_nWiFiTestResult == 1
        && m_nKeyTestResult == 1 && m_nLSensorTestResult == 1 && m_nSnTestResult == 1 && m_nMacTestResult == 1 && m_nVersionTestResult == 1 && m_nSDCardTestResult == 1) {
