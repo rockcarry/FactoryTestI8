@@ -138,10 +138,10 @@ void CFactoryTestI8SNDlg::DoDeviceTest()
     if (!m_bTestCancel) {
         m_strTestInfo   = "正在写号 ...\r\n";
         m_strTestResult = "正在写号";
+        PostMessage(WM_TNP_UPDATE_UI);
 
         tnp_set_sn(m_pTnpContext, m_strCurSN.GetBuffer());
         m_strCurSN .ReleaseBuffer();
-        PostMessage(WM_TNP_UPDATE_UI);
 
         char sn [65];
         char mac[18];
@@ -149,6 +149,7 @@ void CFactoryTestI8SNDlg::DoDeviceTest()
         tnp_get_mac(m_pTnpContext, mac, sizeof(mac));
         m_bResultBurnSN = strcmp(sn, m_strCurSN ) == 0 ? 1 : 0;
         m_strCurMac     = mac;
+        PostMessage(WM_TNP_UPDATE_UI);
     }
 
     if (!m_bTestCancel) {
