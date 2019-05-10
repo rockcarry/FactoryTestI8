@@ -13,7 +13,7 @@
 #define IDC_TXT_MES_LOGIN               1005
 #define IDC_TXT_TEST_INFO               1006
 #define IDC_TXT_SN_MAC_VER              1007
-#define IDC_BTN_LED_RESULT              1008
+#define IDC_BTN_MOTOR_RESULT            1008
 #define IDC_BTN_SPK_RESULT              1009
 #define IDC_BTN_MIC_RESULT              1010
 #define IDC_BTN_CAMERA_RESULT           1011

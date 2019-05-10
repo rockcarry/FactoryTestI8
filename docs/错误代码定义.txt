@@ -17,3 +17,4 @@ MAC 写号 NG        L012
 机器不能开机       L017
 WiFi 连接 NG       L018
 SD 测试 NG         L019
+马达测试 NG        L020

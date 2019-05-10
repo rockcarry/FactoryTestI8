@@ -35,7 +35,7 @@ protected:
     afx_msg LRESULT OnTnpUpdateUI   (WPARAM wParam, LPARAM lParam);
     afx_msg LRESULT OnTnpDeviceFound(WPARAM wParam, LPARAM lParam);
     afx_msg LRESULT OnTnpDeviceLost (WPARAM wParam, LPARAM lParam);
-    afx_msg void OnBnClickedBtnLedResult();
+    afx_msg void OnBnClickedBtnMotorResult();
     afx_msg void OnBnClickedBtnCameraResult();
     afx_msg void OnBnClickedBtnIrResult();
     afx_msg void OnBnClickedBtnKeyResult();
@@ -59,7 +59,7 @@ private:
     char    m_strUACDev  [MAX_PATH];
     char    m_strCamType [32];
     char    m_strDeviceIP[32];
-    int     m_nLedTestResult;
+    int     m_nMotorTestResult;
     int     m_nCameraTestResult;
     int     m_nIRTestResult;
     int     m_nWiFiTestResult;

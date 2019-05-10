@@ -7,7 +7,7 @@
 #define IDR_MAINFRAME                   128
 #define IDC_TXT_CONNECT_STATE           1001
 #define IDC_TXT_CUR_VER                 1002
-#define IDC_BTN_LED_RESULT              1003
+#define IDC_BTN_MOTOR_RESULT            1003
 #define IDC_BTN_CAMERA_RESULT           1004
 #define IDC_BTN_IR_RESULT               1005
 #define IDC_BTN_KEY_RESULT              1006

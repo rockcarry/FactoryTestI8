@@ -115,7 +115,7 @@ BEGIN_MESSAGE_MAP(CFactoryTestI8SMTDlg, CDialog)
     ON_MESSAGE(WM_TNP_UPDATE_UI   , &CFactoryTestI8SMTDlg::OnTnpUpdateUI   )
     ON_MESSAGE(WM_TNP_DEVICE_FOUND, &CFactoryTestI8SMTDlg::OnTnpDeviceFound)
     ON_MESSAGE(WM_TNP_DEVICE_LOST , &CFactoryTestI8SMTDlg::OnTnpDeviceLost )
-    ON_BN_CLICKED(IDC_BTN_LED_RESULT, &CFactoryTestI8SMTDlg::OnBnClickedBtnLedResult)
+    ON_BN_CLICKED(IDC_BTN_MOTOR_RESULT, &CFactoryTestI8SMTDlg::OnBnClickedBtnMotorResult)
     ON_BN_CLICKED(IDC_BTN_CAMERA_RESULT, &CFactoryTestI8SMTDlg::OnBnClickedBtnCameraResult)
     ON_BN_CLICKED(IDC_BTN_IR_RESULT, &CFactoryTestI8SMTDlg::OnBnClickedBtnIrResult)
     ON_BN_CLICKED(IDC_BTN_KEY_RESULT, &CFactoryTestI8SMTDlg::OnBnClickedBtnKeyResult)
@@ -161,7 +161,7 @@ BOOL CFactoryTestI8SMTDlg::OnInitDialog()
     log_printf("uacdev   = %s\n", m_strUACDev  );
 
     m_strConnectState   = "等待设备连接...";
-    m_nLedTestResult    = -1;
+    m_nMotorTestResult  = -1;
     m_nCameraTestResult = -1;
     m_nIRTestResult     = -1;
     m_nWiFiTestResult   = -1;
@@ -246,7 +246,7 @@ int CFactoryTestI8SMTDlg::GetBackColorByCtrlId(int id)
 {
     int result = -1;
     switch (id) {
-    case IDC_BTN_LED_RESULT:    result = m_nLedTestResult;    break;
+    case IDC_BTN_MOTOR_RESULT:  result = m_nMotorTestResult;  break;
     case IDC_BTN_CAMERA_RESULT: result = m_nCameraTestResult; break;
     case IDC_BTN_IR_RESULT:     result = m_nIRTestResult;     break;
     case IDC_BTN_WIFI_RESULT:   result = m_nWiFiTestResult;   break;
@@ -268,7 +268,7 @@ int CFactoryTestI8SMTDlg::GetBackColorByCtrlId(int id)
 void CFactoryTestI8SMTDlg::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct)
 {
     switch (nIDCtl) {
-    case IDC_BTN_LED_RESULT:
+    case IDC_BTN_MOTOR_RESULT:
     case IDC_BTN_CAMERA_RESULT:
     case IDC_BTN_IR_RESULT:
     case IDC_BTN_WIFI_RESULT:
@@ -429,7 +429,7 @@ LRESULT CFactoryTestI8SMTDlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
     m_strConnectState    = "等待设备连接...";
     m_strCurVer          = "";
     m_strDeviceIP[0]     = '\0';
-    m_nLedTestResult     = -1;
+    m_nMotorTestResult   = -1;
     m_nCameraTestResult  = -1;
     m_nIRTestResult      = -1;
     m_nWiFiTestResult    = -1;
@@ -442,7 +442,7 @@ LRESULT CFactoryTestI8SMTDlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
     tnp_disconnect(m_pTnpContext);
     UpdateData(FALSE);
 
-    GetDlgItem(IDC_BTN_LED_RESULT    )->SetWindowText("NG");
+    GetDlgItem(IDC_BTN_MOTOR_RESULT  )->SetWindowText("NG");
     GetDlgItem(IDC_BTN_CAMERA_RESULT )->SetWindowText("NG");
     GetDlgItem(IDC_BTN_IR_RESULT     )->SetWindowText("NG");
     GetDlgItem(IDC_BTN_WIFI_RESULT   )->SetWindowText("NG");
@@ -468,7 +468,7 @@ BOOL CFactoryTestI8SMTDlg::PreTranslateMessage(MSG *pMsg)
 {
     if (pMsg->message == WM_KEYDOWN || pMsg->message == WM_KEYUP) {
         switch (pMsg->wParam) {
-        case 'Z': if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnLedResult    (); return TRUE;
+        case 'Z': if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnMotorResult  (); return TRUE;
         case 'X': if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnCameraResult (); return TRUE;
         case 'C': if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnIrResult     (); return TRUE;
         case 'V': if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnKeyResult    (); return TRUE;
@@ -496,14 +496,14 @@ BOOL CFactoryTestI8SMTDlg::PreTranslateMessage(MSG *pMsg)
     return CDialog::PreTranslateMessage(pMsg);
 }
 
-void CFactoryTestI8SMTDlg::OnBnClickedBtnLedResult()
+void CFactoryTestI8SMTDlg::OnBnClickedBtnMotorResult()
 {
-    if (m_nLedTestResult != 1) {
-        m_nLedTestResult = 1;
-        GetDlgItem(IDC_BTN_LED_RESULT)->SetWindowText("PASS");
+    if (m_nMotorTestResult != 1) {
+        m_nMotorTestResult = 1;
+        GetDlgItem(IDC_BTN_MOTOR_RESULT)->SetWindowText("PASS");
     } else {
-        m_nLedTestResult = 0;
-        GetDlgItem(IDC_BTN_LED_RESULT)->SetWindowText("NG");
+        m_nMotorTestResult = 0;
+        GetDlgItem(IDC_BTN_MOTOR_RESULT)->SetWindowText("NG");
     }
 }
 
@@ -609,6 +609,7 @@ void CFactoryTestI8SMTDlg::OnSize(UINT nType, int cx, int cy)
         player_setrect(m_pFanPlayer, 0, 218, 0, rect.right - 218, rect.bottom);
     }
 }
+
 
 
 

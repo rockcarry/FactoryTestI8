@@ -134,7 +134,7 @@ BEGIN_MESSAGE_MAP(CFactoryTestI8FullDlg, CDialog)
     ON_MESSAGE(WM_TNP_UPDATE_UI   , &CFactoryTestI8FullDlg::OnTnpUpdateUI   )
     ON_MESSAGE(WM_TNP_DEVICE_FOUND, &CFactoryTestI8FullDlg::OnTnpDeviceFound)
     ON_MESSAGE(WM_TNP_DEVICE_LOST , &CFactoryTestI8FullDlg::OnTnpDeviceLost )
-    ON_BN_CLICKED(IDC_BTN_LED_RESULT, &CFactoryTestI8FullDlg::OnBnClickedBtnLedResult)
+    ON_BN_CLICKED(IDC_BTN_MOTOR_RESULT, &CFactoryTestI8FullDlg::OnBnClickedBtnMotorResult)
     ON_BN_CLICKED(IDC_BTN_SPK_RESULT, &CFactoryTestI8FullDlg::OnBnClickedBtnSpkResult)
     ON_BN_CLICKED(IDC_BTN_MIC_RESULT, &CFactoryTestI8FullDlg::OnBnClickedBtnMicResult)
     ON_BN_CLICKED(IDC_BTN_CAMERA_RESULT, &CFactoryTestI8FullDlg::OnBnClickedBtnCameraResult)
@@ -204,7 +204,7 @@ BOOL CFactoryTestI8FullDlg::OnInitDialog()
     m_strConnectState   = "等待设备连接...";
     m_strTestInfo       = "请打开设备...\r\n";
     m_bSnScaned         = FALSE;
-    m_nLedTestResult    = -1;
+    m_nMotorTestResult  = -1;
     m_nCameraTestResult = -1;
     m_nIRTestResult     = -1;
     m_nSpkTestResult    = -1;
@@ -312,7 +312,7 @@ int CFactoryTestI8FullDlg::GetBackColorByCtrlId(int id)
 {
     int result = -1;
     switch (id) {
-    case IDC_BTN_LED_RESULT:    result = m_nLedTestResult;    break;
+    case IDC_BTN_MOTOR_RESULT:  result = m_nMotorTestResult;  break;
     case IDC_BTN_IR_RESULT:     result = m_nIRTestResult;     break;
     case IDC_BTN_CAMERA_RESULT: result = m_nCameraTestResult; break;
     case IDC_BTN_SPK_RESULT:    result = m_nSpkTestResult;    break;
@@ -336,7 +336,7 @@ int CFactoryTestI8FullDlg::GetBackColorByCtrlId(int id)
 void CFactoryTestI8FullDlg::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct)
 {
     switch (nIDCtl) {
-    case IDC_BTN_LED_RESULT:
+    case IDC_BTN_MOTOR_RESULT:
     case IDC_BTN_IR_RESULT:
     case IDC_BTN_CAMERA_RESULT:
     case IDC_BTN_SPK_RESULT:
@@ -572,7 +572,7 @@ LRESULT CFactoryTestI8FullDlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
     m_strCurMac         = "";
     m_strDeviceIP[0]    = '\0';
 //  m_bSnScaned         = FALSE;
-    m_nLedTestResult    = -1;
+    m_nMotorTestResult  = -1;
     m_nCameraTestResult = -1;
     m_nIRTestResult     = -1;
     m_nSpkTestResult    = -1;
@@ -586,7 +586,7 @@ LRESULT CFactoryTestI8FullDlg::OnTnpDeviceLost(WPARAM wParam, LPARAM lParam)
     m_nSDCardTestResult = -1;
     UpdateData(FALSE);
 
-    GetDlgItem(IDC_BTN_LED_RESULT    )->SetWindowText("NG");
+    GetDlgItem(IDC_BTN_MOTOR_RESULT  )->SetWindowText("NG");
     GetDlgItem(IDC_BTN_SPK_RESULT    )->SetWindowText("NG");
     GetDlgItem(IDC_BTN_MIC_RESULT    )->SetWindowText("NG");
     GetDlgItem(IDC_BTN_CAMERA_RESULT )->SetWindowText("NG");
@@ -614,7 +614,7 @@ BOOL CFactoryTestI8FullDlg::PreTranslateMessage(MSG *pMsg)
 {
     if (pMsg->message == WM_KEYDOWN || pMsg->message == WM_KEYUP) {
         switch (pMsg->wParam) {
-        case 'Z'     : if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnLedResult   (); return TRUE;
+        case 'Z'     : if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnMotorResult (); return TRUE;
         case 'X'     : if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnSpkResult   (); return TRUE;
         case 'C'     : if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnMicResult   (); return TRUE;
         case 'V'     : if (pMsg->message == WM_KEYDOWN) OnBnClickedBtnCameraResult(); return TRUE;
@@ -641,14 +641,14 @@ BOOL CFactoryTestI8FullDlg::PreTranslateMessage(MSG *pMsg)
     return CDialog::PreTranslateMessage(pMsg);
 }
 
-void CFactoryTestI8FullDlg::OnBnClickedBtnLedResult()
+void CFactoryTestI8FullDlg::OnBnClickedBtnMotorResult()
 {
-    if (m_nLedTestResult != 1) {
-        m_nLedTestResult = 1;
-        GetDlgItem(IDC_BTN_LED_RESULT)->SetWindowText("PASS");
+    if (m_nMotorTestResult != 1) {
+        m_nMotorTestResult = 1;
+        GetDlgItem(IDC_BTN_MOTOR_RESULT)->SetWindowText("PASS");
     } else {
-        m_nLedTestResult = 0;
-        GetDlgItem(IDC_BTN_LED_RESULT)->SetWindowText("NG");
+        m_nMotorTestResult = 0;
+        GetDlgItem(IDC_BTN_MOTOR_RESULT)->SetWindowText("NG");
     }
 }
 
@@ -706,8 +706,8 @@ void CFactoryTestI8FullDlg::OnBnClickedBtnUploadReport()
     CString strTestResult;
     CString strErrCode;
     CString strErrMsg;
-    if (m_nLedTestResult != 1) {
-        strErrCode += "L001,";
+    if (m_nMotorTestResult != 1) {
+        strErrCode += "L020,";
     }
     if (m_nCameraTestResult != 1) {
         strErrCode += "L002,";
@@ -742,7 +742,7 @@ void CFactoryTestI8FullDlg::OnBnClickedBtnUploadReport()
     if (m_nSDCardTestResult != 1) {
         strErrCode += "L019,";
     }
-    if (  m_nLedTestResult == 1 && m_nCameraTestResult == 1 && m_nIRTestResult == 1 && m_nSpkTestResult == 1 && m_nMicTestResult == 1 && m_nWiFiTestResult == 1
+    if (  m_nMotorTestResult == 1 && m_nCameraTestResult == 1 && m_nIRTestResult == 1 && m_nSpkTestResult == 1 && m_nMicTestResult == 1 && m_nWiFiTestResult == 1
        && m_nKeyTestResult == 1 && m_nLSensorTestResult == 1 && m_nSnTestResult == 1 && m_nMacTestResult == 1 && m_nVersionTestResult == 1 && m_nSDCardTestResult == 1) {
         strTestResult = "OK";
     } else {

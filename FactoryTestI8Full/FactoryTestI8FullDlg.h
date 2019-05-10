@@ -38,7 +38,7 @@ protected:
     afx_msg LRESULT OnTnpDeviceFound(WPARAM wParam, LPARAM lParam);
     afx_msg LRESULT OnTnpDeviceLost (WPARAM wParam, LPARAM lParam);
     afx_msg void OnEnChangeEdtScanSn();
-    afx_msg void OnBnClickedBtnLedResult();
+    afx_msg void OnBnClickedBtnMotorResult();
     afx_msg void OnBnClickedBtnSpkResult();
     afx_msg void OnBnClickedBtnMicResult();
     afx_msg void OnBnClickedBtnCameraResult();
@@ -71,7 +71,7 @@ private:
     char    m_strDeviceIP  [32];
     BOOL    m_bMesLoginOK;
     BOOL    m_bSnScaned;
-    int     m_nLedTestResult;
+    int     m_nMotorTestResult;
     int     m_nSpkTestResult;
     int     m_nMicTestResult;
     int     m_nCameraTestResult;
