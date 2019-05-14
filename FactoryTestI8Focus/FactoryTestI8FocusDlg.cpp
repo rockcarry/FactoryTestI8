@@ -366,6 +366,24 @@ void CFactoryTestI8FocusDlg::OnEnChangeEdtScanSn()
         }
 #endif
 
+        struct in_addr addr = {0};
+        int ret = tnp_connect(m_pTnpContext, m_strCurSN.GetBuffer(), &addr);
+        m_strCurSN.ReleaseBuffer();
+        if (ret == 0) {
+            strcpy(m_strDeviceIP, inet_ntoa(addr));
+            if (strcmp(m_strCamType, "rtsp") == 0) {
+                PLAYER_INIT_PARAMS params = {0};
+                char  url[MAX_PATH];
+                params.init_timeout   = 1000;
+                params.auto_reconnect = 1000;
+                params.rtsp_transport = 2;
+                sprintf(url, "rtsp://%s/video0", m_strDeviceIP);
+                if (m_pFanPlayer) player_close(m_pFanPlayer);
+                m_pFanPlayer = player_open(url, GetSafeHwnd(), &params);
+                SetTimer(TIMER_ID_DEFINITION, 200, NULL);
+            }
+        }
+
         m_strTestInfo = TEXT("«ÎΩ¯––—ÈΩπ≤‚ ‘...");
         UpdateData(FALSE);
     }
@@ -577,6 +595,8 @@ void CFactoryTestI8FocusDlg::OnSize(UINT nType, int cx, int cy)
 
 LRESULT CFactoryTestI8FocusDlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
 {
+    if (!m_bSnScaned) return 0;
+
     if (strcmp(m_strDeviceIP, "") != 0) {
         log_printf("already have a device connected !\n");
         return 0;
@@ -587,19 +607,19 @@ LRESULT CFactoryTestI8FocusDlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
     m_strCurSN.ReleaseBuffer();
     if (ret == 0) {
         strcpy(m_strDeviceIP, inet_ntoa(addr));
+        if (strcmp(m_strCamType, "rtsp") == 0) {
+            PLAYER_INIT_PARAMS params = {0};
+            char  url[MAX_PATH];
+            params.init_timeout   = 1000;
+            params.auto_reconnect = 1000;
+            params.rtsp_transport = 2;
+            sprintf(url, "rtsp://%s/video0", m_strDeviceIP);
+            if (m_pFanPlayer) player_close(m_pFanPlayer);
+            m_pFanPlayer = player_open(url, GetSafeHwnd(), &params);
+            SetTimer(TIMER_ID_DEFINITION, 200, NULL);
+        }
     }
 
-    if (strcmp(m_strCamType, "rtsp") == 0) {
-        PLAYER_INIT_PARAMS params = {0};
-        char  url[MAX_PATH];
-        params.init_timeout   = 1000;
-        params.auto_reconnect = 1000;
-        params.rtsp_transport = 2;
-        sprintf(url, "rtsp://%s/video0", m_strDeviceIP);
-        if (m_pFanPlayer) player_close(m_pFanPlayer);
-        m_pFanPlayer = player_open(url, GetSafeHwnd(), &params);
-        SetTimer(TIMER_ID_DEFINITION, 200, NULL);
-    }
     return 0;
 }
 
