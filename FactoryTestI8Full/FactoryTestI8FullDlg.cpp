@@ -99,7 +99,8 @@ CFactoryTestI8FullDlg::CFactoryTestI8FullDlg(CWnd* pParent /*=NULL*/)
     , m_strCurSN(_T(""))
     , m_strCurMac(_T(""))
     , m_strTestInfo(_T(""))
-    , m_strSnMacVer(_T("实际 SN ： \r\n实际 MAC：\r\n实际 VER："))
+//  , m_strSnMacVer(_T("实际 SN ： \r\n实际 MAC：\r\n实际 VER："))
+    , m_strSnMacVer(_T("实际 SN ： \r\n实际 VER："))
     , m_pTnpContext(NULL)
     , m_pFanPlayer(NULL)
     , m_hTestThread(NULL)
@@ -381,14 +382,15 @@ void CFactoryTestI8FullDlg::DoDeviceTest()
     int   tick_sleep= 0;
     char strVer   [128];
     char strSN    [65 ];
-    char strMAC   [18 ];
+//  char strMAC   [18 ];
     char strResult[256];
 
     tnp_get_sn   (m_pTnpContext, strSN , sizeof(strSN ));
-    tnp_get_mac  (m_pTnpContext, strMAC, sizeof(strMAC));
+//  tnp_get_mac  (m_pTnpContext, strMAC, sizeof(strMAC));
     tnp_get_fwver(m_pTnpContext, strVer, sizeof(strVer));
     m_nSnTestResult      = strcmp(strSN , m_strCurSN ) == 0 ? 1 : 0;
-    m_nMacTestResult     = strcmp(strMAC, m_strCurMac) == 0 ? 1 : 0;
+//  m_nMacTestResult     = strcmp(strMAC, m_strCurMac) == 0 ? 1 : 0;
+    m_nMacTestResult     = 1;
     m_nVersionTestResult = strcmp(strVer, m_strFwVer ) == 0 ? 1 : 0;
 
     GetDlgItem(IDC_BTN_WIFI_RESULT   )->SetWindowText(m_nWiFiTestResult    ? "PASS" : "NG");
@@ -396,7 +398,8 @@ void CFactoryTestI8FullDlg::DoDeviceTest()
     GetDlgItem(IDC_BTN_MAC_RESULT    )->SetWindowText(m_nMacTestResult     ? "PASS" : "NG");
     GetDlgItem(IDC_BTN_VERSION_RESULT)->SetWindowText(m_nVersionTestResult ? "PASS" : "NG");
 
-    m_strSnMacVer.Format("实际 SN ：%s\r\n实际 MAC：%s\r\n实际 VER：%s", CString(strSN).Trim(), CString(strMAC).Trim(), CString(strVer).Trim());
+//  m_strSnMacVer.Format("实际 SN ：%s\r\n实际 MAC：%s\r\n实际 VER：%s", CString(strSN).Trim(), CString(strMAC).Trim(), CString(strVer).Trim());
+    m_strSnMacVer.Format("实际 SN ：%s\r\n实际 VER：%s", CString(strSN).Trim(), CString(strVer).Trim());
     m_strTestInfo = "测试完成，请上传...";
     PostMessage(WM_TNP_UPDATE_UI);
 
@@ -488,6 +491,7 @@ void CFactoryTestI8FullDlg::OnEnChangeEdtScanSn()
         }
 
         if (m_bMesLoginOK) {
+            /*
             CString strErrMsg;
             CString strMAC;
             CString strBT ;
@@ -501,7 +505,7 @@ void CFactoryTestI8FullDlg::OnEnChangeEdtScanSn()
                 AfxMessageBox(TEXT("无法从 MES 系统获取 MAC 地址！"), MB_OK);
                 UpdateData(FALSE);
                 return;
-            }
+            }*/
         } else
 #endif
         {

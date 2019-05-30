@@ -144,11 +144,11 @@ void CFactoryTestI8SNDlg::DoDeviceTest()
         m_strCurSN .ReleaseBuffer();
 
         char sn [65];
-        char mac[18];
+//      char mac[18];
         tnp_get_sn (m_pTnpContext, sn , sizeof(sn ));
-        tnp_get_mac(m_pTnpContext, mac, sizeof(mac));
+//      tnp_get_mac(m_pTnpContext, mac, sizeof(mac));
         m_bResultBurnSN = strcmp(sn, m_strCurSN ) == 0 ? 1 : 0;
-        m_strCurMac     = mac;
+//      m_strCurMac     = mac;
         PostMessage(WM_TNP_UPDATE_UI);
     }
 
