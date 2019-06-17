@@ -55,6 +55,7 @@ private:
     char    m_strUserName  [32];
     char    m_strPassWord  [32];
     char    m_strResource  [32];
+    char    m_strGongDan   [32];
     char    m_strTnpVer    [32];
     char    m_strLoginMode [32];
     char    m_strRouteCheck[32];

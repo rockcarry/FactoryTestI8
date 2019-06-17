@@ -495,7 +495,8 @@ void CFactoryTestI8FocusDlg::OnBnClickedBtnUpload()
 
     strMO = m_strGongDan;
     if (m_bMesLoginOK) {
-        BOOL ret = MesDLL::GetInstance().SetMobileDataWithMO(m_strCurSN, CString(m_strResource), CString(m_strUserName), strTestResult, strErrCode, strMO, strErrMsg);
+        BOOL ret = MesDLL::GetInstance().SetMobileData(m_strCurSN, CString(m_strResource), CString(m_strUserName), strTestResult, strErrCode, strErrMsg);
+//      BOOL ret = MesDLL::GetInstance().SetMobileDataWithMO(m_strCurSN, CString(m_strResource), CString(m_strUserName), strTestResult, strErrCode, strMO, strErrMsg);
         if (!ret) {
             if (strErrMsg.Find("CS_Route_Failed_FirstOP") != -1) {
                 m_strTestInfo = "×ÊÔ´Âë´íÎó£¡";
