@@ -49,7 +49,7 @@ static void parse_params(const char *str, const char *key, char *val)
     }
 }
 
-static int load_config_from_file(char *user, char *passwd, char *res, char *ver, char *login, char *route, char *throughput, char *spkmic, char *log)
+static int load_config_from_file(char *user, char *passwd, char *res, char *gongdan, char *ver, char *login, char *route, char *throughput, char *spkmic, char *log)
 {
     char  file[MAX_PATH];
     FILE *fp = NULL;
@@ -71,6 +71,7 @@ static int load_config_from_file(char *user, char *passwd, char *res, char *ver,
             parse_params(buf, "username"  , user      );
             parse_params(buf, "password"  , passwd    );
             parse_params(buf, "resource"  , res       );
+            parse_params(buf, "gongdan"   , gongdan   );
             parse_params(buf, "version"   , ver       );
             parse_params(buf, "loginmode" , login     );
             parse_params(buf, "routecheck", route     );
@@ -232,7 +233,8 @@ void CFactoryTestI8SNDlg::DoDeviceTest()
             strErrCode += "L013,";
         }
         if (m_bMesLoginOK) {
-            BOOL ret = MesDLL::GetInstance().SetMobileData(m_strCurSN, CString(m_strResource), CString(m_strUserName), m_strTestResult, strErrCode, strErrMsg);
+//          BOOL ret = MesDLL::GetInstance().SetMobileData(m_strCurSN, CString(m_strResource), CString(m_strUserName), m_strTestResult, strErrCode, strErrMsg);
+            BOOL ret = MesDLL::GetInstance().SetMobileDataWithMO(m_strCurSN, CString(m_strResource), CString(m_strUserName), m_strTestResult, strErrCode, m_strGongDan, strErrMsg);
             if (!ret) {
                 if (strErrMsg.Find("CS_RepeatCollect_OnOneOP") != -1) {
                     m_strTestResult = "重复采集";
@@ -337,13 +339,14 @@ BOOL CFactoryTestI8SNDlg::OnInitDialog()
     strcpy(m_strUserName  , "username"      );
     strcpy(m_strPassWord  , "password"      );
     strcpy(m_strResource  , "resource"      );
+    strcpy(m_strGongDan   , "gongdan"       );
     strcpy(m_strTnpVer    , "version"       );
     strcpy(m_strLoginMode , "alert_and_exit");
     strcpy(m_strRouteCheck, "yes"           );
     strcpy(m_strTestSpkMic, "yes"           );
     strcpy(m_strLogFile   , "DEBUGER"       );
     strcpy(m_strDeviceIP  , ""              );
-    int ret = load_config_from_file(m_strUserName, m_strPassWord, m_strResource, m_strTnpVer, m_strLoginMode, m_strRouteCheck, m_strThroughPut, m_strTestSpkMic, m_strLogFile);
+    int ret = load_config_from_file(m_strUserName, m_strPassWord, m_strResource, m_strGongDan, m_strTnpVer, m_strLoginMode, m_strRouteCheck, m_strThroughPut, m_strTestSpkMic, m_strLogFile);
     if (ret != 0) {
         AfxMessageBox(TEXT("无法打开测试配置文件！"), MB_OK);
     }
