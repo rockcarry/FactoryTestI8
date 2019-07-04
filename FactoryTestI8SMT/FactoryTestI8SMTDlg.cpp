@@ -45,7 +45,7 @@ static void parse_params(const char *str, const char *key, char *val)
     }
 }
 
-static int load_config_from_file(char *fwver, char *appver, char *log, char *uid, char *uvc, char *uac, char *cam)
+static int load_config_from_file(char *fwver, char *log, char *uvc, char *uac, char *cam)
 {
     char  file[MAX_PATH];
     FILE *fp = NULL;
@@ -65,9 +65,7 @@ static int load_config_from_file(char *fwver, char *appver, char *log, char *uid
             fseek(fp, 0, SEEK_SET);
             fread(buf, len, 1, fp);
             parse_params(buf, "fw_ver"  , fwver );
-            parse_params(buf, "app_ver" , appver);
             parse_params(buf, "logfile" , log);
-            parse_params(buf, "ft_uid"  , uid);
             parse_params(buf, "uvcdev"  , uvc);
             parse_params(buf, "uacdev"  , uac);
             parse_params(buf, "camtype" , cam);
@@ -143,19 +141,18 @@ BOOL CFactoryTestI8SMTDlg::OnInitDialog()
 
     // 在此添加额外的初始化代码
     strcpy(m_strFwVer     , ""       );
-    strcpy(m_strAppVer    , ""       );
     strcpy(m_strLogFile   , "DEBUGER");
     strcpy(m_strUVCDev    , ""       );
     strcpy(m_strUACDev    , ""       );
     strcpy(m_strCamType   , "uvc"    );
     strcpy(m_strDeviceIP  , ""       );
-    int ret = load_config_from_file(m_strFwVer, m_strAppVer, m_strLogFile, m_strFtUid, m_strUVCDev, m_strUACDev, m_strCamType);
+    tnp_get_localhost_ip(m_strLocalHostIP, sizeof(m_strLocalHostIP));
+    int ret = load_config_from_file(m_strFwVer, m_strLogFile, m_strUVCDev, m_strUACDev, m_strCamType);
     if (ret != 0) {
         AfxMessageBox(TEXT("无法打开测试配置文件！"), MB_OK);
     }
     log_init(m_strLogFile);
     log_printf("fwver    = %s\n", m_strFwVer   );
-    log_printf("appver   = %s\n", m_strAppVer  );
     log_printf("logfile  = %s\n", m_strLogFile );
     log_printf("uvcdev   = %s\n", m_strUVCDev  );
     log_printf("uacdev   = %s\n", m_strUACDev  );
@@ -173,7 +170,7 @@ BOOL CFactoryTestI8SMTDlg::OnInitDialog()
     m_nSDCardTestResult = -1;
     UpdateData(FALSE);
 
-    m_pTnpContext = tnp_init(GetSafeHwnd());
+    m_pTnpContext = tnp_init(GetSafeHwnd(), TRUE);
     if (strcmp(m_strUVCDev, "") != 0 || strcmp(m_strCamType, "rtsp") == 0) {
         MoveWindow(0, 0, 900, 600, FALSE);
 
@@ -406,7 +403,7 @@ LRESULT CFactoryTestI8SMTDlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
     }
 
     struct in_addr addr;
-    int ret = tnp_connect(m_pTnpContext, m_strFtUid, &addr);
+    int ret = tnp_connect(m_pTnpContext, m_strLocalHostIP, &addr);
     if (ret == 0) {
         strcpy(m_strDeviceIP, inet_ntoa(addr));
         m_strConnectState.Format(TEXT("已连接 %s"), CString(m_strDeviceIP));

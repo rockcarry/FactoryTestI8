@@ -346,6 +346,7 @@ BOOL CFactoryTestI8SNDlg::OnInitDialog()
     strcpy(m_strTestSpkMic, "yes"           );
     strcpy(m_strLogFile   , "DEBUGER"       );
     strcpy(m_strDeviceIP  , ""              );
+    tnp_get_localhost_ip(m_strLocalHostIP, sizeof(m_strLocalHostIP));
     int ret = load_config_from_file(m_strUserName, m_strPassWord, m_strResource, m_strGongDan, m_strTnpVer, m_strLoginMode, m_strRouteCheck, m_strThroughPut, m_strTestSpkMic, m_strLogFile);
     if (ret != 0) {
         AfxMessageBox(TEXT("无法打开测试配置文件！"), MB_OK);
@@ -381,7 +382,7 @@ BOOL CFactoryTestI8SNDlg::OnInitDialog()
     m_bResultDone      = FALSE;
     UpdateData(FALSE);
 
-    m_pTnpContext = tnp_init(GetSafeHwnd());
+    m_pTnpContext = tnp_init(GetSafeHwnd(), TRUE);
 
     SetTimer(TIMER_ID_SET_FOCUS, 1000, NULL);
     return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
@@ -507,7 +508,7 @@ LRESULT CFactoryTestI8SNDlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
     }
 
     struct in_addr addr;
-    int ret = tnp_connect(m_pTnpContext, NULL, &addr);
+    int ret = tnp_connect(m_pTnpContext, m_strLocalHostIP, &addr);
     if (ret == 0) {
         strcpy(m_strDeviceIP, inet_ntoa(addr));
         m_strConnectState.Format(TEXT("设备连接成功！（%s）"), CString(m_strDeviceIP));
