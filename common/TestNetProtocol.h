@@ -9,7 +9,7 @@ enum {
     WM_TNP_DEVICE_LOST ,
 };
 
-void* tnp_init(HWND hwnd);
+void* tnp_init(HWND hwnd, BOOL ip_pair_mode = FALSE);
 void  tnp_free(void *ctxt);
 
 int   tnp_connect    (void *ctxt, char *sn, struct in_addr *addr);
@@ -26,4 +26,5 @@ int   tnp_test_spkmic(void *ctxt);
 int   tnp_test_iperf (void *ctxt);
 int   tnp_enter_aging(void *ctxt);
 
+void  tnp_get_localhost_ip(char *ip, int len);
 

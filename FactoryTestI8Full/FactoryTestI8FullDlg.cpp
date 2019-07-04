@@ -49,7 +49,7 @@ static void parse_params(const char *str, const char *key, char *val)
     }
 }
 
-static int load_config_from_file(char *user, char *passwd, char *res, char *fwver, char *appver, char *login, char *route, char *log, char *uvc, char *uac, char *cam)
+static int load_config_from_file(char *user, char *passwd, char *res, char *fwver, char *login, char *route, char *log, char *uvc, char *uac, char *cam)
 {
     char  file[MAX_PATH];
     FILE *fp = NULL;
@@ -72,7 +72,6 @@ static int load_config_from_file(char *user, char *passwd, char *res, char *fwve
             parse_params(buf, "password"  , passwd);
             parse_params(buf, "resource"  , res   );
             parse_params(buf, "fw_ver"    , fwver );
-            parse_params(buf, "app_ver"   , appver);
             parse_params(buf, "loginmode" , login );
             parse_params(buf, "routecheck", route );
             parse_params(buf, "logfile"   , log   );
@@ -166,7 +165,6 @@ BOOL CFactoryTestI8FullDlg::OnInitDialog()
     strcpy(m_strPassWord  , "password"      );
     strcpy(m_strResource  , "resource"      );
     strcpy(m_strFwVer     , ""              );
-    strcpy(m_strAppVer    , ""              );
     strcpy(m_strLoginMode , "alert_and_exit");
     strcpy(m_strRouteCheck, "yes"           );
     strcpy(m_strLogFile   , "DEBUGER"       );
@@ -174,7 +172,7 @@ BOOL CFactoryTestI8FullDlg::OnInitDialog()
     strcpy(m_strUACDev    , ""              );
     strcpy(m_strCamType   , "uvc"           );
     strcpy(m_strDeviceIP  , ""              );
-    int ret = load_config_from_file(m_strUserName, m_strPassWord, m_strResource, m_strFwVer, m_strAppVer, m_strLoginMode, m_strRouteCheck, m_strLogFile, m_strUVCDev, m_strUACDev, m_strCamType);
+    int ret = load_config_from_file(m_strUserName, m_strPassWord, m_strResource, m_strFwVer, m_strLoginMode, m_strRouteCheck, m_strLogFile, m_strUVCDev, m_strUACDev, m_strCamType);
     if (ret != 0) {
         AfxMessageBox(TEXT("无法打开测试配置文件！"), MB_OK);
     }
@@ -183,7 +181,6 @@ BOOL CFactoryTestI8FullDlg::OnInitDialog()
     log_printf("password = %s\n", m_strPassWord);
     log_printf("resource = %s\n", m_strResource);
     log_printf("fwver    = %s\n", m_strFwVer   );
-    log_printf("appver   = %s\n", m_strAppVer  );
     log_printf("logfile  = %s\n", m_strLogFile );
     log_printf("uvcdev   = %s\n", m_strUVCDev  );
     log_printf("uacdev   = %s\n", m_strUACDev  );

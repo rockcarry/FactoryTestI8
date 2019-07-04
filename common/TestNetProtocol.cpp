@@ -17,6 +17,7 @@ typedef struct {
     int     thread_status;
     DEVICE  device_list[256];
     SOCKET  sock;
+    BOOL    ip_pair_mode;
 } TNPCONTEXT;
 
 #define TNP_UDP_PORT      8313
@@ -40,6 +41,7 @@ static DWORD WINAPI DeviceDetectThreadProc(LPVOID pParam)
     int     socklen  = sizeof(struct sockaddr_in);
     struct  sockaddr_in servaddr = {};
     struct  sockaddr_in fromaddr = {};
+    char   *uid_key  = ctxt->ip_pair_mode ? "ft_uid?" :  "uid?";
 
     servaddr.sin_family      = AF_INET;
     servaddr.sin_addr.s_addr = get_localhost_ip();
@@ -64,9 +66,9 @@ static DWORD WINAPI DeviceDetectThreadProc(LPVOID pParam)
 
         char msg[256] = {};
         int  ret;
-        ret = sendto  (sock, (char*)"uid?", (int)strlen("uid?") + 1, 0, (struct sockaddr*)&servaddr, sizeof(servaddr));
+        ret = sendto  (sock, uid_key, (int)strlen(uid_key) + 1, 0, (struct sockaddr*)&servaddr, sizeof(servaddr));
         ret = recvfrom(sock, msg, sizeof(msg), 0, (struct sockaddr*)&fromaddr, &socklen);
-        if (strstr(msg, "uid:") == msg && msg[ret] == '\0') {
+        if (strstr(msg, "uid:") == msg && msg[ret] == '\0' || strstr(msg, "ft_uid:") == msg && msg[ret] == '\0') {
 #if 0
             log_printf("receive datagram from %s:%d\n", inet_ntoa(fromaddr.sin_addr), fromaddr.sin_port);
             log_printf("msg: %s\n", msg);
@@ -81,7 +83,7 @@ static DWORD WINAPI DeviceDetectThreadProc(LPVOID pParam)
                 PostMessage(ctxt->hwnd, WM_TNP_DEVICE_FOUND, 0, fromaddr.sin_addr.S_un.S_addr);
             }
             ctxt->device_list[b4].tick = GetTickCount();
-            strncpy(ctxt->device_list[b4].sn, msg + 4, sizeof(ctxt->device_list[b4].sn));
+            strncpy(ctxt->device_list[b4].sn, msg + strlen(uid_key), sizeof(ctxt->device_list[b4].sn));
         } else {
 //          log_printf("receive datagram error or timeout !\n");
         }
@@ -112,7 +114,7 @@ static DWORD WINAPI DeviceDetectThreadProc(LPVOID pParam)
     return 0;
 }
 
-void* tnp_init(HWND hwnd)
+void* tnp_init(HWND hwnd, BOOL ip_pair_mode)
 {
     // wsa startup
     WSADATA wsa;
@@ -129,7 +131,8 @@ void* tnp_init(HWND hwnd)
     }
 
     // init context variables
-    ctxt->hwnd = hwnd;
+    ctxt->hwnd         = hwnd;
+    ctxt->ip_pair_mode = ip_pair_mode;
 
     // create thread for device detection
     ctxt->thread_handle = CreateThread(NULL, 0, DeviceDetectThreadProc, ctxt, 0, NULL);
@@ -285,4 +288,11 @@ int tnp_test_iperf(void *ctxt)
 int tnp_enter_aging(void *ctxt)
 {
     return 0;
+}
+
+void tnp_get_localhost_ip(char *ip, int len)
+{
+    struct in_addr sin_addr = {};
+    sin_addr.s_addr = get_localhost_ip();
+    strncpy(ip, inet_ntoa(sin_addr), len);
 }
