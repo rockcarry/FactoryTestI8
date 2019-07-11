@@ -521,8 +521,6 @@ LRESULT CFactoryTestI8SNDlg::OnTnpDeviceFound(WPARAM wParam, LPARAM lParam)
             m_strTestResult = "请扫描条码";
         }
     } else {
-        m_strConnectState.Format(TEXT("设备连接失败！（%s）"), CString(m_strDeviceIP));
-        m_strTestInfo   = "设备连接失败，请重启设备。\r\n";
         m_bConnectState = FALSE;
     }
     UpdateData(FALSE);
