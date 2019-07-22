@@ -38,11 +38,8 @@ protected:
     afx_msg void OnBnClickedBtnMotorResult();
     afx_msg void OnBnClickedBtnCameraResult();
     afx_msg void OnBnClickedBtnIrResult();
-    afx_msg void OnBnClickedBtnKeyResult();
-    afx_msg void OnBnClickedBtnLsensorResult();
     afx_msg void OnBnClickedBtnSpkResult();
     afx_msg void OnBnClickedBtnMicResult();
-    afx_msg void OnBnClickedBtnWifiResult();
     afx_msg void OnBnClickedBtnNextDevice();
     DECLARE_MESSAGE_MAP()
 
