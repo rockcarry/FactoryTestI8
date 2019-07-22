@@ -17,9 +17,8 @@
 #define IDC_BTN_SPK_RESULT              1009
 #define IDC_BTN_MIC_RESULT              1010
 #define IDC_BTN_CAMERA_RESULT           1011
-#define IDC_BTN_IR_RESULT               1012
 #define IDC_BTN_KEY_RESULT              1013
-#define IDC_BTN_LSENSOR_RESULT          1014
+#define IDC_BTN_UART_RESULT             1014
 #define IDC_BTN_SN_RESULT               1015
 #define IDC_BTN_MAC_RESULT              1016
 #define IDC_BTN_VERSION_RESULT          1017

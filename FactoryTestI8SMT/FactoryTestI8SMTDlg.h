@@ -37,12 +37,8 @@ protected:
     afx_msg LRESULT OnTnpDeviceLost (WPARAM wParam, LPARAM lParam);
     afx_msg void OnBnClickedBtnLedResult();
     afx_msg void OnBnClickedBtnCameraResult();
-    afx_msg void OnBnClickedBtnIrResult();
-    afx_msg void OnBnClickedBtnKeyResult();
-    afx_msg void OnBnClickedBtnLsensorResult();
     afx_msg void OnBnClickedBtnSpkResult();
     afx_msg void OnBnClickedBtnMicResult();
-    afx_msg void OnBnClickedBtnWifiResult();
     afx_msg void OnBnClickedBtnNextDevice();
     DECLARE_MESSAGE_MAP()
 
@@ -60,10 +56,9 @@ private:
     char    m_strLocalHostIP[32];
     int     m_nLedTestResult;
     int     m_nCameraTestResult;
-    int     m_nIRTestResult;
     int     m_nWiFiTestResult;
     int     m_nKeyTestResult;
-    int     m_nLSensorTestResult;
+    int     m_nUARTTestResult;
     int     m_nSpkTestResult;
     int     m_nMicTestResult;
     int     m_nVersionTestResult;

@@ -42,7 +42,6 @@ protected:
     afx_msg void OnBnClickedBtnSpkResult();
     afx_msg void OnBnClickedBtnMicResult();
     afx_msg void OnBnClickedBtnCameraResult();
-    afx_msg void OnBnClickedBtnIrResult();
     afx_msg void OnBnClickedBtnUploadReport();
     DECLARE_MESSAGE_MAP()
 
@@ -74,10 +73,9 @@ private:
     int     m_nSpkTestResult;
     int     m_nMicTestResult;
     int     m_nCameraTestResult;
-    int     m_nIRTestResult;
     int     m_nWiFiTestResult;
     int     m_nKeyTestResult;
-    int     m_nLSensorTestResult;
+    int     m_nUARTTestResult;
     int     m_nSnTestResult;
     int     m_nMacTestResult;
     int     m_nVersionTestResult;

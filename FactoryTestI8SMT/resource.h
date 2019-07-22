@@ -9,15 +9,14 @@
 #define IDC_TXT_CUR_VER                 1002
 #define IDC_BTN_LED_RESULT              1003
 #define IDC_BTN_CAMERA_RESULT           1004
-#define IDC_BTN_IR_RESULT               1005
-#define IDC_BTN_KEY_RESULT              1006
-#define IDC_BTN_LSENSOR_RESULT          1007
-#define IDC_BTN_SPK_RESULT              1008
-#define IDC_BTN_MIC_RESULT              1009
-#define IDC_BTN_VERSION_RESULT          1010
-#define IDC_BTN_WIFI_RESULT             1011
-#define IDC_BTN_SDCARD_RESULT           1012
-#define IDC_BTN_NEXT_DEVICE             1028
+#define IDC_BTN_KEY_RESULT              1005
+#define IDC_BTN_SPK_RESULT              1006
+#define IDC_BTN_MIC_RESULT              1007
+#define IDC_BTN_VERSION_RESULT          1008
+#define IDC_BTN_WIFI_RESULT             1009
+#define IDC_BTN_SDCARD_RESULT           1010
+#define IDC_BTN_UART_RESULT             1011
+#define IDC_BTN_NEXT_DEVICE             1012
 
 // Next default values for new objects
 // 
