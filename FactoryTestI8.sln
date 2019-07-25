@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FactoryTestI8Focus", "Facto
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FactoryTestI8SMT", "FactoryTestI8SMT\FactoryTestI8SMT.vcproj", "{069A9F6A-8C05-4DF8-BC2A-93CED329DB7E}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WriteSnMacTool", "WriteSnMacTool\WriteSnMacTool.vcproj", "{B2A1ABE3-9EB7-4542-B863-6D1A822DD5F9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -31,6 +33,10 @@ Global
 		{069A9F6A-8C05-4DF8-BC2A-93CED329DB7E}.Debug|Win32.Build.0 = Debug|Win32
 		{069A9F6A-8C05-4DF8-BC2A-93CED329DB7E}.Release|Win32.ActiveCfg = Release|Win32
 		{069A9F6A-8C05-4DF8-BC2A-93CED329DB7E}.Release|Win32.Build.0 = Release|Win32
+		{B2A1ABE3-9EB7-4542-B863-6D1A822DD5F9}.Debug|Win32.ActiveCfg = Debug|Win32
+		{B2A1ABE3-9EB7-4542-B863-6D1A822DD5F9}.Debug|Win32.Build.0 = Debug|Win32
+		{B2A1ABE3-9EB7-4542-B863-6D1A822DD5F9}.Release|Win32.ActiveCfg = Release|Win32
+		{B2A1ABE3-9EB7-4542-B863-6D1A822DD5F9}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
