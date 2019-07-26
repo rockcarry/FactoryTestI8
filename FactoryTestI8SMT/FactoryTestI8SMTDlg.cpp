@@ -45,7 +45,7 @@ static void parse_params(const char *str, const char *key, char *val)
     }
 }
 
-static int load_config_from_file(char *fwver, char *log, char *uvc, char *uac, char *cam)
+static int load_config_from_file(char *fwver, char *log, char *uvc, char *uac, char *cam, char *checkip)
 {
     char  file[MAX_PATH];
     FILE *fp = NULL;
@@ -64,11 +64,12 @@ static int load_config_from_file(char *fwver, char *log, char *uvc, char *uac, c
         if (buf) {
             fseek(fp, 0, SEEK_SET);
             fread(buf, len, 1, fp);
-            parse_params(buf, "fw_ver"  , fwver );
+            parse_params(buf, "fw_ver"  , fwver);
             parse_params(buf, "logfile" , log);
             parse_params(buf, "uvcdev"  , uvc);
             parse_params(buf, "uacdev"  , uac);
             parse_params(buf, "camtype" , cam);
+            parse_params(buf, "checkip" , checkip);
             free(buf);
         }
         fclose(fp);
@@ -139,14 +140,16 @@ BOOL CFactoryTestI8SMTDlg::OnInitDialog()
     SetIcon(m_hIcon, FALSE);        // 设置小图标
 
     // 在此添加额外的初始化代码
-    strcpy(m_strFwVer     , ""       );
-    strcpy(m_strLogFile   , "DEBUGER");
-    strcpy(m_strUVCDev    , ""       );
-    strcpy(m_strUACDev    , ""       );
-    strcpy(m_strCamType   , "uvc"    );
-    strcpy(m_strDeviceIP  , ""       );
-    tnp_get_localhost_ip(m_strLocalHostIP, sizeof(m_strLocalHostIP));
-    int ret = load_config_from_file(m_strFwVer, m_strLogFile, m_strUVCDev, m_strUACDev, m_strCamType);
+    strcpy(m_strFwVer      , ""       );
+    strcpy(m_strLogFile    , "DEBUGER");
+    strcpy(m_strUVCDev     , ""       );
+    strcpy(m_strUACDev     , ""       );
+    strcpy(m_strCamType    , "uvc"    );
+    strcpy(m_strCheckIP    , "true"   );
+    strcpy(m_strDeviceIP   , ""       );
+    strcpy(m_strLocalHostIP, ""       );
+
+    int ret = load_config_from_file(m_strFwVer, m_strLogFile, m_strUVCDev, m_strUACDev, m_strCamType, m_strCheckIP);
     if (ret != 0) {
         AfxMessageBox(TEXT("无法打开测试配置文件！"), MB_OK);
     }
@@ -170,6 +173,10 @@ BOOL CFactoryTestI8SMTDlg::OnInitDialog()
     UpdateData(FALSE);
 
     m_pTnpContext = tnp_init(GetSafeHwnd(), TRUE);
+    if (strcmp(m_strCheckIP, "true") == 0) {
+        tnp_get_localhost_ip(m_strLocalHostIP, sizeof(m_strLocalHostIP));
+    }
+
     if (strcmp(m_strUVCDev, "") != 0 || strcmp(m_strCamType, "rtsp") == 0) {
         MoveWindow(0, 0, 900, 600, FALSE);
 

@@ -61,6 +61,7 @@ private:
     char    m_strRouteCheck [32];
     char    m_strThroughPut [32];
     char    m_strTestSpkMic [32];
+    char    m_strCheckIP    [32];
     char    m_strLogFile    [32];
     char    m_strDeviceIP   [32];
     char    m_strLocalHostIP[32];
