@@ -36,6 +36,7 @@ private:
     CString m_strSN;
     CString m_strMAC;
     CString m_strDevInfo;
+    char    m_strCheckIP [32];
     char    m_strDeviceIP[32];
     char    m_strLocalHostIP[32];
     char    m_curSN   [33];

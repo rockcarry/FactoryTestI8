@@ -12,6 +12,68 @@
 #endif
 
 
+static void get_app_dir(char *path, int size)
+{
+    HMODULE handle = GetModuleHandle(NULL);
+    GetModuleFileNameA(handle, path, size);
+    char  *str = path + strlen(path);
+    while (*--str != '\\');
+    *str = '\0';
+}
+
+static void parse_params(const char *str, const char *key, char *val)
+{
+    char *p = (char*)strstr(str, key);
+    int   i;
+
+    if (!p) return;
+    p += strlen(key);
+    if (*p == '\0') return;
+
+    while (1) {
+        if (*p != ' ' && *p != '=' && *p != ':') break;
+        else p++;
+    }
+
+    for (i=0; i<32; i++) {
+        if (*p == ',' || *p == ';' || *p == '\r' || *p == '\n' || *p == '\0') {
+            val[i] = '\0';
+            break;
+        } else {
+            val[i] = *p++;
+        }
+    }
+}
+
+static int load_config_from_file(char *checkip)
+{
+    char  file[MAX_PATH];
+    FILE *fp = NULL;
+    char *buf= NULL;
+    int   len= 0;
+
+    // open params file
+    get_app_dir(file, MAX_PATH);
+    strcat(file, "\\writesnmactool.ini");
+    fp = fopen(file, "rb");
+
+    if (fp) {
+        fseek(fp, 0, SEEK_END);
+        len = ftell(fp);
+        buf = (char*)malloc(len);
+        if (buf) {
+            fseek(fp, 0, SEEK_SET);
+            fread(buf, len, 1, fp);
+            parse_params(buf, "checkip"   , checkip   );
+            free(buf);
+        }
+        fclose(fp);
+        return 0;
+    }
+
+    return -1;
+}
+
 // CWriteSnMacToolDlg dialog
 
 CWriteSnMacToolDlg::CWriteSnMacToolDlg(CWnd* pParent /*=NULL*/)
@@ -43,7 +105,6 @@ BEGIN_MESSAGE_MAP(CWriteSnMacToolDlg, CDialog)
     ON_WM_DESTROY()
 END_MESSAGE_MAP()
 
-
 // CWriteSnMacToolDlg message handlers
 
 BOOL CWriteSnMacToolDlg::OnInitDialog()
@@ -55,14 +116,22 @@ BOOL CWriteSnMacToolDlg::OnInitDialog()
     SetIcon(m_hIcon, TRUE);         // Set big icon
     SetIcon(m_hIcon, FALSE);        // Set small icon
 
+    strcpy(m_strCheckIP    , "true");
     strcpy(m_strDeviceIP   , "");
     strcpy(m_strLocalHostIP, "");
     strcpy(m_curSN         , "");
     strcpy(m_curMAC        , "");
     strcpy(m_curFWVer      , "");
 
+    int ret = load_config_from_file(m_strCheckIP);
+    if (ret != 0) {
+        AfxMessageBox(TEXT("无法打开测试配置文件！"), MB_OK);
+    }
+
     m_pTnpContext = tnp_init(GetSafeHwnd(), TRUE);
-    tnp_get_localhost_ip(m_strLocalHostIP, sizeof(m_strLocalHostIP));
+    if (strcmp(m_strCheckIP, "true") == 0) {
+        tnp_get_localhost_ip(m_strLocalHostIP, sizeof(m_strLocalHostIP));
+    }
     return TRUE;  // return TRUE  unless you set the focus to a control
 }
 

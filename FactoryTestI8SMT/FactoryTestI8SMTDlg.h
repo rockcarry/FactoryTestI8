@@ -53,6 +53,7 @@ private:
     char    m_strUVCDev     [MAX_PATH];
     char    m_strUACDev     [MAX_PATH];
     char    m_strCamType    [32];
+    char    m_strCheckIP    [32];
     char    m_strDeviceIP   [32];
     char    m_strLocalHostIP[32];
     int     m_nMotorTestResult;

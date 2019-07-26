@@ -49,7 +49,7 @@ static void parse_params(const char *str, const char *key, char *val)
     }
 }
 
-static int load_config_from_file(char *user, char *passwd, char *res, char *gongdan, char *ver, char *login, char *route, char *throughput, char *spkmic, char *log)
+static int load_config_from_file(char *user, char *passwd, char *res, char *gongdan, char *ver, char *login, char *route, char *throughput, char *spkmic, char *checkip, char *log)
 {
     char  file[MAX_PATH];
     FILE *fp = NULL;
@@ -77,6 +77,7 @@ static int load_config_from_file(char *user, char *passwd, char *res, char *gong
             parse_params(buf, "routecheck", route     );
             parse_params(buf, "throughput", throughput);
             parse_params(buf, "testspkmic", spkmic    );
+            parse_params(buf, "checkip"   , checkip   );
             parse_params(buf, "logfile"   , log       );
             free(buf);
         }
@@ -336,18 +337,19 @@ BOOL CFactoryTestI8SNDlg::OnInitDialog()
     m_strTestResult = "请连接设备";
 
     // 在此添加额外的初始化代码
-    strcpy(m_strUserName  , "username"      );
-    strcpy(m_strPassWord  , "password"      );
-    strcpy(m_strResource  , "resource"      );
-    strcpy(m_strGongDan   , "gongdan"       );
-    strcpy(m_strTnpVer    , "version"       );
-    strcpy(m_strLoginMode , "alert_and_exit");
-    strcpy(m_strRouteCheck, "yes"           );
-    strcpy(m_strTestSpkMic, "yes"           );
-    strcpy(m_strLogFile   , "DEBUGER"       );
-    strcpy(m_strDeviceIP  , ""              );
-    tnp_get_localhost_ip(m_strLocalHostIP, sizeof(m_strLocalHostIP));
-    int ret = load_config_from_file(m_strUserName, m_strPassWord, m_strResource, m_strGongDan, m_strTnpVer, m_strLoginMode, m_strRouteCheck, m_strThroughPut, m_strTestSpkMic, m_strLogFile);
+    strcpy(m_strUserName   , "username"      );
+    strcpy(m_strPassWord   , "password"      );
+    strcpy(m_strResource   , "resource"      );
+    strcpy(m_strGongDan    , "gongdan"       );
+    strcpy(m_strTnpVer     , "version"       );
+    strcpy(m_strLoginMode  , "alert_and_exit");
+    strcpy(m_strRouteCheck , "yes"           );
+    strcpy(m_strTestSpkMic , "yes"           );
+    strcpy(m_strCheckIP    , "true"          );
+    strcpy(m_strLogFile    , "DEBUGER"       );
+    strcpy(m_strDeviceIP   , ""              );
+    strcpy(m_strLocalHostIP, ""              );
+    int ret = load_config_from_file(m_strUserName, m_strPassWord, m_strResource, m_strGongDan, m_strTnpVer, m_strLoginMode, m_strRouteCheck, m_strThroughPut, m_strTestSpkMic, m_strCheckIP, m_strLogFile);
     if (ret != 0) {
         AfxMessageBox(TEXT("无法打开测试配置文件！"), MB_OK);
     }
@@ -383,6 +385,9 @@ BOOL CFactoryTestI8SNDlg::OnInitDialog()
     UpdateData(FALSE);
 
     m_pTnpContext = tnp_init(GetSafeHwnd(), TRUE);
+    if (strcmp(m_strCheckIP, "true") == 0) {
+        tnp_get_localhost_ip(m_strLocalHostIP, sizeof(m_strLocalHostIP));
+    }
 
     SetTimer(TIMER_ID_SET_FOCUS, 1000, NULL);
     return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
